@@ -230,6 +230,45 @@ td {
     color: #8b5cf6;
 }
 
+/* Category Filter Buttons */
+.category-filter {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.category-filter.active {
+    background-color: var(--active-bg);
+    color: white;
+    border-color: var(--active-bg);
+}
+
+.category-filter:hover:not(.active) {
+    background-color: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+/* Line Clamp for Product Cards */
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Product Card Aspect Ratio */
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
 /* Login/Signup Forms */
 .auth-btn {
     background: var(--gradient-1);
