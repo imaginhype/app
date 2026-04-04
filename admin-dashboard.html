@@ -11,7 +11,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        // ✅ THIS IS THE CORRECT LINE - FIXED TYPO
         import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = {
@@ -30,8 +29,8 @@
         // ============================================
         // IMAGEKIT CONFIGURATION - CHANGE THESE 2 LINES
         // ============================================
-        const IMAGEKIT_URL_ENDPOINT = 'https://ik.imagekit.io/imaginhype/';  // ← REPLACE with your URL Endpoint
-        const IMAGEKIT_PUBLIC_KEY = 'public_D0PgCZHzZEtnu2vNK7KbS/dwYgc=';                 // ← REPLACE with your Public Key
+        const IMAGEKIT_URL_ENDPOINT = 'https://ik.imagekit.io/imaginhype';
+        const IMAGEKIT_PUBLIC_KEY = 'public_D0PgCZHzZEtnu2vNK7KbS/dwYgc=';
         
         let currentUser = null;
         let currentUserId = null;
@@ -58,7 +57,6 @@
             }
         });
         
-        // ========== CORE FUNCTIONS ==========
         async function loadDashboard() {
             await loadStats();
             await loadRecentOrders();
@@ -264,8 +262,14 @@
         const productSearchInput = document.getElementById('product-search');
         if (productSearchInput) productSearchInput.addEventListener('input', (e) => { currentSearch = e.target.value; renderProducts(); });
         
-        // ========== IMAGEKIT IMAGE UPLOAD ==========
+        // ========== IMAGEKIT IMAGE UPLOAD - FIXED URL ==========
         async function uploadToImageKit(file) {
+            // Validate file size
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('Image too large. Max 5MB', 'error');
+                return null;
+            }
+            
             const formData = new FormData();
             formData.append('file', file);
             formData.append('fileName', file.name);
@@ -273,6 +277,7 @@
             formData.append('useUniqueFileName', 'true');
             
             try {
+                // CORRECT URL - note "imagekit.io" NOT "imagetk.io"
                 const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
                     method: 'POST',
                     body: formData
@@ -281,12 +286,14 @@
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    throw new Error(data.message || 'Upload failed');
+                    console.error('ImageKit error details:', data);
+                    throw new Error(data.message || data.help || 'Upload failed');
                 }
                 
                 return data.url;
             } catch (error) {
                 console.error('ImageKit upload error:', error);
+                showNotification('Upload failed: ' + error.message, 'error');
                 return null;
             }
         }
