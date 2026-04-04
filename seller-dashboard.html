@@ -2,16 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Seller Dashboard - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        
+        import { getAuth, onAuthStateChanged, signOut }
+            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, getDoc, query, where, orderBy }
+            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
             authDomain: "imaginhype-app.firebaseapp.com",
@@ -20,295 +22,322 @@
             messagingSenderId: "200919529212",
             appId: "1:200919529212:web:afa69db5cf256d35f90979"
         };
-        
-        const app = initializeApp(firebaseConfig);
+
+        const app  = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        let currentUser = null;
-        let currentSellerId = null;
-        let currentSellerData = null;
-        
+        const db   = getFirestore(app);
+
+        // Apply theme immediately
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        let currentUser = null, currentSellerId = null, currentSellerData = null;
+
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.data()?.role === 'admin') {
-                    window.location.href = '/admin-dashboard.html';
-                }
-                currentUser = user;
-                currentSellerId = user.uid;
-                currentSellerData = userDoc.data();
-                loadSellerDashboard();
-            } else {
-                window.location.href = '/';
+            if (!user) { window.location.href = '/'; return; }
+
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+            // FIX: added `return` so admin redirect doesn't continue loading seller UI
+            if (userDoc.data()?.role === 'admin') {
+                window.location.href = '/admin-dashboard.html';
+                return;
             }
+
+            currentUser       = user;
+            currentSellerId   = user.uid;
+            currentSellerData = userDoc.data();
+
+            document.getElementById('seller-name').textContent = currentSellerData?.name || 'Seller';
+            applyThemeIcons();
+            loadSellerDashboard();
         });
-        
+
+        // ── Theme ────────────────────────────────────────────────────────────
+        function applyThemeIcons() {
+            const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+            document.querySelectorAll('.icon-moon').forEach(el => el.style.display = theme === 'dark'  ? 'inline' : 'none');
+            document.querySelectorAll('.icon-sun' ).forEach(el => el.style.display = theme === 'light' ? 'inline' : 'none');
+        }
+        window.toggleTheme = () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            applyThemeIcons();
+        };
+
+        // ── Toast ────────────────────────────────────────────────────────────
+        function showNotification(message, type = 'success') {
+            let box = document.getElementById('toast-container');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'toast-container';
+                box.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
+                document.body.appendChild(box);
+            }
+            const t = document.createElement('div');
+            t.style.cssText = `background:${type==='success'?'#10b981':'#ef4444'};color:white;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:500;box-shadow:0 4px 6px rgba(0,0,0,.15);cursor:pointer;max-width:320px;`;
+            t.textContent = message;
+            t.onclick = () => t.remove();
+            box.appendChild(t);
+            setTimeout(() => { if (t.parentNode) t.remove(); }, 3000);
+        }
+
+        // ── Load everything ──────────────────────────────────────────────────
         async function loadSellerDashboard() {
-            await loadSellerStats();
-            await loadMyOrders();
-            await loadProducts();
-            await loadEarnings();
+            await Promise.all([loadSellerStats(), loadMyOrders(), loadProducts(), loadEarnings()]);
         }
-        
+
         async function loadSellerStats() {
-            const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId)));
-            const totalOrders = ordersSnap.size;
-            const completedOrders = ordersSnap.docs.filter(d => d.data().status === 'completed' || d.data().status === 'paid').length;
-            const pendingOrders = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
-            
-            const earnings = currentSellerData?.totalEarnings || 0;
-            const pendingPayout = currentSellerData?.pendingPayout || 0;
-            
-            document.getElementById('stat-total-orders').innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
-            document.getElementById('stat-completed').innerHTML = `<div class="text-2xl font-bold">${completedOrders}</div><div class="text-sm opacity-70">Completed</div>`;
-            document.getElementById('stat-pending-orders').innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
-            document.getElementById('stat-earnings').innerHTML = `<div class="text-2xl font-bold">AED ${earnings}</div><div class="text-sm opacity-70">Total Earnings</div>`;
-            document.getElementById('stat-payout').innerHTML = `<div class="text-2xl font-bold">AED ${pendingPayout}</div><div class="text-sm opacity-70">Pending Payout</div>`;
+            const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId)));
+            const totalOrders     = snap.size;
+            const completedOrders = snap.docs.filter(d => ['completed','paid'].includes(d.data().status)).length;
+            const pendingOrders   = snap.docs.filter(d => d.data().status === 'pending').length;
+            const earnings        = currentSellerData?.totalEarnings  || 0;
+            const pending         = currentSellerData?.pendingPayout  || 0;
+
+            document.getElementById('stat-total-orders'   ).innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
+            document.getElementById('stat-completed'      ).innerHTML = `<div class="text-2xl font-bold">${completedOrders}</div><div class="text-sm opacity-70">Completed</div>`;
+            document.getElementById('stat-pending-orders' ).innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
+            document.getElementById('stat-earnings'       ).innerHTML = `<div class="text-2xl font-bold">AED ${earnings}</div><div class="text-sm opacity-70">Total Earnings</div>`;
+            document.getElementById('stat-payout'         ).innerHTML = `<div class="text-2xl font-bold">AED ${pending}</div><div class="text-sm opacity-70">Pending Payout</div>`;
         }
-        
+
         async function loadMyOrders() {
-            const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), orderBy('createdAt', 'desc')));
+            const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), orderBy('createdAt', 'desc')));
             const container = document.getElementById('my-orders');
-            if (ordersSnap.empty) {
-                container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet. Place your first order!</div>';
-                return;
-            }
+            if (!container) return;
+            if (snap.empty) { container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet. Place your first order!</div>'; return; }
             container.innerHTML = '';
-            for (const orderDoc of ordersSnap.docs) {
-                const order = orderDoc.data();
-                let statusColor = 'bg-yellow-500/20 text-yellow-500';
-                if (order.status === 'approved') statusColor = 'bg-blue-500/20 text-blue-500';
-                if (order.status === 'completed') statusColor = 'bg-green-500/20 text-green-500';
-                if (order.status === 'paid') statusColor = 'bg-purple-500/20 text-purple-500';
-                
-                container.innerHTML += `
-                    <div class="border rounded-lg p-4 mb-3">
-                        <div class="flex justify-between items-start flex-wrap gap-2">
-                            <div>
-                                <p class="font-semibold">Order #${orderDoc.id.slice(0,8)}</p>
-                                <p class="text-sm opacity-70">Customer: ${order.customerName}</p>
-                                <p class="text-sm">Amount: AED ${order.totalAmount}</p>
-                                ${order.commissionAmount ? `<p class="text-sm text-green-500">Your Earnings: AED ${order.sellerEarnings}</p>` : '<p class="text-sm text-yellow-500">Commission pending approval</p>'}
-                            </div>
-                            <div>
-                                <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColor}">${order.status.toUpperCase()}</span>
-                            </div>
+            snap.docs.forEach(d => {
+                const o = d.data();
+                let sc = 'bg-yellow-500/20 text-yellow-500';
+                if (o.status === 'approved')  sc = 'bg-blue-500/20 text-blue-500';
+                if (o.status === 'completed') sc = 'bg-green-500/20 text-green-500';
+                if (o.status === 'paid')      sc = 'bg-purple-500/20 text-purple-500';
+                const div = document.createElement('div');
+                div.className = 'border rounded-lg p-4 mb-3';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start flex-wrap gap-2">
+                        <div>
+                            <p class="font-semibold">Order #${d.id.slice(0,8)}</p>
+                            <p class="text-sm opacity-70">Customer: <span class="customer-name"></span></p>
+                            <p class="text-sm">Amount: AED ${o.totalAmount}</p>
+                            ${o.commissionAmount
+                                ? `<p class="text-sm text-green-500">Your Earnings: AED ${o.sellerEarnings}</p>`
+                                : '<p class="text-sm text-yellow-500">Commission pending approval</p>'}
                         </div>
-                        ${order.status === 'approved' ? `<button onclick="markCompleted('${orderDoc.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm">Mark as Completed</button>` : ''}
-                        ${order.status === 'completed' ? `<button onclick="requestPayout('${orderDoc.id}', ${order.sellerEarnings})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm">Request Payout</button>` : ''}
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${sc}">${(o.status||'').toUpperCase()}</span>
                     </div>
-                `;
-            }
-        }
-        
-        window.markCompleted = async (orderId) => {
-            await updateDoc(doc(db, 'orders', orderId), { status: 'completed', completedAt: new Date().toISOString() });
-            alert('Order marked as completed!');
-            loadMyOrders();
-            loadSellerStats();
-        };
-        
-        window.requestPayout = async (orderId, amount) => {
-            const confirm = window.confirm(`Request payout of AED ${amount} for this order?`);
-            if (confirm) {
-                await updateDoc(doc(db, 'orders', orderId), { status: 'paid', payoutRequestedAt: new Date().toISOString() });
-                
-                // Update seller's pending payout
-                const sellerRef = doc(db, 'users', currentSellerId);
-                const newPending = (currentSellerData?.pendingPayout || 0) + amount;
-                await updateDoc(sellerRef, { pendingPayout: newPending });
-                currentSellerData.pendingPayout = newPending;
-                
-                alert('Payout requested! Admin will process it soon.');
-                loadMyOrders();
-                loadSellerStats();
-            }
-        };
-        
-        async function loadProducts() {
-            const productsSnap = await getDocs(collection(db, 'products'));
-            const container = document.getElementById('products-list');
-            if (productsSnap.empty) {
-                container.innerHTML = '<div class="text-center py-8 opacity-60">No products available yet. Admin will add them soon.</div>';
-                return;
-            }
-            container.innerHTML = '';
-            productsSnap.docs.forEach(productDoc => {
-                const product = productDoc.data();
-                container.innerHTML += `
-                    <div class="border rounded-lg p-4">
-                        <h4 class="font-semibold">${product.name}</h4>
-                        <p class="text-sm opacity-70 mt-1">${product.description?.substring(0, 100) || 'No description'}</p>
-                        <p class="text-lg font-bold mt-2">AED ${product.price}</p>
-                        <p class="text-xs opacity-60">Category: ${product.category || 'Uncategorized'}</p>
-                        <button onclick="openOrderForm('${productDoc.id}', '${product.name}', ${product.price})" class="mt-3 w-full px-4 py-2 bg-purple-500 text-white rounded-lg">Place Order</button>
-                    </div>
-                `;
+                    ${o.status === 'approved'  ? `<button onclick="markCompleted('${d.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition">Mark as Completed</button>` : ''}
+                    ${o.status === 'completed' ? `<button onclick="requestPayout('${d.id}',${o.sellerEarnings||0})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Request Payout</button>` : ''}`;
+                // textContent to avoid XSS from customerName
+                div.querySelector('.customer-name').textContent = o.customerName || 'N/A';
+                container.appendChild(div);
             });
         }
-        
-        window.openOrderForm = (productId, productName, price) => {
-            const modal = document.getElementById('order-modal');
-            document.getElementById('order-product-id').value = productId;
-            document.getElementById('order-product-name').innerHTML = `<strong>${productName}</strong> - AED ${price}`;
-            document.getElementById('order-price').value = price;
-            modal.classList.remove('hidden');
+
+        window.markCompleted = async (orderId) => {
+            await updateDoc(doc(db, 'orders', orderId), { status: 'completed', completedAt: new Date().toISOString() });
+            showNotification('Order marked as completed!');
+            loadMyOrders(); loadSellerStats();
         };
-        
+
+        window.requestPayout = async (orderId, amount) => {
+            if (!confirm(`Request payout of AED ${amount} for this order?`)) return;
+            await updateDoc(doc(db, 'orders', orderId), { status: 'paid', payoutRequestedAt: new Date().toISOString() });
+            const newPending = (currentSellerData?.pendingPayout || 0) + amount;
+            await updateDoc(doc(db, 'users', currentSellerId), { pendingPayout: newPending });
+            currentSellerData.pendingPayout = newPending;
+            showNotification('Payout requested! Admin will process it soon.');
+            loadMyOrders(); loadSellerStats();
+        };
+
+        async function loadProducts() {
+            const snap = await getDocs(collection(db, 'products'));
+            const container = document.getElementById('products-list'); if (!container) return;
+            if (snap.empty) { container.innerHTML = '<div class="text-center py-8 opacity-60">No products available yet.</div>'; return; }
+            container.innerHTML = '';
+            snap.docs.forEach(d => {
+                const p = d.data();
+                const div = document.createElement('div');
+                div.className = 'border rounded-lg p-4';
+                div.innerHTML = `
+                    ${(p.imageUrl && p.imageUrl !== 'undefined') ? `<img src="${p.imageUrl}" class="w-full h-40 object-cover rounded-lg mb-3" alt="" onerror="this.remove()">` : ''}
+                    <h4 class="font-semibold product-name"></h4>
+                    <p class="text-sm opacity-70 mt-1 product-desc"></p>
+                    <p class="text-lg font-bold mt-2">AED ${p.price}</p>
+                    <p class="text-xs opacity-60">Category: ${p.category || 'Uncategorized'}</p>
+                    <button class="order-btn mt-3 w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">Place Order</button>`;
+                div.querySelector('.product-name').textContent = p.name || 'Untitled';
+                div.querySelector('.product-desc').textContent = (p.description || '').substring(0,100);
+                div.querySelector('.order-btn').onclick = () => openOrderForm(d.id, p.name, p.price);
+                container.appendChild(div);
+            });
+        }
+
+        async function loadEarnings() {
+            const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', 'in', ['approved','completed','paid'])));
+            let total = 0;
+            snap.docs.forEach(d => { total += d.data().sellerEarnings || 0; });
+            const el = document.getElementById('total-earnings-display');
+            if (el) el.innerHTML = `<div class="text-3xl font-bold">AED ${total}</div><div class="text-sm opacity-70 mt-1">Total earned from approved orders</div>`;
+
+            const profileEl = document.getElementById('section-profile');
+            if (profileEl) {
+                const el2 = document.getElementById('profile-name');   if(el2) el2.textContent = currentSellerData?.name    || '';
+                const el3 = document.getElementById('profile-email');  if(el3) el3.textContent = currentSellerData?.email   || '';
+                const el4 = document.getElementById('profile-joined'); if(el4) el4.textContent = currentSellerData?.createdAt ? new Date(currentSellerData.createdAt).toLocaleDateString() : 'N/A';
+                const el5 = document.getElementById('profile-earnings'); if(el5) el5.textContent = total;
+                const el6 = document.getElementById('profile-pending');  if(el6) el6.textContent = currentSellerData?.pendingPayout || 0;
+            }
+        }
+
+        // ── Order modal ──────────────────────────────────────────────────────
+        window.openOrderForm = (productId, productName, price) => {
+            document.getElementById('order-product-id').value = productId;
+            document.getElementById('order-price').value      = price;
+            const nameEl = document.getElementById('order-product-name');
+            nameEl.textContent = ''; // clear first
+            const strong = document.createElement('strong');
+            strong.textContent = productName;
+            nameEl.appendChild(strong);
+            nameEl.append(` — AED ${price}`);
+            document.getElementById('order-modal').classList.remove('hidden');
+        };
+
         window.closeOrderModal = () => {
             document.getElementById('order-modal').classList.add('hidden');
             document.getElementById('order-form').reset();
         };
-        
+
         window.submitOrder = async () => {
-            const productId = document.getElementById('order-product-id').value;
-            const customerName = document.getElementById('customer-name').value;
-            const customerPhone = document.getElementById('customer-phone').value;
-            const customerAddress = document.getElementById('customer-address').value;
-            const quantity = parseInt(document.getElementById('quantity').value);
-            const price = parseFloat(document.getElementById('order-price').value);
-            const notes = document.getElementById('order-notes').value;
-            
-            if (!customerName || !customerPhone || !customerAddress) {
-                alert('Please fill all required fields');
-                return;
+            const productId     = document.getElementById('order-product-id').value;
+            const customerName  = document.getElementById('customer-name').value.trim();
+            const customerPhone = document.getElementById('customer-phone').value.trim();
+            const customerAddr  = document.getElementById('customer-address').value.trim();
+            const quantity      = parseInt(document.getElementById('quantity').value);
+            const price         = parseFloat(document.getElementById('order-price').value);
+            const notes         = document.getElementById('order-notes').value;
+
+            if (!customerName || !customerPhone || !customerAddr) {
+                showNotification('Please fill in all required fields.', 'error'); return;
             }
-            
-            const totalAmount = price * quantity;
-            
+
             await addDoc(collection(db, 'orders'), {
-                productId: productId,
-                sellerId: currentSellerId,
-                sellerName: currentSellerData?.name || 'Seller',
-                customerName: customerName,
-                customerPhone: customerPhone,
-                customerAddress: customerAddress,
-                quantity: quantity,
-                unitPrice: price,
-                totalAmount: totalAmount,
-                notes: notes,
-                status: 'pending',
-                createdAt: new Date().toISOString()
+                productId, sellerId: currentSellerId,
+                sellerName:      currentSellerData?.name || 'Seller',
+                customerName,    customerPhone, customerAddress: customerAddr,
+                quantity,        unitPrice: price, totalAmount: price * quantity,
+                notes,           status: 'pending',
+                createdAt:       new Date().toISOString()
             });
-            
-            alert('Order placed! Admin will review and approve commission.');
-            closeOrderModal();
-            loadMyOrders();
-            loadSellerStats();
+
+            showNotification('Order placed! Admin will review and approve commission.');
+            window.closeOrderModal();
+            loadMyOrders(); loadSellerStats();
         };
-        
-        async function loadEarnings() {
-            const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', 'in', ['approved', 'completed', 'paid'])));
-            let total = 0;
-            ordersSnap.docs.forEach(doc => {
-                total += doc.data().sellerEarnings || 0;
-            });
-            document.getElementById('total-earnings-display').innerHTML = `<div class="text-3xl font-bold">AED ${total}</div><div class="text-sm opacity-70 mt-1">Total earned from approved orders</div>`;
-        }
-        
-        window.showSection = (section) => {
+
+        // ── Navigation ───────────────────────────────────────────────────────
+        // FIX: receive clickedEl explicitly — don't rely on global `event` variable
+        window.showSection = (section, clickedEl) => {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(`section-${section}`).classList.remove('hidden');
+            document.getElementById(`section-${section}`)?.classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('page-title').innerText = section.charAt(0).toUpperCase() + section.slice(1);
+            clickedEl?.classList.add('active');
+            if (section === 'earnings') loadEarnings();
+            window.closeMobileMenu?.();
         };
-        
-        window.logout = async () => {
-            await signOut(auth);
-            window.location.href = '/';
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        window.toggleMobileMenu = () => {
+            const sb = document.getElementById('mobile-sidebar'), ov = document.getElementById('sidebar-overlay');
+            sb?.classList.toggle('show'); ov?.classList.toggle('show');
+            document.body.style.overflow = sb?.classList.contains('show') ? 'hidden' : '';
         };
-        
-        window.toggleTheme = () => {
-            const current = document.documentElement.getAttribute('data-theme');
-            const newTheme = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+        window.closeMobileMenu = () => {
+            document.getElementById('mobile-sidebar')?.classList.remove('show');
+            document.getElementById('sidebar-overlay')?.classList.remove('show');
+            document.body.style.overflow = '';
         };
-        
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        // Make functions global
-        window.markCompleted = markCompleted;
-        window.requestPayout = requestPayout;
-        window.openOrderForm = openOrderForm;
-        window.closeOrderModal = closeOrderModal;
-        window.submitOrder = submitOrder;
     </script>
 </head>
 <body class="transition-colors duration-300">
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <aside class="sidebar w-64 fixed h-full overflow-y-auto">
-            <div class="p-4 border-b">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-store text-2xl text-purple-500"></i>
-                    <span class="text-xl font-bold">Marketplace Pro</span>
-                </div>
-                <p class="text-xs opacity-60 mt-1">Seller Portal</p>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Mobile Sidebar -->
+        <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+            <div class="p-4 border-b flex justify-between items-center">
+                <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+                <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
             </div>
             <nav class="p-4">
-                <div class="nav-item active" onclick="showSection('dashboard')">
-                    <i class="fas fa-tachometer-alt w-5"></i>
-                    <span>Dashboard</span>
-                </div>
-                <div class="nav-item" onclick="showSection('products')">
-                    <i class="fas fa-box w-5"></i>
-                    <span>Products</span>
-                </div>
-                <div class="nav-item" onclick="showSection('orders')">
-                    <i class="fas fa-shopping-cart w-5"></i>
-                    <span>My Orders</span>
-                </div>
-                <div class="nav-item" onclick="showSection('earnings')">
-                    <i class="fas fa-chart-line w-5"></i>
-                    <span>Earnings</span>
-                </div>
-                <div class="nav-item" onclick="showSection('profile')">
-                    <i class="fas fa-user w-5"></i>
-                    <span>Profile</span>
-                </div>
+                <div class="nav-item active" onclick="showSection('dashboard',this)"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></div>
+                <div class="nav-item" onclick="showSection('products',this)"><i class="fas fa-box w-5"></i><span>Products</span></div>
+                <div class="nav-item" onclick="showSection('orders',this)"><i class="fas fa-shopping-cart w-5"></i><span>My Orders</span></div>
+                <div class="nav-item" onclick="showSection('earnings',this)"><i class="fas fa-chart-line w-5"></i><span>Earnings</span></div>
+                <div class="nav-item" onclick="showSection('profile',this)"><i class="fas fa-user w-5"></i><span>Profile</span></div>
             </nav>
             <div class="absolute bottom-0 w-full p-4 border-t">
-                <button onclick="logout()" class="w-full text-left nav-item">
-                    <i class="fas fa-sign-out-alt w-5"></i>
-                    <span>Logout</span>
-                </button>
+                <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+            </div>
+        </aside>
+
+        <!-- Desktop Sidebar -->
+        <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
+            <div class="p-4 border-b">
+                <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+                <p class="text-xs opacity-60 mt-2">Seller Portal</p>
+            </div>
+            <nav class="p-4">
+                <div class="nav-item active" onclick="showSection('dashboard',this)"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></div>
+                <div class="nav-item" onclick="showSection('products',this)"><i class="fas fa-box w-5"></i><span>Products</span></div>
+                <div class="nav-item" onclick="showSection('orders',this)"><i class="fas fa-shopping-cart w-5"></i><span>My Orders</span></div>
+                <div class="nav-item" onclick="showSection('earnings',this)"><i class="fas fa-chart-line w-5"></i><span>Earnings</span></div>
+                <div class="nav-item" onclick="showSection('profile',this)"><i class="fas fa-user w-5"></i><span>Profile</span></div>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4 border-t">
+                <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content flex-1 ml-64 overflow-y-auto">
+        <main class="main-content flex-1 overflow-y-auto">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
-                <h1 class="text-2xl font-bold" id="page-title">Dashboard</h1>
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <h1 class="text-xl md:text-2xl font-bold" id="page-title">Dashboard</h1>
+                </div>
                 <div class="flex items-center space-x-4">
-                    <button onclick="window.toggleTheme()" class="p-2 rounded-full transition">
-                        <i class="fas fa-moon dark:block hidden"></i>
-                        <i class="fas fa-sun dark:hidden block"></i>
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition" title="Toggle theme">
+                        <i class="fas fa-moon icon-moon"></i>
+                        <i class="fas fa-sun  icon-sun" style="display:none"></i>
                     </button>
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-user-circle text-2xl"></i>
-                        <span id="seller-name">Seller</span>
+                        <span id="seller-name" class="hidden md:inline">Seller</span>
                     </div>
                 </div>
             </div>
 
-            <div class="p-6">
+            <div class="p-4 md:p-6">
+
                 <!-- Dashboard Section -->
                 <div id="section-dashboard" class="section">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
                         <div class="stat-card p-4 rounded-xl" id="stat-total-orders">Loading...</div>
                         <div class="stat-card p-4 rounded-xl" id="stat-completed">Loading...</div>
                         <div class="stat-card p-4 rounded-xl" id="stat-pending-orders">Loading...</div>
                         <div class="stat-card p-4 rounded-xl" id="stat-earnings">Loading...</div>
                         <div class="stat-card p-4 rounded-xl" id="stat-payout">Loading...</div>
                     </div>
-                    
                     <div class="card p-6 rounded-xl">
                         <h3 class="text-lg font-semibold mb-4">My Recent Orders</h3>
-                        <div id="my-orders"></div>
+                        <div id="my-orders"><div class="text-center py-8 opacity-60">Loading...</div></div>
                     </div>
                 </div>
 
@@ -316,7 +345,9 @@
                 <div id="section-products" class="section hidden">
                     <div class="card p-6 rounded-xl">
                         <h3 class="text-lg font-semibold mb-4">Available Products</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="products-list"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="products-list">
+                            <div class="text-center py-8 opacity-60 col-span-full">Loading...</div>
+                        </div>
                     </div>
                 </div>
 
@@ -350,6 +381,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </main>
     </div>
@@ -357,18 +389,18 @@
     <!-- Order Modal -->
     <div id="order-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="card rounded-xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-xl font-bold mb-4">Place Order</h3>
-            <form id="order-form" class="space-y-4">
+            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Place Order</h3><button onclick="closeOrderModal()" class="text-2xl">&times;</button></div>
+            <form id="order-form" class="space-y-4" onsubmit="event.preventDefault(); submitOrder();">
                 <input type="hidden" id="order-product-id">
                 <input type="hidden" id="order-price">
                 <div class="p-3 bg-purple-500/10 rounded-lg" id="order-product-name"></div>
-                <div><input type="text" id="customer-name" placeholder="Customer Full Name *" class="w-full px-4 py-2 rounded-lg border" required></div>
-                <div><input type="tel" id="customer-phone" placeholder="Customer Phone *" class="w-full px-4 py-2 rounded-lg border" required></div>
-                <div><textarea id="customer-address" placeholder="Customer Address *" class="w-full px-4 py-2 rounded-lg border" rows="2" required></textarea></div>
-                <div><input type="number" id="quantity" value="1" min="1" class="w-full px-4 py-2 rounded-lg border"></div>
-                <div><textarea id="order-notes" placeholder="Order Notes (optional)" class="w-full px-4 py-2 rounded-lg border" rows="2"></textarea></div>
+                <div><input type="text"   id="customer-name"    placeholder="Customer Full Name *" class="w-full px-4 py-2 rounded-lg border" required></div>
+                <div><input type="tel"    id="customer-phone"   placeholder="Customer Phone *" class="w-full px-4 py-2 rounded-lg border" required></div>
+                <div><textarea            id="customer-address" placeholder="Customer Address *" class="w-full px-4 py-2 rounded-lg border" rows="2" required></textarea></div>
+                <div><input type="number" id="quantity"         value="1" min="1" class="w-full px-4 py-2 rounded-lg border"></div>
+                <div><textarea            id="order-notes"      placeholder="Order Notes (optional)" class="w-full px-4 py-2 rounded-lg border" rows="2"></textarea></div>
                 <div class="flex space-x-3">
-                    <button type="button" onclick="submitOrder()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg">Place Order</button>
+                    <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Place Order</button>
                     <button type="button" onclick="closeOrderModal()" class="flex-1 border py-2 rounded-lg">Cancel</button>
                 </div>
             </form>
@@ -376,11 +408,20 @@
     </div>
 
     <style>
-        .nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; margin: 0.25rem 0; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
-        .nav-item:hover { background: var(--hover-bg); }
-        .nav-item.active { background: var(--active-bg); color: var(--active-text); }
-        .stat-card { background: var(--card-bg); border: 1px solid var(--border-color); transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-2px); }
+        .section { animation: fadeIn .2s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+        .nav-item { display:flex; align-items:center; gap:.75rem; padding:.75rem 1rem; margin:.25rem 0; border-radius:.5rem; cursor:pointer; transition:all .2s; color:var(--text-secondary); }
+        .nav-item:hover { background:var(--hover-bg); color:var(--text-primary); }
+        .nav-item.active { background:var(--active-bg); color:var(--active-text); }
+        .stat-card { background:var(--card-bg); border:1px solid var(--border-color); transition:transform .2s; }
+        .stat-card:hover { transform:translateY(-2px); }
+        #mobile-sidebar { transform:translateX(-100%); transition:transform .3s ease; }
+        #mobile-sidebar.show { transform:translateX(0); }
+        #sidebar-overlay:not(.show) { display:none; }
+        #sidebar-overlay.show { display:block; }
+        @media(min-width:768px){ #mobile-sidebar,#sidebar-overlay{ display:none; } }
+        @media(max-width:767px){ .desktop-sidebar{ display:none; } .main-content{ margin-left:0!important; } }
+        @media(min-width:769px){ .main-content{ margin-left:16rem; } }
     </style>
     <script src="app.js"></script>
 </body>
