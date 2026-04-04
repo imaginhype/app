@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Marketplace - Admin & Seller Portal</title>
+    <!-- Tailwind CSS + Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        // Firebase configuration - YOU WILL REPLACE THIS WITH YOUR OWN
+        const firebaseConfig = {
+            apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
+            authDomain: "imaginhype-app.firebaseapp.com",
+            projectId: "imaginhype-app",
+            storageBucket: "imaginhype-app.firebasestorage.app",
+            messagingSenderId: "200919529212",
+            appId: "1:200919529212:web:afa69db5cf256d35f90979"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Make auth and db available globally
+        window.auth = auth;
+        window.db = db;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.getDocs = getDocs;
+        window.collection = collection;
+        window.query = query;
+        window.where = where;
+        
+        // Theme handling
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) toggle.checked = savedTheme === 'light';
+        }
+        
+        window.initTheme = initTheme;
+        window.toggleTheme = function() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        };
+        
+        window.checkFirstUser = async () => {
+            const usersRef = collection(db, 'users');
+            const snapshot = await getDocs(usersRef);
+            return snapshot.empty;
+        };
+        
+        window.logout = async () => {
+            await signOut(auth);
+            window.location.href = '/';
+        };
+        
+        // Expose functions
+        window.checkFirstUser = checkFirstUser;
+    </script>
+</head>
+<body class="transition-colors duration-300">
+    <!-- Navigation -->
+    <nav class="nav-bar fixed w-full top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-store text-2xl text-purple-500"></i>
+                <span class="text-xl font-bold">Marketplace Pro</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="window.toggleTheme()" class="theme-toggle p-2 rounded-full transition">
+                    <i class="fas fa-moon dark:block hidden"></i>
+                    <i class="fas fa-sun dark:hidden block"></i>
+                </button>
+                <div id="nav-buttons" class="space-x-3">
+                    <button onclick="showLogin()" class="px-4 py-2 rounded-lg font-medium transition login-btn">Login</button>
+                    <button onclick="showSignup()" class="px-4 py-2 rounded-lg font-medium transition signup-btn">Sign Up</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 pt-24 pb-12">
+        <!-- Hero Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                Sell Smarter, Earn Faster
+            </h1>
+            <p class="text-lg opacity-80 max-w-2xl mx-auto">
+                The complete marketplace platform for admins and sellers. Manage products, track orders, and get paid instantly.
+            </p>
+        </div>
+
+        <!-- Auth Forms -->
+        <div class="max-w-md mx-auto">
+            <!-- Login Form -->
+            <div id="login-form" class="card p-8 rounded-2xl shadow-xl transition-all">
+                <h2 class="text-2xl font-bold mb-6 text-center">Welcome Back</h2>
+                <div id="login-error" class="error-message hidden mb-4 p-3 rounded-lg text-sm"></div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email Address</label>
+                        <input type="email" id="login-email" class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition" placeholder="admin@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input type="password" id="login-password" class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition" placeholder="••••••••">
+                    </div>
+                    <button onclick="handleLogin()" class="w-full py-3 rounded-lg font-semibold transition auth-btn">Login</button>
+                </div>
+                <p class="text-center mt-4 text-sm">
+                    Don't have an account? 
+                    <button onclick="showSignup()" class="text-purple-500 hover:underline">Sign Up</button>
+                </p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signup-form" class="card p-8 rounded-2xl shadow-xl transition-all hidden">
+                <h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
+                <div id="signup-error" class="error-message hidden mb-4 p-3 rounded-lg text-sm"></div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Full Name</label>
+                        <input type="text" id="signup-name" class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email Address</label>
+                        <input type="email" id="signup-email" class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition" placeholder="seller@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input type="password" id="signup-password" class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition" placeholder="••••••••">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Confirm Password</label>
+                        <input type="password" id="signup-confirm" class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition" placeholder="••••••••">
+                    </div>
+                    <button onclick="handleSignup()" class="w-full py-3 rounded-lg font-semibold transition auth-btn">Sign Up</button>
+                </div>
+                <p class="text-center mt-4 text-sm">
+                    Already have an account? 
+                    <button onclick="showLogin()" class="text-purple-500 hover:underline">Login</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Show login form
+        window.showLogin = () => {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+        };
+        
+        window.showSignup = () => {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.remove('hidden');
+        };
+        
+        // Handle Login
+        window.handleLogin = async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            if (!email || !password) {
+                errorDiv.textContent = 'Please fill in all fields';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const userCredential = await window.signInWithEmailAndPassword(window.auth, email, password);
+                const user = userCredential.user;
+                
+                // Get user role from Firestore
+                const userDoc = await window.getDoc(window.doc(window.db, 'users', user.uid));
+                const role = userDoc.data()?.role || 'seller';
+                
+                if (role === 'admin') {
+                    window.location.href = '/admin-dashboard.html';
+                } else {
+                    window.location.href = '/seller-dashboard.html';
+                }
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        };
+        
+        // Handle Signup
+        window.handleSignup = async () => {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+            const errorDiv = document.getElementById('signup-error');
+            
+            if (!name || !email || !password || !confirm) {
+                errorDiv.textContent = 'Please fill in all fields';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            if (password !== confirm) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            if (password.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                // Check if first user
+                const isFirstUser = await window.checkFirstUser();
+                const role = isFirstUser ? 'admin' : 'seller';
+                
+                // Create user
+                const userCredential = await window.createUserWithEmailAndPassword(window.auth, email, password);
+                const user = userCredential.user;
+                
+                // Save user data
+                await window.setDoc(window.doc(window.db, 'users', user.uid), {
+                    uid: user.uid,
+                    name: name,
+                    email: email,
+                    role: role,
+                    createdAt: new Date().toISOString(),
+                    bankDetails: {},
+                    totalEarnings: 0,
+                    pendingPayout: 0,
+                    status: 'active'
+                });
+                
+                if (role === 'admin') {
+                    alert('Admin account created! You will now be redirected.');
+                    window.location.href = '/admin-dashboard.html';
+                } else {
+                    alert('Account created successfully! Please login.');
+                    showLogin();
+                }
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        };
+        
+        // Check if user is already logged in
+        window.auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const userDoc = await window.getDoc(window.doc(window.db, 'users', user.uid));
+                const role = userDoc.data()?.role || 'seller';
+                if (role === 'admin' && !window.location.pathname.includes('admin-dashboard')) {
+                    window.location.href = '/admin-dashboard.html';
+                } else if (role === 'seller' && !window.location.pathname.includes('seller-dashboard')) {
+                    window.location.href = '/seller-dashboard.html';
+                }
+            }
+        });
+        
+        // Initialize theme
+        window.initTheme();
+    </script>
+    <script src="app.js"></script>
+</body>
+</html  >

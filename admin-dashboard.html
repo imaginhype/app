@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
+            authDomain: "imaginhype-app.firebaseapp.com",
+            projectId: "imaginhype-app",
+            storageBucket: "imaginhype-app.firebasestorage.app",
+            messagingSenderId: "200919529212",
+            appId: "1:200919529212:web:afa69db5cf256d35f90979"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let currentUser = null;
+        let currentUserId = null;
+        
+        // Check auth
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.data()?.role !== 'admin') {
+                    window.location.href = '/seller-dashboard.html';
+                }
+                currentUser = user;
+                currentUserId = user.uid;
+                loadDashboard();
+            } else {
+                window.location.href = '/';
+            }
+        });
+        
+        async function loadDashboard() {
+            await loadStats();
+            await loadRecentOrders();
+            await loadPendingCommissions();
+            await loadChart();
+        }
+        
+        async function loadStats() {
+            const usersSnap = await getDocs(collection(db, 'users'));
+            const sellers = usersSnap.docs.filter(d => d.data().role === 'seller').length;
+            
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const totalOrders = ordersSnap.size;
+            const pendingOrders = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
+            
+            const productsSnap = await getDocs(collection(db, 'products'));
+            
+            document.getElementById('stat-sellers').innerHTML = `<div class="text-2xl font-bold">${sellers}</div><div class="text-sm opacity-70">Active Sellers</div>`;
+            document.getElementById('stat-orders').innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
+            document.getElementById('stat-pending').innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
+            document.getElementById('stat-products').innerHTML = `<div class="text-2xl font-bold">${productsSnap.size}</div><div class="text-sm opacity-70">Products</div>`;
+        }
+        
+        async function loadRecentOrders() {
+            const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
+            const tbody = document.getElementById('recent-orders-table');
+            tbody.innerHTML = '';
+            ordersSnap.docs.slice(0, 10).forEach(doc => {
+                const order = doc.data();
+                tbody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="px-4 py-2">#${doc.id.slice(0,8)}</td>
+                        <td class="px-4 py-2">${order.customerName || 'N/A'}</td>
+                        <td class="px-4 py-2">AED ${order.totalAmount}</td>
+                        <td class="px-4 py-2"><span class="status-badge status-${order.status}">${order.status}</span></td>
+                        <td class="px-4 py-2">
+                            <button onclick="viewOrder('${doc.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        
+        async function loadPendingCommissions() {
+            const ordersSnap = await getDocs(query(collection(db, 'orders'), where('status', '==', 'pending')));
+            const container = document.getElementById('pending-commissions');
+            if (ordersSnap.empty) {
+                container.innerHTML = '<div class="text-center py-8 opacity-60">No pending commissions</div>';
+                return;
+            }
+            container.innerHTML = '';
+            for (const orderDoc of ordersSnap.docs) {
+                const order = orderDoc.data();
+                const sellerDoc = await getDoc(doc(db, 'users', order.sellerId));
+                container.innerHTML += `
+                    <div class="border rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold">Order #${orderDoc.id.slice(0,8)}</p>
+                                <p class="text-sm opacity-70">Seller: ${sellerDoc.data()?.name || 'Unknown'}</p>
+                                <p class="text-sm">Amount: AED ${order.totalAmount}</p>
+                            </div>
+                            <div class="space-x-2">
+                                <button onclick="approveCommission('${orderDoc.id}', 'percentage', 10)" class="px-3 py-1 bg-green-500 text-white rounded text-sm">10%</button>
+                                <button onclick="approveCommission('${orderDoc.id}', 'percentage', 15)" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">15%</button>
+                                <button onclick="openCustomCommission('${orderDoc.id}', ${order.totalAmount})" class="px-3 py-1 bg-purple-500 text-white rounded text-sm">Custom</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        window.approveCommission = async (orderId, type, value) => {
+            const orderRef = doc(db, 'orders', orderId);
+            const orderDoc = await getDoc(orderRef);
+            const order = orderDoc.data();
+            
+            let commissionAmount = 0;
+            let sellerEarnings = 0;
+            
+            if (type === 'percentage') {
+                commissionAmount = (order.totalAmount * value) / 100;
+                sellerEarnings = order.totalAmount - commissionAmount;
+            } else {
+                commissionAmount = value;
+                sellerEarnings = order.totalAmount - commissionAmount;
+            }
+            
+            await updateDoc(orderRef, {
+                status: 'approved',
+                commissionType: type,
+                commissionValue: value,
+                commissionAmount: commissionAmount,
+                sellerEarnings: sellerEarnings,
+                approvedAt: new Date().toISOString()
+            });
+            
+            // Update seller earnings
+            const sellerRef = doc(db, 'users', order.sellerId);
+            const sellerDoc = await getDoc(sellerRef);
+            const currentEarnings = sellerDoc.data()?.totalEarnings || 0;
+            await updateDoc(sellerRef, {
+                totalEarnings: currentEarnings + sellerEarnings
+            });
+            
+            alert('Commission approved!');
+            loadPendingCommissions();
+            loadRecentOrders();
+            loadStats();
+        };
+        
+        window.openCustomCommission = (orderId, totalAmount) => {
+            const type = prompt('Commission type? (percentage or fixed)');
+            if (!type) return;
+            const value = parseFloat(prompt('Enter commission value:'));
+            if (isNaN(value)) return;
+            approveCommission(orderId, type, value);
+        };
+        
+        async function loadChart() {
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const monthlyData = {};
+            ordersSnap.docs.forEach(doc => {
+                const order = doc.data();
+                const date = new Date(order.createdAt);
+                const month = date.toLocaleString('default', { month: 'short' });
+                monthlyData[month] = (monthlyData[month] || 0) + order.totalAmount;
+            });
+            
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(monthlyData),
+                    datasets: [{
+                        label: 'Revenue (AED)',
+                        data: Object.values(monthlyData),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') } }
+                    }
+                }
+            });
+        }
+        
+        // Navigation functions
+        window.showSection = (section) => {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`section-${section}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            event.target.classList.add('active');
+        };
+        
+        window.logout = async () => {
+            await signOut(auth);
+            window.location.href = '/';
+        };
+        
+        window.viewOrder = (orderId) => {
+            alert(`View order ${orderId} - Full details coming in next version`);
+        };
+        
+        window.toggleTheme = () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        };
+        
+        // Initialize theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Load dashboard
+        window.loadDashboard = loadDashboard;
+        window.approveCommission = approveCommission;
+        window.openCustomCommission = openCustomCommission;
+        window.viewOrder = viewOrder;
+    </script>
+</head>
+<body class="transition-colors duration-300">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 fixed h-full overflow-y-auto transition-all duration-300">
+            <div class="p-4 border-b">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-store text-2xl text-purple-500"></i>
+                    <span class="text-xl font-bold">Marketplace Pro</span>
+                </div>
+                <p class="text-xs opacity-60 mt-2">Admin Panel</p>
+            </div>
+            <nav class="p-4">
+                <div class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-tachometer-alt w-5"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="showSection('products')">
+                    <i class="fas fa-box w-5"></i>
+                    <span>Products</span>
+                </div>
+                <div class="nav-item" onclick="showSection('orders')">
+                    <i class="fas fa-shopping-cart w-5"></i>
+                    <span>Orders</span>
+                </div>
+                <div class="nav-item" onclick="showSection('sellers')">
+                    <i class="fas fa-users w-5"></i>
+                    <span>Sellers</span>
+                </div>
+                <div class="nav-item" onclick="showSection('payouts')">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span>Payouts</span>
+                </div>
+                <div class="nav-item" onclick="showSection('announcements')">
+                    <i class="fas fa-bullhorn w-5"></i>
+                    <span>Announcements</span>
+                </div>
+                <div class="nav-item" onclick="showSection('chat')">
+                    <i class="fas fa-comments w-5"></i>
+                    <span>Community Chat</span>
+                </div>
+                <div class="nav-item" onclick="showSection('settings')">
+                    <i class="fas fa-cog w-5"></i>
+                    <span>Settings</span>
+                </div>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4 border-t">
+                <button onclick="logout()" class="w-full text-left nav-item">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-1 ml-64 overflow-y-auto">
+            <!-- Top Bar -->
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold" id="page-title">Dashboard</h1>
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.toggleTheme()" class="p-2 rounded-full transition">
+                        <i class="fas fa-moon dark:block hidden"></i>
+                        <i class="fas fa-sun dark:hidden block"></i>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-user-circle text-2xl"></i>
+                        <span>Admin</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <!-- Dashboard Section -->
+                <div id="section-dashboard" class="section">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="stat-card p-6 rounded-xl" id="stat-sellers">Loading...</div>
+                        <div class="stat-card p-6 rounded-xl" id="stat-orders">Loading...</div>
+                        <div class="stat-card p-6 rounded-xl" id="stat-pending">Loading...</div>
+                        <div class="stat-card p-6 rounded-xl" id="stat-products">Loading...</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="card p-6 rounded-xl">
+                            <h3 class="text-lg font-semibold mb-4">Revenue Trend</h3>
+                            <canvas id="revenueChart" height="200"></canvas>
+                        </div>
+                        <div class="card p-6 rounded-xl">
+                            <h3 class="text-lg font-semibold mb-4">Pending Commissions</h3>
+                            <div id="pending-commissions" class="max-h-96 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Recent Orders</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="border-b">
+                                    <tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr>
+                                </thead>
+                                <tbody id="recent-orders-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other sections placeholder -->
+                <div id="section-products" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Product Management</h3>
+                        <button onclick="alert('Add product form - Will be fully implemented in next update')" class="bg-purple-500 text-white px-4 py-2 rounded-lg mb-4">+ Add Product</button>
+                        <div class="text-center py-8 opacity-60">Product list will appear here. Full implementation in next update.</div>
+                    </div>
+                </div>
+
+                <div id="section-orders" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">All Orders</h3>
+                        <div class="text-center py-8 opacity-60">Full order management coming soon. Use dashboard for commission approval.</div>
+                    </div>
+                </div>
+
+                <div id="section-sellers" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Seller Management</h3>
+                        <div class="text-center py-8 opacity-60">Seller list and management coming in next update.</div>
+                    </div>
+                </div>
+
+                <div id="section-payouts" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Payout Requests</h3>
+                        <div class="text-center py-8 opacity-60">Payout management coming soon.</div>
+                    </div>
+                </div>
+
+                <div id="section-announcements" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Announcements</h3>
+                        <div class="text-center py-8 opacity-60">Create and manage announcements coming soon.</div>
+                    </div>
+                </div>
+
+                <div id="section-chat" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Community Chat</h3>
+                        <div class="text-center py-8 opacity-60">Real-time chat coming in next update.</div>
+                    </div>
+                </div>
+
+                <div id="section-settings" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Platform Settings</h3>
+                        <div class="text-center py-8 opacity-60">Settings panel coming soon.</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        .nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; margin: 0.25rem 0; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
+        .nav-item:hover { background: var(--hover-bg); }
+        .nav-item.active { background: var(--active-bg); color: var(--active-text); }
+        .stat-card { background: var(--card-bg); border: 1px solid var(--border-color); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .status-pending { background: #f59e0b20; color: #f59e0b; }
+        .status-approved { background: #10b98120; color: #10b981; }
+        .status-completed { background: #3b82f620; color: #3b82f6; }
+        .status-paid { background: #8b5cf620; color: #8b5cf6; }
+    </style>
+    <script src="app.js"></script>
+</body>
+</html>

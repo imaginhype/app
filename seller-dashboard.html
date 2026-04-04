@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
+            authDomain: "imaginhype-app.firebaseapp.com",
+            projectId: "imaginhype-app",
+            storageBucket: "imaginhype-app.firebasestorage.app",
+            messagingSenderId: "200919529212",
+            appId: "1:200919529212:web:afa69db5cf256d35f90979"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let currentUser = null;
+        let currentSellerId = null;
+        let currentSellerData = null;
+        
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.data()?.role === 'admin') {
+                    window.location.href = '/admin-dashboard.html';
+                }
+                currentUser = user;
+                currentSellerId = user.uid;
+                currentSellerData = userDoc.data();
+                loadSellerDashboard();
+            } else {
+                window.location.href = '/';
+            }
+        });
+        
+        async function loadSellerDashboard() {
+            await loadSellerStats();
+            await loadMyOrders();
+            await loadProducts();
+            await loadEarnings();
+        }
+        
+        async function loadSellerStats() {
+            const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId)));
+            const totalOrders = ordersSnap.size;
+            const completedOrders = ordersSnap.docs.filter(d => d.data().status === 'completed' || d.data().status === 'paid').length;
+            const pendingOrders = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
+            
+            const earnings = currentSellerData?.totalEarnings || 0;
+            const pendingPayout = currentSellerData?.pendingPayout || 0;
+            
+            document.getElementById('stat-total-orders').innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
+            document.getElementById('stat-completed').innerHTML = `<div class="text-2xl font-bold">${completedOrders}</div><div class="text-sm opacity-70">Completed</div>`;
+            document.getElementById('stat-pending-orders').innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
+            document.getElementById('stat-earnings').innerHTML = `<div class="text-2xl font-bold">AED ${earnings}</div><div class="text-sm opacity-70">Total Earnings</div>`;
+            document.getElementById('stat-payout').innerHTML = `<div class="text-2xl font-bold">AED ${pendingPayout}</div><div class="text-sm opacity-70">Pending Payout</div>`;
+        }
+        
+        async function loadMyOrders() {
+            const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), orderBy('createdAt', 'desc')));
+            const container = document.getElementById('my-orders');
+            if (ordersSnap.empty) {
+                container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet. Place your first order!</div>';
+                return;
+            }
+            container.innerHTML = '';
+            for (const orderDoc of ordersSnap.docs) {
+                const order = orderDoc.data();
+                let statusColor = 'bg-yellow-500/20 text-yellow-500';
+                if (order.status === 'approved') statusColor = 'bg-blue-500/20 text-blue-500';
+                if (order.status === 'completed') statusColor = 'bg-green-500/20 text-green-500';
+                if (order.status === 'paid') statusColor = 'bg-purple-500/20 text-purple-500';
+                
+                container.innerHTML += `
+                    <div class="border rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start flex-wrap gap-2">
+                            <div>
+                                <p class="font-semibold">Order #${orderDoc.id.slice(0,8)}</p>
+                                <p class="text-sm opacity-70">Customer: ${order.customerName}</p>
+                                <p class="text-sm">Amount: AED ${order.totalAmount}</p>
+                                ${order.commissionAmount ? `<p class="text-sm text-green-500">Your Earnings: AED ${order.sellerEarnings}</p>` : '<p class="text-sm text-yellow-500">Commission pending approval</p>'}
+                            </div>
+                            <div>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColor}">${order.status.toUpperCase()}</span>
+                            </div>
+                        </div>
+                        ${order.status === 'approved' ? `<button onclick="markCompleted('${orderDoc.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm">Mark as Completed</button>` : ''}
+                        ${order.status === 'completed' ? `<button onclick="requestPayout('${orderDoc.id}', ${order.sellerEarnings})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm">Request Payout</button>` : ''}
+                    </div>
+                `;
+            }
+        }
+        
+        window.markCompleted = async (orderId) => {
+            await updateDoc(doc(db, 'orders', orderId), { status: 'completed', completedAt: new Date().toISOString() });
+            alert('Order marked as completed!');
+            loadMyOrders();
+            loadSellerStats();
+        };
+        
+        window.requestPayout = async (orderId, amount) => {
+            const confirm = window.confirm(`Request payout of AED ${amount} for this order?`);
+            if (confirm) {
+                await updateDoc(doc(db, 'orders', orderId), { status: 'paid', payoutRequestedAt: new Date().toISOString() });
+                
+                // Update seller's pending payout
+                const sellerRef = doc(db, 'users', currentSellerId);
+                const newPending = (currentSellerData?.pendingPayout || 0) + amount;
+                await updateDoc(sellerRef, { pendingPayout: newPending });
+                currentSellerData.pendingPayout = newPending;
+                
+                alert('Payout requested! Admin will process it soon.');
+                loadMyOrders();
+                loadSellerStats();
+            }
+        };
+        
+        async function loadProducts() {
+            const productsSnap = await getDocs(collection(db, 'products'));
+            const container = document.getElementById('products-list');
+            if (productsSnap.empty) {
+                container.innerHTML = '<div class="text-center py-8 opacity-60">No products available yet. Admin will add them soon.</div>';
+                return;
+            }
+            container.innerHTML = '';
+            productsSnap.docs.forEach(productDoc => {
+                const product = productDoc.data();
+                container.innerHTML += `
+                    <div class="border rounded-lg p-4">
+                        <h4 class="font-semibold">${product.name}</h4>
+                        <p class="text-sm opacity-70 mt-1">${product.description?.substring(0, 100) || 'No description'}</p>
+                        <p class="text-lg font-bold mt-2">AED ${product.price}</p>
+                        <p class="text-xs opacity-60">Category: ${product.category || 'Uncategorized'}</p>
+                        <button onclick="openOrderForm('${productDoc.id}', '${product.name}', ${product.price})" class="mt-3 w-full px-4 py-2 bg-purple-500 text-white rounded-lg">Place Order</button>
+                    </div>
+                `;
+            });
+        }
+        
+        window.openOrderForm = (productId, productName, price) => {
+            const modal = document.getElementById('order-modal');
+            document.getElementById('order-product-id').value = productId;
+            document.getElementById('order-product-name').innerHTML = `<strong>${productName}</strong> - AED ${price}`;
+            document.getElementById('order-price').value = price;
+            modal.classList.remove('hidden');
+        };
+        
+        window.closeOrderModal = () => {
+            document.getElementById('order-modal').classList.add('hidden');
+            document.getElementById('order-form').reset();
+        };
+        
+        window.submitOrder = async () => {
+            const productId = document.getElementById('order-product-id').value;
+            const customerName = document.getElementById('customer-name').value;
+            const customerPhone = document.getElementById('customer-phone').value;
+            const customerAddress = document.getElementById('customer-address').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const price = parseFloat(document.getElementById('order-price').value);
+            const notes = document.getElementById('order-notes').value;
+            
+            if (!customerName || !customerPhone || !customerAddress) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
+            const totalAmount = price * quantity;
+            
+            await addDoc(collection(db, 'orders'), {
+                productId: productId,
+                sellerId: currentSellerId,
+                sellerName: currentSellerData?.name || 'Seller',
+                customerName: customerName,
+                customerPhone: customerPhone,
+                customerAddress: customerAddress,
+                quantity: quantity,
+                unitPrice: price,
+                totalAmount: totalAmount,
+                notes: notes,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            });
+            
+            alert('Order placed! Admin will review and approve commission.');
+            closeOrderModal();
+            loadMyOrders();
+            loadSellerStats();
+        };
+        
+        async function loadEarnings() {
+            const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', 'in', ['approved', 'completed', 'paid'])));
+            let total = 0;
+            ordersSnap.docs.forEach(doc => {
+                total += doc.data().sellerEarnings || 0;
+            });
+            document.getElementById('total-earnings-display').innerHTML = `<div class="text-3xl font-bold">AED ${total}</div><div class="text-sm opacity-70 mt-1">Total earned from approved orders</div>`;
+        }
+        
+        window.showSection = (section) => {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`section-${section}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('page-title').innerText = section.charAt(0).toUpperCase() + section.slice(1);
+        };
+        
+        window.logout = async () => {
+            await signOut(auth);
+            window.location.href = '/';
+        };
+        
+        window.toggleTheme = () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        };
+        
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Make functions global
+        window.markCompleted = markCompleted;
+        window.requestPayout = requestPayout;
+        window.openOrderForm = openOrderForm;
+        window.closeOrderModal = closeOrderModal;
+        window.submitOrder = submitOrder;
+    </script>
+</head>
+<body class="transition-colors duration-300">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 fixed h-full overflow-y-auto">
+            <div class="p-4 border-b">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-store text-2xl text-purple-500"></i>
+                    <span class="text-xl font-bold">Marketplace Pro</span>
+                </div>
+                <p class="text-xs opacity-60 mt-1">Seller Portal</p>
+            </div>
+            <nav class="p-4">
+                <div class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-tachometer-alt w-5"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="showSection('products')">
+                    <i class="fas fa-box w-5"></i>
+                    <span>Products</span>
+                </div>
+                <div class="nav-item" onclick="showSection('orders')">
+                    <i class="fas fa-shopping-cart w-5"></i>
+                    <span>My Orders</span>
+                </div>
+                <div class="nav-item" onclick="showSection('earnings')">
+                    <i class="fas fa-chart-line w-5"></i>
+                    <span>Earnings</span>
+                </div>
+                <div class="nav-item" onclick="showSection('profile')">
+                    <i class="fas fa-user w-5"></i>
+                    <span>Profile</span>
+                </div>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4 border-t">
+                <button onclick="logout()" class="w-full text-left nav-item">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-1 ml-64 overflow-y-auto">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold" id="page-title">Dashboard</h1>
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.toggleTheme()" class="p-2 rounded-full transition">
+                        <i class="fas fa-moon dark:block hidden"></i>
+                        <i class="fas fa-sun dark:hidden block"></i>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-user-circle text-2xl"></i>
+                        <span id="seller-name">Seller</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <!-- Dashboard Section -->
+                <div id="section-dashboard" class="section">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                        <div class="stat-card p-4 rounded-xl" id="stat-total-orders">Loading...</div>
+                        <div class="stat-card p-4 rounded-xl" id="stat-completed">Loading...</div>
+                        <div class="stat-card p-4 rounded-xl" id="stat-pending-orders">Loading...</div>
+                        <div class="stat-card p-4 rounded-xl" id="stat-earnings">Loading...</div>
+                        <div class="stat-card p-4 rounded-xl" id="stat-payout">Loading...</div>
+                    </div>
+                    
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">My Recent Orders</h3>
+                        <div id="my-orders"></div>
+                    </div>
+                </div>
+
+                <!-- Products Section -->
+                <div id="section-products" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Available Products</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="products-list"></div>
+                    </div>
+                </div>
+
+                <!-- Orders Section -->
+                <div id="section-orders" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">All My Orders</h3>
+                        <div id="my-orders-full"></div>
+                    </div>
+                </div>
+
+                <!-- Earnings Section -->
+                <div id="section-earnings" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">My Earnings</h3>
+                        <div id="total-earnings-display" class="mb-6"></div>
+                        <div id="earnings-breakdown"></div>
+                    </div>
+                </div>
+
+                <!-- Profile Section -->
+                <div id="section-profile" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">My Profile</h3>
+                        <div class="space-y-3">
+                            <p><strong>Name:</strong> <span id="profile-name"></span></p>
+                            <p><strong>Email:</strong> <span id="profile-email"></span></p>
+                            <p><strong>Member Since:</strong> <span id="profile-joined"></span></p>
+                            <p><strong>Total Earnings:</strong> AED <span id="profile-earnings">0</span></p>
+                            <p><strong>Pending Payout:</strong> AED <span id="profile-pending">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="card rounded-xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4">Place Order</h3>
+            <form id="order-form" class="space-y-4">
+                <input type="hidden" id="order-product-id">
+                <input type="hidden" id="order-price">
+                <div class="p-3 bg-purple-500/10 rounded-lg" id="order-product-name"></div>
+                <div><input type="text" id="customer-name" placeholder="Customer Full Name *" class="w-full px-4 py-2 rounded-lg border" required></div>
+                <div><input type="tel" id="customer-phone" placeholder="Customer Phone *" class="w-full px-4 py-2 rounded-lg border" required></div>
+                <div><textarea id="customer-address" placeholder="Customer Address *" class="w-full px-4 py-2 rounded-lg border" rows="2" required></textarea></div>
+                <div><input type="number" id="quantity" value="1" min="1" class="w-full px-4 py-2 rounded-lg border"></div>
+                <div><textarea id="order-notes" placeholder="Order Notes (optional)" class="w-full px-4 py-2 rounded-lg border" rows="2"></textarea></div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="submitOrder()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg">Place Order</button>
+                    <button type="button" onclick="closeOrderModal()" class="flex-1 border py-2 rounded-lg">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; margin: 0.25rem 0; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
+        .nav-item:hover { background: var(--hover-bg); }
+        .nav-item.active { background: var(--active-bg); color: var(--active-text); }
+        .stat-card { background: var(--card-bg); border: 1px solid var(--border-color); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+    </style>
+    <script src="app.js"></script>
+</body>
+</html>
