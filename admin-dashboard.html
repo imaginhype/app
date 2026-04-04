@@ -11,7 +11,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, query, where, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -82,7 +82,7 @@
                         <td class="px-4 py-2">
                             <button onclick="viewOrder('${doc.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>
                         </td>
-                    </tr>
+                    </table>
                 `;
             });
         }
@@ -150,7 +150,7 @@
                 totalEarnings: currentEarnings + sellerEarnings
             });
             
-            alert('Commission approved!');
+            showNotification('Commission approved!', 'success');
             loadPendingCommissions();
             loadRecentOrders();
             loadStats();
@@ -196,12 +196,139 @@
             });
         }
         
+        // ============================================
+        // PRODUCT MANAGEMENT FUNCTIONS
+        // ============================================
+        
+        async function loadProducts() {
+            const container = document.getElementById('products-list-container');
+            if (!container) return;
+            try {
+                const productsSnap = await getDocs(collection(db, 'products'));
+                if (productsSnap.empty) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No products yet. Click "Add Product" to create one.</div>';
+                    return;
+                }
+                
+                let html = '<table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Price</th><th class="px-4 py-2 text-left">Category</th><th class="px-4 py-2 text-left">Stock</th><th class="px-4 py-2 text-left">Actions</th></tr></thead><tbody>';
+                
+                productsSnap.docs.forEach(doc => {
+                    const p = doc.data();
+                    html += `
+                        <tr class="border-b">
+                            <td class="px-4 py-2 font-medium">${p.name}</td>
+                            <td class="px-4 py-2">AED ${p.price}</td>
+                            <td class="px-4 py-2">${p.category || '-'}</td>
+                            <td class="px-4 py-2">${p.quantity || 1}</td>
+                            <td class="px-4 py-2">
+                                <button onclick="editProduct('${doc.id}')" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteProduct('${doc.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="text-center py-8 text-red-500">Error: ${error.message}</div>`;
+            }
+        }
+        
+        window.showAddProductModal = () => {
+            document.getElementById('modal-title').innerText = 'Add New Product';
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('product-modal').classList.remove('hidden');
+        };
+        
+        window.closeProductModal = () => {
+            document.getElementById('product-modal').classList.add('hidden');
+        };
+        
+        window.editProduct = async (productId) => {
+            const productDoc = await getDoc(doc(db, 'products', productId));
+            const p = productDoc.data();
+            
+            document.getElementById('modal-title').innerText = 'Edit Product';
+            document.getElementById('product-id').value = productId;
+            document.getElementById('product-name').value = p.name || '';
+            document.getElementById('product-description').value = p.description || '';
+            document.getElementById('product-category').value = p.category || '';
+            document.getElementById('product-price').value = p.price || '';
+            document.getElementById('product-brand').value = p.brand || '';
+            document.getElementById('product-condition').value = p.condition || 'New';
+            document.getElementById('product-quantity').value = p.quantity || 1;
+            document.getElementById('product-material').value = p.material || '';
+            document.getElementById('product-sku').value = p.sku || '';
+            
+            document.getElementById('product-modal').classList.remove('hidden');
+        };
+        
+        window.deleteProduct = async (productId) => {
+            if (confirm('Delete this product?')) {
+                await deleteDoc(doc(db, 'products', productId));
+                showNotification('Product deleted', 'success');
+                loadProducts();
+            }
+        };
+        
+        // Handle form submit
+        const productForm = document.getElementById('product-form');
+        if (productForm) {
+            productForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const productId = document.getElementById('product-id').value;
+                const productData = {
+                    name: document.getElementById('product-name').value,
+                    description: document.getElementById('product-description').value,
+                    category: document.getElementById('product-category').value,
+                    price: parseFloat(document.getElementById('product-price').value),
+                    brand: document.getElementById('product-brand').value,
+                    condition: document.getElementById('product-condition').value,
+                    quantity: parseInt(document.getElementById('product-quantity').value),
+                    material: document.getElementById('product-material').value,
+                    sku: document.getElementById('product-sku').value,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                try {
+                    if (productId) {
+                        await updateDoc(doc(db, 'products', productId), productData);
+                        showNotification('Product updated!', 'success');
+                    } else {
+                        productData.createdAt = new Date().toISOString();
+                        await addDoc(collection(db, 'products'), productData);
+                        showNotification('Product added!', 'success');
+                    }
+                    closeProductModal();
+                    loadProducts();
+                    loadStats();
+                } catch (error) {
+                    showNotification('Error: ' + error.message, 'error');
+                }
+            });
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+        
         // Navigation functions
         window.showSection = (section) => {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
             document.getElementById(`section-${section}`).classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            if (section === 'products') {
+                loadProducts();
+            }
         };
         
         window.logout = async () => {
@@ -229,6 +356,11 @@
         window.approveCommission = approveCommission;
         window.openCustomCommission = openCustomCommission;
         window.viewOrder = viewOrder;
+        window.loadProducts = loadProducts;
+        window.showAddProductModal = showAddProductModal;
+        window.closeProductModal = closeProductModal;
+        window.editProduct = editProduct;
+        window.deleteProduct = deleteProduct;
     </script>
 </head>
 <body class="transition-colors duration-300">
@@ -335,103 +467,109 @@
                     </div>
                 </div>
 
-                <!-- Other sections placeholder -->
-<!-- Products Section -->
-<div id="section-products" class="section hidden">
-    <div class="card p-6 rounded-xl">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-semibold">Product Management</h3>
-            <button onclick="showAddProductModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">
-                + Add Product
-            </button>
-        </div>
-        
-        <!-- Products List -->
-        <div id="products-list-container" class="overflow-x-auto">
-            <div class="text-center py-8">Loading products...</div>
-        </div>
-    </div>
-</div>
+                <!-- Products Section -->
+                <div id="section-products" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold">Product Management</h3>
+                            <button onclick="showAddProductModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">
+                                + Add Product
+                            </button>
+                        </div>
+                        
+                        <!-- Products List -->
+                        <div id="products-list-container" class="overflow-x-auto">
+                            <div class="text-center py-8">Loading products...</div>
+                        </div>
+                    </div>
+                </div>
 
-<!-- Add/Edit Product Modal -->
-<div id="product-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
-    <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold" id="modal-title">Add New Product</h3>
-            <button onclick="closeProductModal()" class="text-2xl">&times;</button>
-        </div>
-        
-        <form id="product-form" class="space-y-4">
-            <input type="hidden" id="product-id">
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">Product Title *</label>
-                <input type="text" id="product-name" required class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500">
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">Description *</label>
-                <textarea id="product-description" rows="3" required class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Category *</label>
-                    <select id="product-category" required class="w-full px-4 py-2 rounded-lg border">
-                        <option value="">Select category</option>
-                        <option value="Furniture">Furniture</option>
-                        <option value="Electric Bikes">Electric Bikes</option>
-                        <option value="Electric Scooters">Electric Scooters</option>
-                        <option value="BEDS">BEDS</option>
-                        <option value="CHAIRS">CHAIRS</option>
-                        <option value="OTHER">OTHER</option>
-                    </select>
+                <!-- Add/Edit Product Modal -->
+                <div id="product-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
+                    <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold" id="modal-title">Add New Product</h3>
+                            <button onclick="closeProductModal()" class="text-2xl">&times;</button>
+                        </div>
+                        
+                        <form id="product-form" class="space-y-4">
+                            <input type="hidden" id="product-id">
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Product Title *</label>
+                                <input type="text" id="product-name" required class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Description *</label>
+                                <textarea id="product-description" rows="3" required class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Category *</label>
+                                    <select id="product-category" required class="w-full px-4 py-2 rounded-lg border">
+                                        <option value="">Select category</option>
+                                        <option value="Furniture">Furniture</option>
+                                        <option value="Electric Bikes">Electric Bikes</option>
+                                        <option value="Electric Scooters">Electric Scooters</option>
+                                        <option value="BEDS">BEDS</option>
+                                        <option value="CHAIRS">CHAIRS</option>
+                                        <option value="OTHER">OTHER</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Price (AED) *</label>
+                                    <input type="number" id="product-price" required class="w-full px-4 py-2 rounded-lg border">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Brand</label>
+                                    <input type="text" id="product-brand" class="w-full px-4 py-2 rounded-lg border">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Condition *</label>
+                                    <select id="product-condition" required class="w-full px-4 py-2 rounded-lg border">
+                                        <option value="New">New</option>
+                                        <option value="Like New">Like New</option>
+                                        <option value="Good">Good</option>
+                                        <option value="Fair">Fair</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Quantity *</label>
+                                    <input type="number" id="product-quantity" value="1" required class="w-full px-4 py-2 rounded-lg border">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Material</label>
+                                    <input type="text" id="product-material" class="w-full px-4 py-2 rounded-lg border">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-1">SKU (Optional)</label>
+                                <input type="text" id="product-sku" class="w-full px-4 py-2 rounded-lg border">
+                            </div>
+                            
+                            <div class="flex space-x-3 pt-4">
+                                <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save Product</button>
+                                <button type="button" onclick="closeProductModal()" class="flex-1 border py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Price (AED) *</label>
-                    <input type="number" id="product-price" required class="w-full px-4 py-2 rounded-lg border">
+
+                <div id="section-orders" class="section hidden">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">All Orders</h3>
+                        <div class="text-center py-8 opacity-60">Full order management coming soon. Use dashboard for commission approval.</div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Brand</label>
-                    <input type="text" id="product-brand" class="w-full px-4 py-2 rounded-lg border">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Condition *</label>
-                    <select id="product-condition" required class="w-full px-4 py-2 rounded-lg border">
-                        <option value="New">New</option>
-                        <option value="Like New">Like New</option>
-                        <option value="Good">Good</option>
-                        <option value="Fair">Fair</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Quantity *</label>
-                    <input type="number" id="product-quantity" value="1" required class="w-full px-4 py-2 rounded-lg border">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Material</label>
-                    <input type="text" id="product-material" class="w-full px-4 py-2 rounded-lg border">
-                </div>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium mb-1">SKU (Optional)</label>
-                <input type="text" id="product-sku" class="w-full px-4 py-2 rounded-lg border">
-            </div>
-            
-            <div class="flex space-x-3 pt-4">
-                <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save Product</button>
-                <button type="button" onclick="closeProductModal()" class="flex-1 border py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
-            </div>
-        </form>
-    </div>
-</div>
 
                 <div id="section-sellers" class="section hidden">
                     <div class="card p-6 rounded-xl">
