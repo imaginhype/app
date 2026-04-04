@@ -26,6 +26,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
+        // ============================================
+        // CLOUDINARY CONFIGURATION - CHANGE THESE 2 LINES
+        // ============================================
+        const CLOUD_NAME = 'dc1kfsfpv';  // ← REPLACE with your cloud name
+        const API_KEY = 'JsgBx0szRHvLv3YFoWwtdfAU9Bg';        // ← REPLACE with your API key
+        
         let currentUser = null;
         let currentUserId = null;
         let currentUserData = null;
@@ -195,7 +201,7 @@
             container.innerHTML = filtered.map(p => `
                 <div class="product-card card rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer" onclick="viewProductDetail('${p.id}')">
                     <div class="aspect-square bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative">
-                        ${p.imageUrl && p.imageUrl !== '' ? 
+                        ${p.imageUrl && p.imageUrl !== '' && p.imageUrl !== 'undefined' ? 
                             `<img src="${p.imageUrl}" class="w-full h-full object-cover" alt="${p.name}" onerror="this.src='https://placehold.co/400x400?text=No+Image'">` : 
                             `<i class="fas fa-box text-6xl text-gray-400"></i>`
                         }
@@ -217,7 +223,6 @@
             `).join('');
         }
         
-        // Product Detail Page
         window.viewProductDetail = (productId) => {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
@@ -230,7 +235,7 @@
             document.getElementById('detail-product-brand').innerHTML = `<strong>Brand</strong><br>${product.brand || 'Not specified'}`;
             document.getElementById('detail-product-description').innerText = product.description || 'No description available.';
             const detailImg = document.getElementById('detail-product-image');
-            if (product.imageUrl && product.imageUrl !== '') {
+            if (product.imageUrl && product.imageUrl !== '' && product.imageUrl !== 'undefined') {
                 detailImg.src = product.imageUrl;
                 detailImg.classList.remove('hidden');
                 document.getElementById('detail-no-image').classList.add('hidden');
@@ -257,7 +262,43 @@
         const productSearchInput = document.getElementById('product-search');
         if (productSearchInput) productSearchInput.addEventListener('input', (e) => { currentSearch = e.target.value; renderProducts(); });
         
-        const CLOUD_NAME = 'dc1kfsfpv';
+        // ========== CLOUDINARY IMAGE UPLOAD ==========
+        async function handleImageUpload(file) {
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('Image too large. Max 5MB', 'error');
+                return;
+            }
+            
+            showNotification('Uploading image to Cloudinary...', 'info');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'ml_default');
+            formData.append('api_key', API_KEY);
+            
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'Upload failed');
+                }
+                
+                const imageUrl = data.secure_url;
+                document.getElementById('product-image-url').value = imageUrl;
+                document.getElementById('preview-img').src = imageUrl;
+                document.getElementById('image-preview').classList.remove('hidden');
+                
+                showNotification('Image uploaded successfully!', 'success');
+            } catch (error) {
+                console.error('Cloudinary error:', error);
+                showNotification('Upload failed: ' + error.message, 'error');
+            }
+        }
         
         window.showAddProductModal = () => {
             document.getElementById('modal-title').innerText = 'Add New Product';
@@ -285,8 +326,12 @@
             document.getElementById('product-material').value = p.material || '';
             document.getElementById('product-sku').value = p.sku || '';
             document.getElementById('product-image-url').value = p.imageUrl || '';
-            if (p.imageUrl) { document.getElementById('preview-img').src = p.imageUrl; document.getElementById('image-preview').classList.remove('hidden'); }
-            else { document.getElementById('image-preview').classList.add('hidden'); }
+            if (p.imageUrl && p.imageUrl !== '' && p.imageUrl !== 'undefined') { 
+                document.getElementById('preview-img').src = p.imageUrl; 
+                document.getElementById('image-preview').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('image-preview').classList.add('hidden'); 
+            }
             document.getElementById('product-modal').classList.remove('hidden');
         };
         
@@ -302,22 +347,6 @@
         const imageInput = document.getElementById('product-image');
         if (imageInput) imageInput.addEventListener('change', async (e) => { if (e.target.files[0]) await handleImageUpload(e.target.files[0]); });
         
-        async function handleImageUpload(file) {
-            if (file.size > 5 * 1024 * 1024) { showNotification('Image too large. Max 5MB', 'error'); return; }
-            showNotification('Uploading image...', 'info');
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'ml_default');
-            try {
-                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
-                const data = await response.json();
-                document.getElementById('product-image-url').value = data.secure_url;
-                document.getElementById('preview-img').src = data.secure_url;
-                document.getElementById('image-preview').classList.remove('hidden');
-                showNotification('Image uploaded!', 'success');
-            } catch (error) { showNotification('Upload failed: ' + error.message, 'error'); }
-        }
-        
         window.removeImage = () => {
             document.getElementById('product-image-url').value = '';
             document.getElementById('image-preview').classList.add('hidden');
@@ -329,19 +358,36 @@
         if (productForm) productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const productId = document.getElementById('product-id').value;
+            let imageUrl = document.getElementById('product-image-url').value;
+            if (imageUrl === 'undefined') imageUrl = '';
             const productData = {
-                name: document.getElementById('product-name').value, description: document.getElementById('product-description').value,
-                category: document.getElementById('product-category').value, price: parseFloat(document.getElementById('product-price').value),
-                brand: document.getElementById('product-brand').value, condition: document.getElementById('product-condition').value,
-                quantity: parseInt(document.getElementById('product-quantity').value), material: document.getElementById('product-material').value,
-                sku: document.getElementById('product-sku').value, imageUrl: document.getElementById('product-image-url').value || '',
+                name: document.getElementById('product-name').value,
+                description: document.getElementById('product-description').value,
+                category: document.getElementById('product-category').value,
+                price: parseFloat(document.getElementById('product-price').value),
+                brand: document.getElementById('product-brand').value,
+                condition: document.getElementById('product-condition').value,
+                quantity: parseInt(document.getElementById('product-quantity').value),
+                material: document.getElementById('product-material').value,
+                sku: document.getElementById('product-sku').value,
+                imageUrl: imageUrl,
                 updatedAt: new Date().toISOString()
             };
             try {
-                if (productId) { await updateDoc(doc(db, 'products', productId), productData); showNotification('Product updated!', 'success'); }
-                else { productData.createdAt = new Date().toISOString(); await addDoc(collection(db, 'products'), productData); showNotification('Product added!', 'success'); }
-                closeProductModal(); loadProducts(); loadStats();
-            } catch (error) { showNotification('Error: ' + error.message, 'error'); }
+                if (productId) { 
+                    await updateDoc(doc(db, 'products', productId), productData); 
+                    showNotification('Product updated!', 'success'); 
+                } else { 
+                    productData.createdAt = new Date().toISOString(); 
+                    await addDoc(collection(db, 'products'), productData); 
+                    showNotification('Product added!', 'success'); 
+                }
+                closeProductModal(); 
+                loadProducts(); 
+                loadStats();
+            } catch (error) { 
+                showNotification('Error: ' + error.message, 'error'); 
+            }
         });
         
         // ========== CATEGORY MANAGEMENT ==========
@@ -349,7 +395,8 @@
         async function loadCategories() {
             const categoriesSnap = await getDocs(collection(db, 'categories'));
             allCategories = categoriesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderCategoryFilters(); renderCategoryTable();
+            renderCategoryFilters(); 
+            renderCategoryTable();
             const categorySelect = document.getElementById('product-category');
             if (categorySelect) {
                 categorySelect.innerHTML = '<option value="">Select category</option>';
