@@ -905,19 +905,25 @@
         };
         
         // ========== MOBILE MENU ==========
-        window.toggleMobileMenu = () => {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.toggle('open');
-            if (overlay) overlay.classList.toggle('hidden');
-        };
-        
-        window.closeMobileMenu = () => {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.remove('open');
-            if (overlay) overlay.classList.add('hidden');
-        };
+window.toggleMobileMenu = () => {
+    const sidebar = document.getElementById('mobile-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) {
+        sidebar.classList.toggle('show');
+        document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+    }
+    if (overlay) overlay.classList.toggle('show');
+};
+
+window.closeMobileMenu = () => {
+    const sidebar = document.getElementById('mobile-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) {
+        sidebar.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    if (overlay) overlay.classList.remove('show');
+};
         
         // ========== NAVIGATION ==========
         window.showSection = (section) => {
