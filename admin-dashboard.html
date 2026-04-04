@@ -336,20 +336,102 @@
                 </div>
 
                 <!-- Other sections placeholder -->
-                <div id="section-products" class="section hidden">
-                    <div class="card p-6 rounded-xl">
-                        <h3 class="text-lg font-semibold mb-4">Product Management</h3>
-                        <button onclick="alert('Add product form - Will be fully implemented in next update')" class="bg-purple-500 text-white px-4 py-2 rounded-lg mb-4">+ Add Product</button>
-                        <div class="text-center py-8 opacity-60">Product list will appear here. Full implementation in next update.</div>
-                    </div>
-                </div>
+<!-- Products Section -->
+<div id="section-products" class="section hidden">
+    <div class="card p-6 rounded-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold">Product Management</h3>
+            <button onclick="showAddProductModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">
+                + Add Product
+            </button>
+        </div>
+        
+        <!-- Products List -->
+        <div id="products-list-container" class="overflow-x-auto">
+            <div class="text-center py-8">Loading products...</div>
+        </div>
+    </div>
+</div>
 
-                <div id="section-orders" class="section hidden">
-                    <div class="card p-6 rounded-xl">
-                        <h3 class="text-lg font-semibold mb-4">All Orders</h3>
-                        <div class="text-center py-8 opacity-60">Full order management coming soon. Use dashboard for commission approval.</div>
-                    </div>
+<!-- Add/Edit Product Modal -->
+<div id="product-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
+    <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold" id="modal-title">Add New Product</h3>
+            <button onclick="closeProductModal()" class="text-2xl">&times;</button>
+        </div>
+        
+        <form id="product-form" class="space-y-4">
+            <input type="hidden" id="product-id">
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">Product Title *</label>
+                <input type="text" id="product-name" required class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">Description *</label>
+                <textarea id="product-description" rows="3" required class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Category *</label>
+                    <select id="product-category" required class="w-full px-4 py-2 rounded-lg border">
+                        <option value="">Select category</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Electric Bikes">Electric Bikes</option>
+                        <option value="Electric Scooters">Electric Scooters</option>
+                        <option value="BEDS">BEDS</option>
+                        <option value="CHAIRS">CHAIRS</option>
+                        <option value="OTHER">OTHER</option>
+                    </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Price (AED) *</label>
+                    <input type="number" id="product-price" required class="w-full px-4 py-2 rounded-lg border">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Brand</label>
+                    <input type="text" id="product-brand" class="w-full px-4 py-2 rounded-lg border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Condition *</label>
+                    <select id="product-condition" required class="w-full px-4 py-2 rounded-lg border">
+                        <option value="New">New</option>
+                        <option value="Like New">Like New</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Quantity *</label>
+                    <input type="number" id="product-quantity" value="1" required class="w-full px-4 py-2 rounded-lg border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Material</label>
+                    <input type="text" id="product-material" class="w-full px-4 py-2 rounded-lg border">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">SKU (Optional)</label>
+                <input type="text" id="product-sku" class="w-full px-4 py-2 rounded-lg border">
+            </div>
+            
+            <div class="flex space-x-3 pt-4">
+                <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save Product</button>
+                <button type="button" onclick="closeProductModal()" class="flex-1 border py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
 
                 <div id="section-sellers" class="section hidden">
                     <div class="card p-6 rounded-xl">
