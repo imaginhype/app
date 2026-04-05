@@ -174,6 +174,115 @@
             } catch (e) { showNotification('Upload failed: ' + e.message, 'error'); return null; }
         }
 
+                // ========== STEPPER NAVIGATION ==========
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        function updateStepUI() {
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepDiv = document.getElementById(`step${i}`);
+                if (stepDiv) stepDiv.classList.add('hidden');
+            }
+            
+            const currentStepDiv = document.getElementById(`step${currentStep}`);
+            if (currentStepDiv) currentStepDiv.classList.remove('hidden');
+            
+            for (let i = 1; i <= totalSteps; i++) {
+                const circle = document.getElementById(`step${i}-circle`);
+                const label = document.getElementById(`step${i}-label`);
+                if (circle) {
+                    if (i < currentStep) {
+                        circle.classList.remove('bg-gray-300', 'text-gray-600', 'bg-purple-500');
+                        circle.classList.add('bg-green-500', 'text-white');
+                        if (label) label.classList.add('text-green-500');
+                    } else if (i === currentStep) {
+                        circle.classList.remove('bg-gray-300', 'text-gray-600', 'bg-green-500');
+                        circle.classList.add('bg-purple-500', 'text-white');
+                        if (label) label.classList.remove('text-green-500');
+                    } else {
+                        circle.classList.remove('bg-purple-500', 'text-white', 'bg-green-500');
+                        circle.classList.add('bg-gray-300', 'text-gray-600');
+                        if (label) label.classList.remove('text-green-500');
+                    }
+                }
+            }
+            
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (prevBtn) {
+                if (currentStep === 1) prevBtn.classList.add('hidden');
+                else prevBtn.classList.remove('hidden');
+            }
+            
+            if (nextBtn && submitBtn) {
+                if (currentStep === totalSteps) {
+                    nextBtn.classList.add('hidden');
+                    submitBtn.classList.remove('hidden');
+                } else {
+                    nextBtn.classList.remove('hidden');
+                    submitBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        function nextStep() {
+            if (currentStep === 1) {
+                const name = document.getElementById('product-name')?.value;
+                const category = document.getElementById('product-category')?.value;
+                const price = document.getElementById('product-price')?.value;
+                const condition = document.getElementById('product-condition')?.value;
+                
+                if (!name) { showNotification('Please enter product title', 'error'); return; }
+                if (!category) { showNotification('Please select a category', 'error'); return; }
+                if (!price || price <= 0) { showNotification('Please enter a valid price', 'error'); return; }
+                if (!condition) { showNotification('Please select condition', 'error'); return; }
+            }
+            
+            if (currentStep === 2) {
+                const description = document.getElementById('product-description')?.value;
+                if (!description) { showNotification('Please enter product description', 'error'); return; }
+            }
+            
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateStepUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepUI();
+            }
+        }
+
+        // Override showAddProductModal to reset stepper
+        const originalShowAddProductModal = window.showAddProductModal;
+        window.showAddProductModal = () => {
+            currentStep = 1;
+            updateStepUI();
+            if (originalShowAddProductModal) originalShowAddProductModal();
+            else {
+                document.getElementById('modal-title').textContent = 'Add New Product';
+                document.getElementById('product-form').reset();
+                document.getElementById('product-id').value = '';
+                document.getElementById('product-image-url').value = '';
+                document.getElementById('image-preview').classList.add('hidden');
+                document.getElementById('upload-status').classList.add('hidden');
+                document.getElementById('product-modal').classList.remove('hidden');
+            }
+        };
+
+        // Attach event listeners after DOM is ready
+        setTimeout(() => {
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            if (nextBtn) nextBtn.onclick = nextStep;
+            if (prevBtn) prevBtn.onclick = prevStep;
+        }, 100);
+
         // ── Products ─────────────────────────────────────────────────────────
         let allProducts = [], currentFilter = 'all', currentSearch = '';
 
