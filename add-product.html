@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Add New Product - Marketplace Pro</title>
+    <title>Add/Edit Product - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -12,7 +12,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -30,9 +30,9 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        let uploadedImages = [];
-        let currentStep = 1;
         let quillEditor = null;
+        let productId = null;
+        let uploadedImageUrl = null;
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -43,20 +43,14 @@
             }
             loadCategories();
             initQuill();
+            checkForEdit();
         });
 
         function initQuill() {
             quillEditor = new Quill('#description-editor', {
                 theme: 'snow',
                 placeholder: 'Describe your product in detail...',
-                modules: {
-                    toolbar: [
-                        ['bold', 'italic', 'underline', 'strike'],
-                        ['blockquote', 'code-block'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        ['link', 'clean']
-                    ]
-                }
+                modules: { toolbar: [['bold', 'italic', 'underline'], ['link', 'clean']] }
             });
         }
 
@@ -67,231 +61,124 @@
                 if (select) {
                     select.innerHTML = '<option value="">Select category</option>';
                     categoriesSnap.docs.forEach(doc => {
-                        const cat = doc.data();
-                        select.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+                        select.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
                     });
                 }
-            } catch (error) {
-                console.error("Error loading categories:", error);
+            } catch (error) { console.error(error); }
+        }
+
+        function checkForEdit() {
+            const urlParams = new URLSearchParams(window.location.search);
+            productId = urlParams.get('id');
+            if (productId) {
+                document.getElementById('form-title').textContent = 'Edit Product';
+                loadProductData();
             }
         }
 
-        let currentTags = [];
-        function addTag() {
-            const input = document.getElementById('tag-input');
-            const tag = input.value.trim();
-            if (tag && !currentTags.includes(tag)) {
-                currentTags.push(tag);
-                renderTags();
-                input.value = '';
-            }
-        }
-
-        function renderTags() {
-            const container = document.getElementById('tags-container');
-            if (container) {
-                container.innerHTML = currentTags.map(tag => `
-                    <span class="inline-flex items-center bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm">
-                        ${tag}
-                        <button type="button" class="ml-2 text-purple-500 hover:text-purple-700" onclick="removeTag('${tag}')">&times;</button>
-                    </span>
-                `).join('');
-            }
-        }
-
-        window.removeTag = function(tag) {
-            currentTags = currentTags.filter(t => t !== tag);
-            renderTags();
-        };
-
-        function showStep(step) {
-            document.getElementById('step1').classList.add('hidden');
-            document.getElementById('step2').classList.add('hidden');
-            document.getElementById('step3').classList.add('hidden');
-            document.getElementById(`step${step}`).classList.remove('hidden');
-            
-            for (let i = 1; i <= 3; i++) {
-                const circle = document.getElementById(`step${i}-circle`);
-                if (i < step) {
-                    circle.className = 'w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-2';
-                } else if (i === step) {
-                    circle.className = 'w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center mx-auto mb-2';
-                } else {
-                    circle.className = 'w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2';
+        async function loadProductData() {
+            const productDoc = await getDoc(doc(db, 'products', productId));
+            const p = productDoc.data();
+            if (p) {
+                document.getElementById('product-name').value = p.name || '';
+                document.getElementById('product-category').value = p.category || '';
+                document.getElementById('product-price').value = p.price || '';
+                document.getElementById('sale-price').value = p.salePrice || '';
+                document.getElementById('in-stock').value = p.inStock ? 'yes' : 'no';
+                document.getElementById('stock-quantity').value = p.stockQuantity || 0;
+                document.getElementById('product-status').value = p.status || 'draft';
+                document.getElementById('product-sku').value = p.sku || '';
+                document.getElementById('product-brand').value = p.brand || '';
+                document.getElementById('product-color').value = p.color || '';
+                document.getElementById('product-weight').value = p.weight || '';
+                document.getElementById('weight-unit').value = p.weightUnit || 'kg';
+                document.getElementById('product-length').value = p.length || '';
+                document.getElementById('product-width').value = p.width || '';
+                document.getElementById('product-height').value = p.height || '';
+                document.getElementById('dimension-unit').value = p.dimensionUnit || 'cm';
+                if (quillEditor) quillEditor.root.innerHTML = p.description || '';
+                if (p.imageUrl) {
+                    uploadedImageUrl = p.imageUrl;
+                    document.getElementById('image-preview').innerHTML = `<img src="${p.imageUrl}" class="w-32 h-32 object-cover rounded-lg"><button type="button" onclick="removeImage()" class="text-red-500 text-sm mt-1">Remove</button>`;
+                    document.getElementById('image-preview').classList.remove('hidden');
                 }
             }
-            
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            const submitBtn = document.getElementById('submit-btn');
-            
-            if (step === 1) {
-                prevBtn.style.display = 'none';
-                nextBtn.style.display = 'inline-block';
-                submitBtn.style.display = 'none';
-            } else if (step === 3) {
-                prevBtn.style.display = 'inline-block';
-                nextBtn.style.display = 'none';
-                submitBtn.style.display = 'inline-block';
-            } else {
-                prevBtn.style.display = 'inline-block';
-                nextBtn.style.display = 'inline-block';
-                submitBtn.style.display = 'none';
-            }
         }
 
-        window.nextStep = function() {
-            if (currentStep === 1) {
-                const name = document.getElementById('product-name')?.value;
-                const category = document.getElementById('product-category')?.value;
-                const price = document.getElementById('product-price')?.value;
-                if (!name) { alert('Please enter product name'); return; }
-                if (!category) { alert('Please select a category'); return; }
-                if (!price || price <= 0) { alert('Please enter a valid price'); return; }
-                currentStep = 2;
-                showStep(currentStep);
-            } else if (currentStep === 2) {
-                const description = quillEditor ? quillEditor.root.innerHTML : '';
-                if (!description || description === '<p><br></p>') { alert('Please enter product description'); return; }
-                currentStep = 3;
-                showStep(currentStep);
-            }
-        };
-
-        window.prevStep = function() {
-            if (currentStep > 1) {
-                currentStep--;
-                showStep(currentStep);
-            }
-        };
-
         async function uploadImage(file) {
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Image too large. Max 5MB.');
-                return null;
-            }
+            if (file.size > 5 * 1024 * 1024) { alert('Image too large. Max 5MB.'); return null; }
             const fd = new FormData();
             fd.append('image', file);
             try {
-                const res = await fetch('https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
-                    method: 'POST',
-                    body: fd
-                });
+                const res = await fetch('https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5', { method: 'POST', body: fd });
                 const data = await res.json();
                 return data?.data?.url || null;
-            } catch (e) {
-                alert('Upload failed: ' + e.message);
-                return null;
+            } catch (e) { alert('Upload failed: ' + e.message); return null; }
+        }
+
+        window.previewImage = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('image-preview').innerHTML = `<img src="${e.target.result}" class="w-32 h-32 object-cover rounded-lg"><button type="button" onclick="removeImage()" class="text-red-500 text-sm mt-1">Remove</button>`;
+                    document.getElementById('image-preview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+                uploadImage(file).then(url => { if (url) uploadedImageUrl = url; });
             }
-        }
-
-        function displayImages() {
-            const container = document.getElementById('images-preview-container');
-            if (!container) return;
-            container.innerHTML = '';
-            uploadedImages.forEach((img, index) => {
-                const div = document.createElement('div');
-                div.className = 'relative w-24 h-24 rounded-lg overflow-hidden border';
-                div.innerHTML = `
-                    <img src="${img.url}" class="w-full h-full object-cover">
-                    <button type="button" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center" onclick="removeImage(${index})">×</button>
-                    ${index === 0 ? '<span class="absolute bottom-1 left-1 text-xs bg-purple-500 text-white px-1 rounded">Main</span>' : ''}
-                `;
-                container.appendChild(div);
-            });
-            document.getElementById('image-count').textContent = `${uploadedImages.length}/5 images`;
-        }
-
-        window.removeImage = function(index) {
-            uploadedImages.splice(index, 1);
-            displayImages();
         };
 
-        // Drag and drop handlers
-        const dropZone = document.getElementById('drop-zone');
-        if (dropZone) {
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/20');
-            });
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/20');
-            });
-            dropZone.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/20');
-                const files = Array.from(e.dataTransfer.files);
-                for (const file of files) {
-                    if (uploadedImages.length >= 5) {
-                        alert('Maximum 5 images allowed');
-                        break;
-                    }
-                    if (file.type.startsWith('image/')) {
-                        const url = await uploadImage(file);
-                        if (url) {
-                            uploadedImages.push({ url });
-                            displayImages();
-                        }
-                    } else {
-                        alert('Please drop image files only');
-                    }
-                }
-            });
-        }
-
-        const imageInput = document.getElementById('product-images');
-        if (imageInput) {
-            imageInput.addEventListener('change', async (e) => {
-                const files = Array.from(e.target.files);
-                for (const file of files) {
-                    if (uploadedImages.length >= 5) {
-                        alert('Maximum 5 images allowed');
-                        break;
-                    }
-                    const url = await uploadImage(file);
-                    if (url) {
-                        uploadedImages.push({ url });
-                        displayImages();
-                    }
-                }
-                imageInput.value = '';
-            });
-        }
+        window.removeImage = function() {
+            uploadedImageUrl = null;
+            document.getElementById('image-preview').innerHTML = '';
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('product-image').value = '';
+        };
 
         window.submitProduct = async function() {
+            const name = document.getElementById('product-name').value;
+            const category = document.getElementById('product-category').value;
+            const price = document.getElementById('product-price').value;
             const description = quillEditor ? quillEditor.root.innerHTML : '';
             
+            if (!name) { alert('Please enter product name'); return; }
+            if (!category) { alert('Please select a category'); return; }
+            if (!price || price <= 0) { alert('Please enter a valid price'); return; }
+            if (!description || description === '<p><br></p>') { alert('Please enter product description'); return; }
+            if (!uploadedImageUrl) { alert('Please upload a product image'); return; }
+
             const productData = {
-                name: document.getElementById('product-name').value,
+                name: name,
                 description: description,
-                category: document.getElementById('product-category').value,
-                tags: currentTags,
-                price: parseFloat(document.getElementById('product-price').value),
+                category: category,
+                price: parseFloat(price),
                 salePrice: document.getElementById('sale-price').value ? parseFloat(document.getElementById('sale-price').value) : null,
-                sku: document.getElementById('product-sku').value || null,
                 inStock: document.getElementById('in-stock').value === 'yes',
-                stockQuantity: document.getElementById('in-stock').value === 'yes' ? parseInt(document.getElementById('stock-quantity').value) : 0,
+                stockQuantity: parseInt(document.getElementById('stock-quantity').value),
                 status: document.getElementById('product-status').value,
+                sku: document.getElementById('product-sku').value || null,
+                brand: document.getElementById('product-brand').value,
+                color: document.getElementById('product-color').value,
                 weight: document.getElementById('product-weight').value ? parseFloat(document.getElementById('product-weight').value) : null,
                 weightUnit: document.getElementById('weight-unit').value,
                 length: document.getElementById('product-length').value ? parseFloat(document.getElementById('product-length').value) : null,
                 width: document.getElementById('product-width').value ? parseFloat(document.getElementById('product-width').value) : null,
                 height: document.getElementById('product-height').value ? parseFloat(document.getElementById('product-height').value) : null,
                 dimensionUnit: document.getElementById('dimension-unit').value,
-                color: document.getElementById('product-color').value,
-                brand: document.getElementById('product-brand').value,
-                images: uploadedImages.map(img => img.url),
-                imageUrl: uploadedImages[0]?.url || '',
-                createdAt: new Date().toISOString()
+                imageUrl: uploadedImageUrl,
+                updatedAt: new Date().toISOString()
             };
             
             try {
-                await addDoc(collection(db, 'products'), productData);
-                alert('Product added successfully!');
+                if (productId) {
+                    await updateDoc(doc(db, 'products', productId), productData);
+                } else {
+                    productData.createdAt = new Date().toISOString();
+                    await addDoc(collection(db, 'products'), productData);
+                }
                 window.location.href = '/admin-dashboard.html';
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
+            } catch (error) { alert('Error: ' + error.message); }
         };
 
         window.toggleTheme = function() {
@@ -299,200 +186,72 @@
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
-
-        showStep(1);
     </script>
 </head>
 <body class="transition-colors duration-300">
     <div class="min-h-screen">
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <a href="/admin-dashboard.html" class="text-purple-500 hover:text-purple-600">
-                    <i class="fas fa-arrow-left text-xl"></i>
-                </a>
-                <h1 class="text-xl md:text-2xl font-bold">Add New Product</h1>
+                <a href="/admin-dashboard.html" class="text-purple-500 hover:text-purple-600"><i class="fas fa-arrow-left text-xl"></i></a>
+                <h1 class="text-xl md:text-2xl font-bold" id="form-title">Add New Product</h1>
             </div>
             <div class="flex items-center space-x-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
-                    <i class="fas fa-moon dark:block hidden"></i>
-                    <i class="fas fa-sun dark:hidden block"></i>
-                </button>
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-user-circle text-2xl"></i>
-                    <span class="hidden md:inline">Admin</span>
-                </div>
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                <div class="flex items-center space-x-2"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline">Admin</span></div>
             </div>
         </div>
 
         <div class="max-w-4xl mx-auto p-6">
-            <!-- Progress Steps - 3 Steps -->
-            <div class="flex mb-8">
-                <div class="flex-1 text-center">
-                    <div class="w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center mx-auto mb-2" id="step1-circle">1</div>
-                    <span class="text-sm font-medium">Basic Info & Pricing</span>
-                </div>
-                <div class="flex-1 text-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2" id="step2-circle">2</div>
-                    <span class="text-sm font-medium">Description & Details</span>
-                </div>
-                <div class="flex-1 text-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2" id="step3-circle">3</div>
-                    <span class="text-sm font-medium">Images & Attributes</span>
-                </div>
-            </div>
-
-            <!-- Step 1: Basic Information & Pricing -->
-            <div id="step1" class="step-content">
-                <div class="card rounded-xl p-8">
-                    <h2 class="text-xl font-bold mb-6">Basic Information & Pricing</h2>
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Product Name <span class="text-red-500">*</span></label>
-                            <input type="text" id="product-name" placeholder="e.g., Modern Leather Sofa" class="w-full px-4 py-3 rounded-lg border">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Category <span class="text-red-500">*</span></label>
-                            <select id="product-category" class="w-full px-4 py-3 rounded-lg border">
-                                <option value="">Select category</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Tags</label>
-                            <div class="flex gap-2">
-                                <input type="text" id="tag-input" placeholder="Add tag (e.g., modern, leather)" class="flex-1 px-4 py-3 rounded-lg border">
-                                <button type="button" onclick="addTag()" class="px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Add</button>
-                            </div>
-                            <div id="tags-container" class="flex flex-wrap gap-2 mt-3"></div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Regular Price (AED) <span class="text-red-500">*</span></label>
-                                <input type="number" id="product-price" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-lg border">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Sale / Discounted Price (AED)</label>
-                                <input type="number" id="sale-price" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-lg border">
-                                <p class="text-xs opacity-60 mt-1">Leave empty if no sale</p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Stock Status</label>
-                                <select id="in-stock" class="w-full px-4 py-3 rounded-lg border">
-                                    <option value="yes">In Stock</option>
-                                    <option value="no">Out of Stock</option>
-                                </select>
-                            </div>
-                            <div id="stock-quantity-field">
-                                <label class="block text-sm font-medium mb-2">Stock Quantity</label>
-                                <input type="number" id="stock-quantity" value="0" min="0" class="w-full px-4 py-3 rounded-lg border">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Product Status</label>
-                            <select id="product-status" class="w-full px-4 py-3 rounded-lg border">
-                                <option value="draft">Draft</option>
-                                <option value="published">Published</option>
-                                <option value="archived">Archived</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">SKU (Optional)</label>
-                            <input type="text" id="product-sku" placeholder="Unique product code" class="w-full px-4 py-3 rounded-lg border">
-                        </div>
+            <div class="card rounded-xl p-8">
+                <form onsubmit="event.preventDefault(); submitProduct();" class="space-y-6">
+                    <!-- Basic Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label class="block text-sm font-medium mb-2">Product Name <span class="text-red-500">*</span></label><input type="text" id="product-name" class="w-full px-4 py-3 rounded-lg border"></div>
+                        <div><label class="block text-sm font-medium mb-2">Category <span class="text-red-500">*</span></label><select id="product-category" class="w-full px-4 py-3 rounded-lg border"><option value="">Select category</option></select></div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Step 2: Description & Details -->
-            <div id="step2" class="step-content hidden">
-                <div class="card rounded-xl p-8">
-                    <h2 class="text-xl font-bold mb-6">Description & Details</h2>
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Description <span class="text-red-500">*</span></label>
-                            <div id="description-editor" style="height: 250px;"></div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Brand / Supplier</label>
-                                <input type="text" id="product-brand" placeholder="e.g., IKEA, Nike" class="w-full px-4 py-3 rounded-lg border">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Color</label>
-                                <input type="text" id="product-color" placeholder="e.g., Red, Blue, Black, White" class="w-full px-4 py-3 rounded-lg border">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Weight</label>
-                            <div class="flex gap-2">
-                                <input type="number" id="product-weight" step="0.01" placeholder="0.00" class="flex-1 px-4 py-3 rounded-lg border">
-                                <select id="weight-unit" class="w-24 px-4 py-3 rounded-lg border">
-                                    <option value="kg">kg</option>
-                                    <option value="lb">lb</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Dimensions (L × W × H)</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <input type="number" id="product-length" placeholder="Length" step="0.01" class="px-4 py-3 rounded-lg border">
-                                <input type="number" id="product-width" placeholder="Width" step="0.01" class="px-4 py-3 rounded-lg border">
-                                <input type="number" id="product-height" placeholder="Height" step="0.01" class="px-4 py-3 rounded-lg border">
-                            </div>
-                            <div class="mt-2">
-                                <select id="dimension-unit" class="w-24 px-4 py-2 rounded-lg border">
-                                    <option value="cm">cm</option>
-                                    <option value="in">in</option>
-                                </select>
-                            </div>
-                        </div>
+                    
+                    <!-- Pricing -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label class="block text-sm font-medium mb-2">Regular Price (AED) <span class="text-red-500">*</span></label><input type="number" id="product-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border"></div>
+                        <div><label class="block text-sm font-medium mb-2">Sale Price (AED)</label><input type="number" id="sale-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border"><p class="text-xs opacity-60 mt-1">Leave empty if no sale</p></div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Step 3: Images & Final Attributes -->
-            <div id="step3" class="step-content hidden">
-                <div class="card rounded-xl p-8">
-                    <h2 class="text-xl font-bold mb-6">Product Images</h2>
-                    <div class="space-y-6">
-                        <!-- Drag & Drop Upload Area -->
-                        <div id="drop-zone" class="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition" onclick="document.getElementById('product-images').click()">
-                            <i class="fas fa-cloud-upload-alt text-5xl text-purple-500 mb-4"></i>
-                            <p class="text-lg font-medium">Click or drag & drop to upload</p>
-                            <p class="text-sm opacity-60 mt-1">Upload up to 5 high-quality images</p>
-                            <p class="text-xs opacity-50 mt-1">JPEG, PNG, WebP. Max 5MB each</p>
-                            <input type="file" id="product-images" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
-                        </div>
-                        
-                        <!-- Image Count -->
-                        <div class="mt-2 text-right">
-                            <span id="image-count" class="text-sm opacity-60">0/5 images</span>
-                        </div>
-                        
-                        <!-- Images Preview Grid -->
-                        <div id="images-preview-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
-                        </div>
-                        
-                        <!-- Image Guidelines -->
-                        <div class="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                            <h4 class="font-semibold mb-2">Image Guidelines</h4>
-                            <ul class="text-sm opacity-70 space-y-1">
-                                <li>• Upload up to 5 high-quality images</li>
-                                <li>• Supported formats: JPEG, PNG, WebP</li>
-                                <li>• First image will be used as the main product image</li>
-                                <li>• Use good lighting and show multiple angles</li>
-                            </ul>
-                        </div>
+                    
+                    <!-- Inventory -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div><label class="block text-sm font-medium mb-2">Stock Status</label><select id="in-stock" class="w-full px-4 py-3 rounded-lg border"><option value="yes">In Stock</option><option value="no">Out of Stock</option></select></div>
+                        <div><label class="block text-sm font-medium mb-2">Stock Quantity</label><input type="number" id="stock-quantity" value="0" min="0" class="w-full px-4 py-3 rounded-lg border"></div>
+                        <div><label class="block text-sm font-medium mb-2">Product Status</label><select id="product-status" class="w-full px-4 py-3 rounded-lg border"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Navigation Buttons -->
-            <div class="flex justify-between mt-8">
-                <button id="prev-btn" onclick="prevStep()" class="px-8 py-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition" style="display: none;">← Back</button>
-                <button id="next-btn" onclick="nextStep()" class="px-8 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition ml-auto">Next →</button>
-                <button id="submit-btn" onclick="submitProduct()" class="px-8 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition" style="display: none;">Create Product</button>
+                    
+                    <!-- SKU & Brand & Color -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div><label class="block text-sm font-medium mb-2">SKU (Optional)</label><input type="text" id="product-sku" class="w-full px-4 py-3 rounded-lg border"></div>
+                        <div><label class="block text-sm font-medium mb-2">Brand</label><input type="text" id="product-brand" class="w-full px-4 py-3 rounded-lg border"></div>
+                        <div><label class="block text-sm font-medium mb-2">Color</label><input type="text" id="product-color" class="w-full px-4 py-3 rounded-lg border"></div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div><label class="block text-sm font-medium mb-2">Description <span class="text-red-500">*</span></label><div id="description-editor" style="height: 200px;"></div></div>
+                    
+                    <!-- Shipping -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label class="block text-sm font-medium mb-2">Weight</label><div class="flex gap-2"><input type="number" id="product-weight" step="0.01" class="flex-1 px-4 py-3 rounded-lg border"><select id="weight-unit" class="w-24 px-4 py-3 rounded-lg border"><option value="kg">kg</option><option value="lb">lb</option></select></div></div>
+                        <div><label class="block text-sm font-medium mb-2">Dimensions (L × W × H)</label><div class="grid grid-cols-3 gap-2"><input type="number" id="product-length" placeholder="L" class="px-4 py-3 rounded-lg border"><input type="number" id="product-width" placeholder="W" class="px-4 py-3 rounded-lg border"><input type="number" id="product-height" placeholder="H" class="px-4 py-3 rounded-lg border"></div><select id="dimension-unit" class="mt-2 w-24 px-4 py-2 rounded-lg border"><option value="cm">cm</option><option value="in">in</option></select></div>
+                    </div>
+                    
+                    <!-- Image Upload -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Product Image <span class="text-red-500">*</span></label>
+                        <input type="file" id="product-image" accept="image/jpeg,image/png,image/webp" onchange="previewImage(event)" class="w-full px-4 py-3 rounded-lg border">
+                        <div id="image-preview" class="mt-3 hidden"></div>
+                    </div>
+                    
+                    <!-- Submit -->
+                    <div class="flex gap-4 pt-4">
+                        <button type="submit" class="flex-1 bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition">Save Product</button>
+                        <a href="/admin-dashboard.html" class="flex-1 border py-3 rounded-lg text-center hover:bg-gray-100 transition">Cancel</a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
