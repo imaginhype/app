@@ -10,7 +10,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -29,6 +29,7 @@
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         let currentUser = null;
+        let uploadedImages = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -42,47 +43,68 @@
         });
 
         async function loadCategories() {
-            const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-            const snap = await getDocs(collection(db, 'categories'));
-            const select = document.getElementById('product-category');
-            if (select) {
-                select.innerHTML = '<option value="">Select category</option>';
-                snap.docs.forEach(doc => {
-                    select.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
-                });
+            try {
+                const categoriesSnap = await getDocs(collection(db, 'categories'));
+                const select = document.getElementById('product-category');
+                if (select) {
+                    select.innerHTML = '<option value="">Select category</option>';
+                    categoriesSnap.docs.forEach(doc => {
+                        const cat = doc.data();
+                        select.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading categories:", error);
             }
         }
 
+        // ========== STEPPER FUNCTIONS ==========
         let currentStep = 1;
         const totalSteps = 3;
-        let uploadedImages = [];
 
         function updateStepUI() {
+            // Hide all steps
             for (let i = 1; i <= totalSteps; i++) {
-                document.getElementById(`step${i}`).classList.add('hidden');
+                const stepDiv = document.getElementById(`step${i}`);
+                if (stepDiv) stepDiv.classList.add('hidden');
             }
-            document.getElementById(`step${currentStep}`).classList.remove('hidden');
+            // Show current step
+            const currentStepDiv = document.getElementById(`step${currentStep}`);
+            if (currentStepDiv) currentStepDiv.classList.remove('hidden');
             
+            // Update circles
             for (let i = 1; i <= totalSteps; i++) {
                 const circle = document.getElementById(`step${i}-circle`);
-                if (i < currentStep) {
-                    circle.classList.remove('bg-gray-300', 'text-gray-600', 'bg-purple-500');
-                    circle.classList.add('bg-green-500', 'text-white');
-                } else if (i === currentStep) {
-                    circle.classList.remove('bg-gray-300', 'text-gray-600', 'bg-green-500');
-                    circle.classList.add('bg-purple-500', 'text-white');
-                } else {
-                    circle.classList.remove('bg-purple-500', 'text-white', 'bg-green-500');
-                    circle.classList.add('bg-gray-300', 'text-gray-600');
+                if (circle) {
+                    if (i < currentStep) {
+                        circle.classList.remove('bg-gray-300', 'text-gray-600', 'bg-purple-500');
+                        circle.classList.add('bg-green-500', 'text-white');
+                    } else if (i === currentStep) {
+                        circle.classList.remove('bg-gray-300', 'text-gray-600', 'bg-green-500');
+                        circle.classList.add('bg-purple-500', 'text-white');
+                    } else {
+                        circle.classList.remove('bg-purple-500', 'text-white', 'bg-green-500');
+                        circle.classList.add('bg-gray-300', 'text-gray-600');
+                    }
                 }
             }
             
-            document.getElementById('prev-btn').classList.toggle('hidden', currentStep === 1);
-            document.getElementById('next-btn').classList.toggle('hidden', currentStep === totalSteps);
-            document.getElementById('submit-btn').classList.toggle('hidden', currentStep !== totalSteps);
+            // Update buttons
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (prevBtn) {
+                prevBtn.classList.toggle('hidden', currentStep === 1);
+            }
+            if (nextBtn && submitBtn) {
+                nextBtn.classList.toggle('hidden', currentStep === totalSteps);
+                submitBtn.classList.toggle('hidden', currentStep !== totalSteps);
+            }
         }
 
-        function nextStep() {
+        window.nextStep = function() {
+            // Validate current step
             if (currentStep === 1) {
                 const name = document.getElementById('product-name')?.value;
                 const category = document.getElementById('product-category')?.value;
@@ -99,24 +121,35 @@
                 currentStep++;
                 updateStepUI();
             }
-        }
+        };
 
-        function prevStep() {
+        window.prevStep = function() {
             if (currentStep > 1) {
                 currentStep--;
                 updateStepUI();
             }
-        }
+        };
 
+        // ========== IMAGE UPLOAD ==========
         async function uploadImage(file) {
-            if (file.size > 5 * 1024 * 1024) { alert('Image too large. Max 5MB.'); return null; }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image too large. Max 5MB.');
+                return null;
+            }
             const fd = new FormData();
             fd.append('image', file);
             try {
-                const res = await fetch('https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5', { method: 'POST', body: fd });
+                const res = await fetch('https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
+                    method: 'POST',
+                    body: fd
+                });
                 const data = await res.json();
-                return data?.data?.url || null;
-            } catch (e) { alert('Upload failed: ' + e.message); return null; }
+                if (data?.data?.url) return data.data.url;
+                throw new Error('Upload failed');
+            } catch (e) {
+                alert('Upload failed: ' + e.message);
+                return null;
+            }
         }
 
         function displayImages() {
@@ -128,26 +161,42 @@
                 div.className = 'relative w-24 h-24 rounded-lg overflow-hidden border';
                 div.innerHTML = `
                     <img src="${img.url}" class="w-full h-full object-cover">
-                    <button type="button" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs" onclick="removeImage(${index})">×</button>
+                    <button type="button" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center" onclick="removeImage(${index})">×</button>
                     ${index === 0 ? '<span class="absolute bottom-1 left-1 text-xs bg-purple-500 text-white px-1 rounded">Main</span>' : ''}
                 `;
                 container.appendChild(div);
             });
-            document.getElementById('image-count').textContent = `${uploadedImages.length}/5 images`;
+            const countSpan = document.getElementById('image-count');
+            if (countSpan) countSpan.textContent = `${uploadedImages.length}/5 images`;
         }
 
-        window.removeImage = (index) => {
+        window.removeImage = function(index) {
             uploadedImages.splice(index, 1);
             displayImages();
         };
 
-        window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        };
+        // File upload handler
+        const imageInput = document.getElementById('product-images');
+        if (imageInput) {
+            imageInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                for (const file of files) {
+                    if (uploadedImages.length >= 5) {
+                        alert('Maximum 5 images allowed');
+                        break;
+                    }
+                    const url = await uploadImage(file);
+                    if (url) {
+                        uploadedImages.push({ url, file });
+                        displayImages();
+                    }
+                }
+                imageInput.value = '';
+            });
+        }
 
-        window.submitProduct = async () => {
+        // ========== SUBMIT PRODUCT ==========
+        window.submitProduct = async function() {
             const productData = {
                 name: document.getElementById('product-name').value,
                 description: document.getElementById('product-description').value,
@@ -172,30 +221,18 @@
             }
         };
 
-        // File upload handler
-        const imageInput = document.getElementById('product-images');
-        if (imageInput) {
-            imageInput.addEventListener('change', async (e) => {
-                const files = Array.from(e.target.files);
-                for (const file of files) {
-                    if (uploadedImages.length >= 5) {
-                        alert('Maximum 5 images allowed');
-                        break;
-                    }
-                    const url = await uploadImage(file);
-                    if (url) {
-                        uploadedImages.push({ url, file });
-                        displayImages();
-                    }
-                }
-                imageInput.value = '';
-            });
-        }
+        // ========== THEME ==========
+        window.toggleTheme = function() {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        };
 
+        // Initialize
         updateStepUI();
     </script>
 </head>
-<body class="transition-colors duration-300 bg-primary">
+<body class="transition-colors duration-300">
     <div class="min-h-screen">
         <!-- Top Bar -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
