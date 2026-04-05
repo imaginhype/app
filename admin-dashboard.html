@@ -124,11 +124,12 @@ function renderProducts() {
     container.innerHTML = list.map(p => {
         const isOnSale = p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
         const shortDesc = (p.description || 'No description').replace(/<[^>]*>/g, '').substring(0, 80);
+        const displayImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || null);
         return `
         <div class="product-card card rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer" onclick="window.location.href='/add-product.html?id=${p.id}'">
             <div class="relative">
                 <div class="aspect-square bg-gray-100 flex items-center justify-center">
-                    ${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-full object-cover" alt="${p.name}">` : `<i class="fas fa-box text-6xl text-gray-400"></i>`}
+                    ${displayImage ? `<img src="${displayImage}" class="w-full h-full object-cover" alt="${p.name}">` : `<i class="fas fa-box text-6xl text-gray-400"></i>`}
                 </div>
                 ${isOnSale ? '<span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">SALE</span>' : ''}
             </div>
