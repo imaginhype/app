@@ -99,7 +99,7 @@
         function displayProduct() {
             const isOnSale = product.salePrice && product.salePrice > 0 && product.salePrice < product.price;
             
-            // Product Name
+            // Product Name & Brand
             document.getElementById('product-name').textContent = product.name || 'Untitled';
             document.getElementById('product-brand').textContent = product.brand || 'Brand';
             
@@ -111,11 +111,8 @@
                 priceEl.innerHTML = `<span class="text-2xl font-bold">AED ${product.price}</span>`;
             }
             
-            // Color
+            // Color - only show selected color
             document.getElementById('product-color').textContent = product.color || 'Default';
-            
-            // Description
-            document.getElementById('product-description').innerHTML = product.description || 'No description available.';
             
             // Stock Status
             const stockEl = document.getElementById('stock-status');
@@ -125,8 +122,8 @@
                 stockEl.innerHTML = '<span class="text-red-600 dark:text-red-400 text-sm"><i class="fas fa-times-circle mr-1"></i> Out of Stock</span>';
             }
             
-            // Reviews (placeholder)
-            document.getElementById('review-count').textContent = Math.floor(Math.random() * 200) + 50;
+            // Description - always visible
+            document.getElementById('product-description').innerHTML = product.description || 'No description available.';
             
             // Images
             const images = product.images && product.images.length > 0 ? product.images : (product.imageUrl ? [product.imageUrl] : []);
@@ -136,6 +133,23 @@
                 mainImageContainer.innerHTML = `<img src="${images[0]}" class="w-full h-full object-cover" alt="${product.name}">`;
             } else {
                 mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg"><i class="fas fa-box text-6xl text-gray-400"></i></div>';
+            }
+            
+            // Size section - only show if product has sizes
+            const hasSizes = product.sizes && product.sizes.length > 0;
+            const sizeSection = document.getElementById('size-section');
+            if (sizeSection && hasSizes) {
+                sizeSection.classList.remove('hidden');
+                // Populate sizes
+                const sizeContainer = document.getElementById('size-buttons');
+                if (sizeContainer && product.sizes) {
+                    sizeContainer.innerHTML = '';
+                    product.sizes.forEach(size => {
+                        sizeContainer.innerHTML += `<button class="size-btn px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-black hover:text-white transition">${size}</button>`;
+                    });
+                }
+            } else if (sizeSection) {
+                sizeSection.classList.add('hidden');
             }
         }
 
@@ -157,7 +171,6 @@
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
     </script>
     <style>
-        /* Custom styles for the e-commerce product page */
         .size-btn {
             transition: all 0.2s ease;
         }
@@ -171,22 +184,6 @@
             background-color: #000;
             color: white;
         }
-        .accordion-header {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .accordion-header:hover {
-            opacity: 0.7;
-        }
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-        .accordion-content.open {
-            max-height: 500px;
-            transition: max-height 0.3s ease-in;
-        }
     </style>
 </head>
 <body class="transition-colors duration-300 bg-white dark:bg-gray-900">
@@ -196,13 +193,13 @@
             <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-6">
                     <a href="/admin-dashboard.html" class="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition">
-                        <i class="fas fa-arrow-left mr-2"></i> Back
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Products
                     </a>
                     <h1 class="text-xl font-semibold">Product Details</h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     <button onclick="editProduct()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
-                        <i class="fas fa-edit mr-2"></i> Edit
+                        <i class="fas fa-edit mr-2"></i> Edit Product
                     </button>
                     <button onclick="deleteProduct()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm">
                         <i class="fas fa-trash mr-2"></i> Delete
@@ -255,111 +252,48 @@
                         <h1 id="product-name" class="text-3xl md:text-4xl font-bold mt-1 dark:text-white">Loading...</h1>
                     </div>
 
-                    <!-- Price & Reviews -->
+                    <!-- Price -->
                     <div class="mt-4">
                         <div id="product-price" class="text-2xl font-bold dark:text-white">Loading...</div>
-                        <div class="flex items-center gap-2 mt-2">
-                            <div class="flex text-yellow-400">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star-half-alt"></i>
-                            </div>
-                            <span class="text-sm text-gray-500 dark:text-gray-400"><span id="review-count">0</span> reviews</span>
-                        </div>
                     </div>
 
                     <!-- Stock Status -->
                     <div class="mt-4" id="stock-status"></div>
 
-                    <!-- Color Selection -->
+                    <!-- Color Selection - Only selected color -->
                     <div class="mt-6">
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-medium dark:text-white">Color: <span id="product-color">Default</span></span>
                         </div>
-                        <div class="flex gap-3 mt-3">
-                            <button class="w-10 h-10 rounded-full bg-black border-2 border-gray-300 dark:border-gray-600 ring-2 ring-black"></button>
-                            <button class="w-10 h-10 rounded-full bg-gray-500 border-2 border-gray-300 dark:border-gray-600"></button>
-                            <button class="w-10 h-10 rounded-full bg-blue-600 border-2 border-gray-300 dark:border-gray-600"></button>
-                            <button class="w-10 h-10 rounded-full bg-red-500 border-2 border-gray-300 dark:border-gray-600"></button>
-                        </div>
                     </div>
 
-                    <!-- Size Selection -->
-                    <div class="mt-6">
+                    <!-- Size Section (Hidden by default, shows only if product has sizes) -->
+                    <div id="size-section" class="mt-6 hidden">
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-medium dark:text-white">Size:</span>
                             <a href="#" class="text-xs text-gray-500 dark:text-gray-400 hover:underline">Size Guide</a>
                         </div>
-                        <div class="flex flex-wrap gap-2 mt-3">
-                            <button class="size-btn px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-black hover:text-white transition">XXS</button>
-                            <button class="size-btn px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-black hover:text-white transition">XS</button>
-                            <button class="size-btn px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-black hover:text-white transition">S</button>
-                            <button class="size-btn px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-black hover:text-white transition">M</button>
-                            <button class="size-btn px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-black hover:text-white transition">L</button>
-                            <button class="size-btn px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-black hover:text-white transition">XL</button>
-                            <button class="size-btn px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-black hover:text-white transition">XXL</button>
-                        </div>
+                        <div id="size-buttons" class="flex flex-wrap gap-2 mt-3"></div>
                     </div>
 
-                    <!-- Sale Banner -->
-                    <div class="mt-6 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                        <span class="text-sm text-red-600 dark:text-red-400 font-medium">50% Off Archive Sales. Discount applied in cart.</span>
-                    </div>
-
-                    <!-- Add to Cart Button (Admin can use as Update) -->
-                    <div class="mt-6">
-                        <button onclick="editProduct()" class="w-full bg-black dark:bg-white text-white dark:text-black py-4 rounded-full font-medium hover:opacity-90 transition">
-                            Edit Product
-                        </button>
-                    </div>
-
-                    <!-- Payment Options -->
-                    <div class="mt-4 text-center">
-                        <span class="text-xs text-gray-500 dark:text-gray-400">or 4 interest-free payments of AED 14.75 with Klarna or Afterpay</span>
-                    </div>
-
-                    <!-- Accordion Sections -->
+                    <!-- Description Section (Always Open) -->
                     <div class="mt-8 border-t dark:border-gray-800">
-                        <!-- Description Accordion -->
-                        <div class="border-b dark:border-gray-800">
-                            <div class="accordion-header py-4 flex justify-between items-center" onclick="toggleAccordion('description-content')">
-                                <span class="font-medium dark:text-white">DESCRIPTION</span>
-                                <i class="fas fa-chevron-down transition-transform" id="description-icon"></i>
-                            </div>
-                            <div id="description-content" class="accordion-content open">
-                                <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm leading-relaxed" id="product-description">
-                                    Loading...
-                                </div>
-                            </div>
+                        <div class="py-4">
+                            <span class="font-medium dark:text-white">DESCRIPTION</span>
                         </div>
-
-                        <!-- Shipping & Returns Accordion -->
-                        <div class="border-b dark:border-gray-800">
-                            <div class="accordion-header py-4 flex justify-between items-center" onclick="toggleAccordion('shipping-content')">
-                                <span class="font-medium dark:text-white">SHIPPING & RETURNS</span>
-                                <i class="fas fa-chevron-down transition-transform" id="shipping-icon"></i>
-                            </div>
-                            <div id="shipping-content" class="accordion-content">
-                                <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm">
-                                    <p>Free shipping on orders over AED 200. Standard delivery 3-5 business days.</p>
-                                    <p class="mt-2">Easy returns within 14 days of delivery. Conditions apply.</p>
-                                </div>
-                            </div>
+                        <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm leading-relaxed" id="product-description">
+                            Loading...
                         </div>
+                    </div>
 
-                        <!-- Care Instructions Accordion -->
-                        <div class="border-b dark:border-gray-800">
-                            <div class="accordion-header py-4 flex justify-between items-center" onclick="toggleAccordion('care-content')">
-                                <span class="font-medium dark:text-white">CARE INSTRUCTIONS</span>
-                                <i class="fas fa-chevron-down transition-transform" id="care-icon"></i>
-                            </div>
-                            <div id="care-content" class="accordion-content">
-                                <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm">
-                                    <p>Machine wash cold with like colors. Tumble dry low. Do not bleach.</p>
-                                </div>
-                            </div>
+                    <!-- Shipping & Returns (Optional Section) -->
+                    <div class="mt-4 border-t dark:border-gray-800">
+                        <div class="py-4">
+                            <span class="font-medium dark:text-white">SHIPPING & RETURNS</span>
+                        </div>
+                        <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm">
+                            <p>Free shipping on orders over AED 200. Standard delivery 3-5 business days.</p>
+                            <p class="mt-2">Easy returns within 14 days of delivery. Conditions apply.</p>
                         </div>
                     </div>
                 </div>
@@ -368,24 +302,14 @@
     </div>
 
     <script>
-        function toggleAccordion(contentId) {
-            const content = document.getElementById(contentId);
-            const icon = document.getElementById(contentId.replace('-content', '-icon'));
-            if (content.classList.contains('open')) {
-                content.classList.remove('open');
-                if (icon) icon.style.transform = 'rotate(-90deg)';
-            } else {
-                content.classList.add('open');
-                if (icon) icon.style.transform = 'rotate(0deg)';
+        // Size button selection (only if size section is visible)
+        document.addEventListener('click', function(e) {
+            if (e.target.classList && e.target.classList.contains('size-btn')) {
+                document.querySelectorAll('.size-btn').forEach(btn => {
+                    btn.classList.remove('selected', 'bg-black', 'text-white');
+                });
+                e.target.classList.add('selected', 'bg-black', 'text-white');
             }
-        }
-
-        // Size button selection
-        document.querySelectorAll('.size-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected', 'bg-black', 'text-white'));
-                this.classList.add('selected', 'bg-black', 'text-white');
-            });
         });
     </script>
 </body>
