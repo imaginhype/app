@@ -33,6 +33,7 @@
         let quillEditor = null;
         let productId = null;
         let uploadedImages = [];
+        let productSizes = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -44,6 +45,8 @@
             loadCategories();
             initQuill();
             checkForEdit();
+            applyThemeIcons();
+            document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
         });
 
         function applyThemeIcons() {
@@ -129,6 +132,11 @@
                 document.getElementById('product-color').value = p.color || '';
                 if (quillEditor) quillEditor.root.innerHTML = p.description || '';
                 
+                if (p.sizes && p.sizes.length > 0) {
+                    productSizes = [...p.sizes];
+                    renderSizes();
+                }
+                
                 if (p.images && p.images.length > 0) {
                     uploadedImages = p.images.map(url => ({ url }));
                 } else if (p.imageUrl) {
@@ -138,15 +146,34 @@
             }
         }
 
+        // WORKING IMAGE UPLOAD FUNCTION
         async function uploadImage(file) {
-            if (file.size > 5 * 1024 * 1024) { alert('Image too large. Max 5MB.'); return null; }
+            if (file.size > 5 * 1024 * 1024) { 
+                alert('Image too large. Max 5MB.'); 
+                return null; 
+            }
+            
             const fd = new FormData();
-            fd.append('image', file);
+            fd.append('source', file);
+            fd.append('format', 'json');
+            
             try {
-                const res = await fetch('https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5', { method: 'POST', body: fd });
+                const res = await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
+                    method: 'POST',
+                    body: fd
+                });
                 const data = await res.json();
-                return data?.data?.url || null;
-            } catch (e) { alert('Upload failed: ' + e.message); return null; }
+                
+                if (data && data.image && data.image.url) {
+                    return data.image.url;
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (e) { 
+                console.error('Upload error:', e);
+                alert('Upload failed: ' + e.message); 
+                return null; 
+            }
         }
 
         function displayImages() {
@@ -184,14 +211,59 @@
                         alert('Maximum 5 images allowed');
                         break;
                     }
+                    const statusEl = document.getElementById('upload-status');
+                    if (statusEl) {
+                        statusEl.classList.remove('hidden');
+                        statusEl.textContent = 'Uploading...';
+                        statusEl.style.color = '#f59e0b';
+                    }
                     const url = await uploadImage(file);
                     if (url) {
                         uploadedImages.push({ url });
                         displayImages();
+                        if (statusEl) {
+                            statusEl.textContent = 'Upload complete!';
+                            statusEl.style.color = '#10b981';
+                            setTimeout(() => statusEl.classList.add('hidden'), 2000);
+                        }
+                    } else if (statusEl) {
+                        statusEl.textContent = 'Upload failed';
+                        statusEl.style.color = '#ef4444';
+                        setTimeout(() => statusEl.classList.add('hidden'), 2000);
                     }
                 }
                 imageInput.value = '';
             });
+        }
+
+        window.addSize = function() {
+            const input = document.getElementById('size-input');
+            const size = input.value.trim().toUpperCase();
+            if (size && !productSizes.includes(size)) {
+                productSizes.push(size);
+                renderSizes();
+                input.value = '';
+            }
+        };
+
+        window.removeSize = function(index) {
+            productSizes.splice(index, 1);
+            renderSizes();
+        };
+
+        function renderSizes() {
+            const container = document.getElementById('sizes-list');
+            if (!container) return;
+            if (productSizes.length === 0) {
+                container.innerHTML = '<span class="text-xs opacity-60">No sizes added. Add sizes above.</span>';
+                return;
+            }
+            container.innerHTML = productSizes.map((size, idx) => `
+                <span class="inline-flex items-center bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full text-sm">
+                    ${size}
+                    <button type="button" onclick="removeSize(${idx})" class="ml-2 text-red-500 hover:text-red-700">&times;</button>
+                </span>
+            `).join('');
         }
 
         window.deleteProduct = async function() {
@@ -236,6 +308,7 @@
                 status: document.getElementById('product-status').value,
                 brand: document.getElementById('product-brand').value,
                 color: document.getElementById('product-color').value,
+                sizes: productSizes,
                 images: uploadedImages.map(img => img.url),
                 imageUrl: uploadedImages[0]?.url || '',
                 updatedAt: new Date().toISOString()
@@ -257,7 +330,8 @@
 </head>
 <body class="transition-colors duration-300">
     <div class="min-h-screen">
-        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+        <!-- Top Bar -->
+        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center border-b dark:border-gray-800">
             <div class="flex items-center space-x-3">
                 <a href="/admin-dashboard.html" class="text-purple-500 hover:text-purple-600"><i class="fas fa-arrow-left text-xl"></i></a>
                 <h1 class="text-xl md:text-2xl font-bold" id="form-title">Add New Product</h1>
@@ -295,6 +369,7 @@
         <div class="max-w-4xl mx-auto p-6">
             <div class="card rounded-xl p-8">
                 <form onsubmit="event.preventDefault(); submitProduct();" class="space-y-6">
+                    <!-- Product Images -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Product Images <span class="text-red-500">*</span></label>
                         <div class="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition" onclick="document.getElementById('product-images').click()">
@@ -307,19 +382,23 @@
                             <span id="image-count" class="text-sm opacity-60">0/5 images</span>
                             <button type="button" onclick="addMoreImages()" class="text-purple-500 text-sm hover:underline">+ Add more images</button>
                         </div>
+                        <div id="upload-status" class="text-xs mt-1 hidden"></div>
                         <div id="images-preview-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4"></div>
                     </div>
 
+                    <!-- Product Name -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Product Name <span class="text-red-500">*</span></label>
                         <input type="text" id="product-name" class="w-full px-4 py-3 rounded-lg border">
                     </div>
 
+                    <!-- Description -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Description <span class="text-red-500">*</span></label>
                         <div id="description-editor" style="height: 200px;"></div>
                     </div>
 
+                    <!-- Prices -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Regular Price (AED) <span class="text-red-500">*</span></label>
@@ -332,6 +411,7 @@
                         </div>
                     </div>
 
+                    <!-- Product Details Row 1 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Condition</label>
@@ -350,6 +430,7 @@
                         </div>
                     </div>
 
+                    <!-- Product Details Row 2 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Quantity</label>
@@ -362,6 +443,7 @@
                         </div>
                     </div>
 
+                    <!-- Product Details Row 3 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Brand</label>
@@ -373,6 +455,20 @@
                         </div>
                     </div>
 
+                    <!-- Sizes Section -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Sizes (Optional)</label>
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <input type="text" id="size-input" placeholder="Add size (e.g., S, M, L, XL)" class="flex-1 px-4 py-2 rounded-lg border">
+                            <button type="button" onclick="addSize()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Add Size</button>
+                        </div>
+                        <div id="sizes-list" class="flex flex-wrap gap-2 mt-2">
+                            <span class="text-xs opacity-60">No sizes added. Add sizes above.</span>
+                        </div>
+                        <p class="text-xs opacity-60 mt-1">Leave empty if product doesn't have size variants</p>
+                    </div>
+
+                    <!-- Stock & Status -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Stock Status</label>
@@ -390,6 +486,7 @@
                         </div>
                     </div>
 
+                    <!-- Buttons -->
                     <div class="flex gap-4 pt-4">
                         <button type="submit" class="flex-1 bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition">Save Product</button>
                         <button type="button" id="delete-btn" onclick="deleteProduct()" class="hidden flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition">Delete Product</button>
