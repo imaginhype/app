@@ -12,7 +12,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -72,6 +72,7 @@
             productId = urlParams.get('id');
             if (productId) {
                 document.getElementById('form-title').textContent = 'Edit Product';
+                document.getElementById('delete-btn').classList.remove('hidden');
                 loadProductData();
             }
         }
@@ -85,17 +86,9 @@
                 document.getElementById('product-price').value = p.price || '';
                 document.getElementById('sale-price').value = p.salePrice || '';
                 document.getElementById('in-stock').value = p.inStock ? 'yes' : 'no';
-                document.getElementById('stock-quantity').value = p.stockQuantity || 0;
-                document.getElementById('product-status').value = p.status || 'draft';
-                document.getElementById('product-sku').value = p.sku || '';
+                document.getElementById('product-status').value = p.status || 'published';
                 document.getElementById('product-brand').value = p.brand || '';
                 document.getElementById('product-color').value = p.color || '';
-                document.getElementById('product-weight').value = p.weight || '';
-                document.getElementById('weight-unit').value = p.weightUnit || 'kg';
-                document.getElementById('product-length').value = p.length || '';
-                document.getElementById('product-width').value = p.width || '';
-                document.getElementById('product-height').value = p.height || '';
-                document.getElementById('dimension-unit').value = p.dimensionUnit || 'cm';
                 if (quillEditor) quillEditor.root.innerHTML = p.description || '';
                 if (p.imageUrl) {
                     uploadedImageUrl = p.imageUrl;
@@ -136,6 +129,17 @@
             document.getElementById('product-image').value = '';
         };
 
+        window.deleteProduct = async function() {
+            if (!confirm('Delete this product? This cannot be undone.')) return;
+            try {
+                await deleteDoc(doc(db, 'products', productId));
+                alert('Product deleted!');
+                window.location.href = '/admin-dashboard.html';
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        };
+
         window.submitProduct = async function() {
             const name = document.getElementById('product-name').value;
             const category = document.getElementById('product-category').value;
@@ -155,17 +159,9 @@
                 price: parseFloat(price),
                 salePrice: document.getElementById('sale-price').value ? parseFloat(document.getElementById('sale-price').value) : null,
                 inStock: document.getElementById('in-stock').value === 'yes',
-                stockQuantity: parseInt(document.getElementById('stock-quantity').value),
                 status: document.getElementById('product-status').value,
-                sku: document.getElementById('product-sku').value || null,
                 brand: document.getElementById('product-brand').value,
                 color: document.getElementById('product-color').value,
-                weight: document.getElementById('product-weight').value ? parseFloat(document.getElementById('product-weight').value) : null,
-                weightUnit: document.getElementById('weight-unit').value,
-                length: document.getElementById('product-length').value ? parseFloat(document.getElementById('product-length').value) : null,
-                width: document.getElementById('product-width').value ? parseFloat(document.getElementById('product-width').value) : null,
-                height: document.getElementById('product-height').value ? parseFloat(document.getElementById('product-height').value) : null,
-                dimensionUnit: document.getElementById('dimension-unit').value,
                 imageUrl: uploadedImageUrl,
                 updatedAt: new Date().toISOString()
             };
@@ -204,51 +200,80 @@
         <div class="max-w-4xl mx-auto p-6">
             <div class="card rounded-xl p-8">
                 <form onsubmit="event.preventDefault(); submitProduct();" class="space-y-6">
-                    <!-- Basic Info -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div><label class="block text-sm font-medium mb-2">Product Name <span class="text-red-500">*</span></label><input type="text" id="product-name" class="w-full px-4 py-3 rounded-lg border"></div>
-                        <div><label class="block text-sm font-medium mb-2">Category <span class="text-red-500">*</span></label><select id="product-category" class="w-full px-4 py-3 rounded-lg border"><option value="">Select category</option></select></div>
-                    </div>
-                    
-                    <!-- Pricing -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div><label class="block text-sm font-medium mb-2">Regular Price (AED) <span class="text-red-500">*</span></label><input type="number" id="product-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border"></div>
-                        <div><label class="block text-sm font-medium mb-2">Sale Price (AED)</label><input type="number" id="sale-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border"><p class="text-xs opacity-60 mt-1">Leave empty if no sale</p></div>
-                    </div>
-                    
-                    <!-- Inventory -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div><label class="block text-sm font-medium mb-2">Stock Status</label><select id="in-stock" class="w-full px-4 py-3 rounded-lg border"><option value="yes">In Stock</option><option value="no">Out of Stock</option></select></div>
-                        <div><label class="block text-sm font-medium mb-2">Stock Quantity</label><input type="number" id="stock-quantity" value="0" min="0" class="w-full px-4 py-3 rounded-lg border"></div>
-                        <div><label class="block text-sm font-medium mb-2">Product Status</label><select id="product-status" class="w-full px-4 py-3 rounded-lg border"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></div>
-                    </div>
-                    
-                    <!-- SKU & Brand & Color -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div><label class="block text-sm font-medium mb-2">SKU (Optional)</label><input type="text" id="product-sku" class="w-full px-4 py-3 rounded-lg border"></div>
-                        <div><label class="block text-sm font-medium mb-2">Brand</label><input type="text" id="product-brand" class="w-full px-4 py-3 rounded-lg border"></div>
-                        <div><label class="block text-sm font-medium mb-2">Color</label><input type="text" id="product-color" class="w-full px-4 py-3 rounded-lg border"></div>
-                    </div>
-                    
-                    <!-- Description -->
-                    <div><label class="block text-sm font-medium mb-2">Description <span class="text-red-500">*</span></label><div id="description-editor" style="height: 200px;"></div></div>
-                    
-                    <!-- Shipping -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div><label class="block text-sm font-medium mb-2">Weight</label><div class="flex gap-2"><input type="number" id="product-weight" step="0.01" class="flex-1 px-4 py-3 rounded-lg border"><select id="weight-unit" class="w-24 px-4 py-3 rounded-lg border"><option value="kg">kg</option><option value="lb">lb</option></select></div></div>
-                        <div><label class="block text-sm font-medium mb-2">Dimensions (L × W × H)</label><div class="grid grid-cols-3 gap-2"><input type="number" id="product-length" placeholder="L" class="px-4 py-3 rounded-lg border"><input type="number" id="product-width" placeholder="W" class="px-4 py-3 rounded-lg border"><input type="number" id="product-height" placeholder="H" class="px-4 py-3 rounded-lg border"></div><select id="dimension-unit" class="mt-2 w-24 px-4 py-2 rounded-lg border"><option value="cm">cm</option><option value="in">in</option></select></div>
-                    </div>
-                    
-                    <!-- Image Upload -->
+                    <!-- 1. Product Image -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Product Image <span class="text-red-500">*</span></label>
                         <input type="file" id="product-image" accept="image/jpeg,image/png,image/webp" onchange="previewImage(event)" class="w-full px-4 py-3 rounded-lg border">
                         <div id="image-preview" class="mt-3 hidden"></div>
                     </div>
-                    
-                    <!-- Submit -->
+
+                    <!-- 2. Product Name (Full width) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Product Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="product-name" class="w-full px-4 py-3 rounded-lg border">
+                    </div>
+
+                    <!-- 3. Description (Full width) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Description <span class="text-red-500">*</span></label>
+                        <div id="description-editor" style="height: 200px;"></div>
+                    </div>
+
+                    <!-- 4. Sale Price & Regular Price (50/50) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Regular Price (AED) <span class="text-red-500">*</span></label>
+                            <input type="number" id="product-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Sale Price (AED)</label>
+                            <input type="number" id="sale-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border">
+                            <p class="text-xs opacity-60 mt-1">Leave empty if no sale</p>
+                        </div>
+                    </div>
+
+                    <!-- 5. Stock (50%) and Category (50%) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Stock Status</label>
+                            <select id="in-stock" class="w-full px-4 py-3 rounded-lg border">
+                                <option value="yes" selected>In Stock</option>
+                                <option value="no">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Category <span class="text-red-500">*</span></label>
+                            <select id="product-category" class="w-full px-4 py-3 rounded-lg border">
+                                <option value="">Select category</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 6. Visibility (50%) and Brand (50%) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Visibility</label>
+                            <select id="product-status" class="w-full px-4 py-3 rounded-lg border">
+                                <option value="published" selected>Published</option>
+                                <option value="draft">Draft</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Brand</label>
+                            <input type="text" id="product-brand" class="w-full px-4 py-3 rounded-lg border">
+                        </div>
+                    </div>
+
+                    <!-- 7. Color (Full width optional) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Color</label>
+                        <input type="text" id="product-color" class="w-full px-4 py-3 rounded-lg border">
+                    </div>
+
+                    <!-- Submit & Delete Buttons -->
                     <div class="flex gap-4 pt-4">
                         <button type="submit" class="flex-1 bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition">Save Product</button>
+                        <button type="button" id="delete-btn" onclick="deleteProduct()" class="hidden flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition">Delete Product</button>
                         <a href="/admin-dashboard.html" class="flex-1 border py-3 rounded-lg text-center hover:bg-gray-100 transition">Cancel</a>
                     </div>
                 </form>
