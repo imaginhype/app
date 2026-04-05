@@ -64,16 +64,25 @@
             
             document.getElementById('product-name').textContent = product.name || 'Untitled';
             document.getElementById('product-id').textContent = `#${product.id.slice(0, 8)}`;
-            document.getElementById('product-price').innerHTML = isOnSale 
-                ? `<span class="text-3xl font-bold text-red-500">AED ${product.salePrice}</span><span class="text-lg text-gray-400 line-through ml-2">AED ${product.price}</span>`
-                : `<span class="text-3xl font-bold text-purple-500">AED ${product.price}</span>`;
+            
+            if (isOnSale) {
+                document.getElementById('product-price').innerHTML = `<span class="text-3xl font-bold text-red-500">AED ${product.salePrice}</span><span class="text-lg text-gray-400 line-through ml-2">AED ${product.price}</span>`;
+            } else {
+                document.getElementById('product-price').innerHTML = `<span class="text-3xl font-bold text-purple-500">AED ${product.price}</span>`;
+            }
+            
             document.getElementById('product-condition').textContent = product.condition || 'New';
             document.getElementById('product-category').innerHTML = `<strong>Category</strong><br>${product.category || 'Uncategorized'}`;
             document.getElementById('product-quantity').innerHTML = `<strong>Quantity</strong><br>${product.quantity || 1}`;
             document.getElementById('product-brand').innerHTML = `<strong>Brand</strong><br>${product.brand || 'Not specified'}`;
             document.getElementById('product-description').innerHTML = product.description || 'No description available.';
             
-            // Display images
+            if (product.inStock) {
+                document.getElementById('stock-status').innerHTML = '<span class="text-green-500"><i class="fas fa-check-circle mr-1"></i> In Stock</span>';
+            } else {
+                document.getElementById('stock-status').innerHTML = '<span class="text-red-500"><i class="fas fa-times-circle mr-1"></i> Out of Stock</span>';
+            }
+            
             const images = product.images && product.images.length > 0 ? product.images : (product.imageUrl ? [product.imageUrl] : []);
             const mainImageContainer = document.getElementById('main-image');
             const thumbnailsContainer = document.getElementById('thumbnails');
@@ -87,14 +96,6 @@
                 `).join('');
             } else {
                 mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg"><i class="fas fa-box text-6xl text-gray-400"></i></div>';
-            }
-            
-            // Stock status
-            const stockEl = document.getElementById('stock-status');
-            if (product.inStock) {
-                stockEl.innerHTML = '<span class="text-green-500"><i class="fas fa-check-circle mr-1"></i> In Stock</span>';
-            } else {
-                stockEl.innerHTML = '<span class="text-red-500"><i class="fas fa-times-circle mr-1"></i> Out of Stock</span>';
             }
         }
 
@@ -121,7 +122,6 @@
 </head>
 <body class="transition-colors duration-300">
     <div class="min-h-screen">
-        <!-- Top Bar -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <a href="/admin-dashboard.html" class="text-purple-500 hover:text-purple-600"><i class="fas fa-arrow-left text-xl"></i></a>
@@ -137,27 +137,20 @@
         </div>
 
         <div class="max-w-6xl mx-auto p-6">
-            <!-- Action Buttons -->
             <div class="flex justify-between items-center mb-6">
                 <a href="/admin-dashboard.html" class="text-purple-500 hover:text-purple-600"><i class="fas fa-chevron-left mr-2"></i> Back to Products</a>
-                <div class="flex gap-3">
-                    <button onclick="editProduct()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"><i class="fas fa-edit mr-2"></i> Edit</button>
-                </div>
+                <button onclick="editProduct()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"><i class="fas fa-edit mr-2"></i> Edit</button>
             </div>
 
-            <!-- Product Content -->
             <div class="card rounded-xl p-6">
                 <div class="flex flex-col md:flex-row gap-8">
-                    <!-- Images Section -->
                     <div class="md:w-1/2">
-                        <div id="main-image" class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
-                            <div class="w-full h-full flex items-center justify-center"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i></div>
+                        <div id="main-image" class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
+                            <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
                         </div>
-                        <div id="thumbnails" class="flex gap-3 overflow-x-auto pb-2">
-                        </div>
+                        <div id="thumbnails" class="flex gap-3 overflow-x-auto pb-2"></div>
                     </div>
 
-                    <!-- Product Info Section -->
                     <div class="md:w-1/2">
                         <div class="mb-4">
                             <h1 id="product-name" class="text-2xl font-bold mb-2">Loading...</h1>
@@ -181,7 +174,7 @@
 
                         <div class="mb-6">
                             <h3 class="font-semibold mb-2">Description</h3>
-                            <div id="product-description" class="text-sm opacity-80 prose max-w-none">Loading...</div>
+                            <div id="product-description" class="text-sm opacity-80">Loading...</div>
                         </div>
                     </div>
                 </div>
