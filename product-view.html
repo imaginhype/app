@@ -99,10 +99,10 @@
         function displayProduct() {
             const isOnSale = product.salePrice && product.salePrice > 0 && product.salePrice < product.price;
             
-            // Product Name & Brand
+            // Product Name
             document.getElementById('product-name').textContent = product.name || 'Untitled';
             
-            // Brand - show if exists
+            // Brand
             const brandEl = document.getElementById('product-brand');
             if (product.brand && product.brand.trim() !== '') {
                 brandEl.textContent = product.brand;
@@ -113,7 +113,7 @@
                 document.getElementById('brand-row').classList.add('hidden');
             }
             
-            // SKU - show if exists
+            // SKU
             const skuEl = document.getElementById('product-sku');
             if (product.sku && product.sku.trim() !== '') {
                 skuEl.textContent = product.sku;
@@ -135,20 +135,13 @@
                 document.getElementById('category-row').classList.add('hidden');
             }
             
-            // Condition
+            // Condition - plain text, no badge
             const conditionEl = document.getElementById('product-condition');
             if (product.condition && product.condition.trim() !== '') {
                 conditionEl.textContent = product.condition;
                 conditionEl.classList.remove('hidden');
                 document.getElementById('condition-row').classList.remove('hidden');
-                // Add color class based on condition
-                const conditionClass = {
-                    'New': 'bg-green-500/20 text-green-500',
-                    'Like New': 'bg-blue-500/20 text-blue-500',
-                    'Good': 'bg-yellow-500/20 text-yellow-500',
-                    'Fair': 'bg-orange-500/20 text-orange-500'
-                };
-                conditionEl.className = `text-sm px-3 py-1 rounded-full ${conditionClass[product.condition] || 'bg-gray-500/20 text-gray-500'}`;
+                conditionEl.className = 'font-medium dark:text-white text-sm mt-1';
             } else {
                 conditionEl.classList.add('hidden');
                 document.getElementById('condition-row').classList.add('hidden');
@@ -162,7 +155,7 @@
                 priceEl.innerHTML = `<span class="text-2xl font-bold">AED ${product.price}</span>`;
             }
             
-            // Color - only show if exists
+            // Color
             const colorEl = document.getElementById('product-color');
             if (product.color && product.color.trim() !== '') {
                 colorEl.textContent = product.color;
@@ -197,7 +190,7 @@
                 mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg"><i class="fas fa-box text-6xl text-gray-400"></i></div>';
             }
             
-            // Sizes - only show if product has sizes
+            // Sizes
             const hasSizes = product.sizes && product.sizes.length > 0;
             const sizeSection = document.getElementById('size-section');
             if (sizeSection && hasSizes) {
@@ -322,11 +315,11 @@
                     <!-- Stock Status -->
                     <div class="mb-6" id="stock-status"></div>
 
-                    <!-- Details Grid - Brand, SKU, Category, Condition, Color, Quantity -->
+                    <!-- Details Grid -->
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <!-- Brand Row -->
                         <div id="brand-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Brand</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">BRAND</div>
                             <div id="product-brand" class="font-medium dark:text-white text-sm mt-1">-</div>
                         </div>
                         
@@ -338,25 +331,25 @@
                         
                         <!-- Category Row -->
                         <div id="category-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Category</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">CATEGORY</div>
                             <div id="product-category" class="font-medium dark:text-white text-sm mt-1">-</div>
                         </div>
                         
                         <!-- Condition Row -->
                         <div id="condition-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Condition</div>
-                            <div id="product-condition" class="text-sm mt-1">-</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">CONDITION</div>
+                            <div id="product-condition" class="font-medium dark:text-white text-sm mt-1">-</div>
                         </div>
                         
                         <!-- Color Row -->
                         <div id="color-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Color</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">COLOR</div>
                             <div id="product-color" class="font-medium dark:text-white text-sm mt-1">-</div>
                         </div>
                         
                         <!-- Quantity Row -->
                         <div class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Quantity</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">QUANTITY</div>
                             <div id="product-quantity" class="font-medium dark:text-white text-sm mt-1">-</div>
                         </div>
                     </div>
@@ -377,17 +370,6 @@
                         </div>
                         <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm leading-relaxed" id="product-description">
                             Loading...
-                        </div>
-                    </div>
-
-                    <!-- Shipping & Returns Section -->
-                    <div class="mt-4 border-t dark:border-gray-800">
-                        <div class="py-4">
-                            <span class="font-medium dark:text-white">SHIPPING & RETURNS</span>
-                        </div>
-                        <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm">
-                            <p>Free shipping on orders over AED 200. Standard delivery 3-5 business days.</p>
-                            <p class="mt-2">Easy returns within 14 days of delivery. Conditions apply.</p>
                         </div>
                     </div>
                 </div>
