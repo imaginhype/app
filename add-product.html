@@ -93,7 +93,6 @@
                 document.getElementById('product-color').value = p.color || '';
                 if (quillEditor) quillEditor.root.innerHTML = p.description || '';
                 
-                // Load images
                 if (p.images && p.images.length > 0) {
                     uploadedImages = p.images.map(url => ({ url }));
                 } else if (p.imageUrl) {
@@ -233,7 +232,7 @@
         <div class="max-w-4xl mx-auto p-6">
             <div class="card rounded-xl p-8">
                 <form onsubmit="event.preventDefault(); submitProduct();" class="space-y-6">
-                    <!-- Images Section -->
+                    <!-- Images -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Product Images <span class="text-red-500">*</span></label>
                         <div class="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition" onclick="document.getElementById('product-images').click()">
@@ -261,7 +260,7 @@
                         <div id="description-editor" style="height: 200px;"></div>
                     </div>
 
-                    <!-- Price Row -->
+                    <!-- Prices -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Regular Price (AED) <span class="text-red-500">*</span></label>
@@ -270,11 +269,10 @@
                         <div>
                             <label class="block text-sm font-medium mb-2">Sale Price (AED)</label>
                             <input type="number" id="sale-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border">
-                            <p class="text-xs opacity-60 mt-1">Leave empty if no sale</p>
                         </div>
                     </div>
 
-                    <!-- Product Details Row -->
+                    <!-- Details -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Condition</label>
@@ -304,7 +302,7 @@
                         </div>
                     </div>
 
-                    <!-- Stock & Visibility -->
+                    <!-- Stock & Status -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Stock Status</label>
