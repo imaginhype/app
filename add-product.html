@@ -73,10 +73,7 @@
             if (productId) {
                 document.getElementById('form-title').textContent = 'Edit Product';
                 document.getElementById('delete-btn').classList.remove('hidden');
-                document.getElementById('edit-mode').classList.add('hidden');
                 loadProductData();
-            } else {
-                document.getElementById('add-mode').classList.remove('hidden');
             }
         }
 
@@ -88,18 +85,21 @@
                 document.getElementById('product-category').value = p.category || '';
                 document.getElementById('product-price').value = p.price || '';
                 document.getElementById('sale-price').value = p.salePrice || '';
+                document.getElementById('product-condition').value = p.condition || 'New';
+                document.getElementById('product-quantity').value = p.quantity || 1;
                 document.getElementById('in-stock').value = p.inStock ? 'yes' : 'no';
                 document.getElementById('product-status').value = p.status || 'published';
                 document.getElementById('product-brand').value = p.brand || '';
                 document.getElementById('product-color').value = p.color || '';
                 if (quillEditor) quillEditor.root.innerHTML = p.description || '';
+                
+                // Load images
                 if (p.images && p.images.length > 0) {
                     uploadedImages = p.images.map(url => ({ url }));
-                    displayImages();
                 } else if (p.imageUrl) {
                     uploadedImages = [{ url: p.imageUrl }];
-                    displayImages();
                 }
+                displayImages();
             }
         }
 
@@ -188,6 +188,8 @@
                 category: category,
                 price: parseFloat(price),
                 salePrice: document.getElementById('sale-price').value ? parseFloat(document.getElementById('sale-price').value) : null,
+                condition: document.getElementById('product-condition').value,
+                quantity: parseInt(document.getElementById('product-quantity').value),
                 inStock: document.getElementById('in-stock').value === 'yes',
                 status: document.getElementById('product-status').value,
                 brand: document.getElementById('product-brand').value,
@@ -217,7 +219,6 @@
 </head>
 <body class="transition-colors duration-300">
     <div class="min-h-screen">
-        <!-- Top Bar -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <a href="/admin-dashboard.html" class="text-purple-500 hover:text-purple-600"><i class="fas fa-arrow-left text-xl"></i></a>
@@ -230,26 +231,9 @@
         </div>
 
         <div class="max-w-4xl mx-auto p-6">
-            <!-- Edit Mode Banner (only shown when editing) -->
-            <div id="edit-mode" class="bg-purple-100 dark:bg-purple-900/30 rounded-lg p-4 mb-6 flex justify-between items-center">
-                <div>
-                    <span class="font-semibold">Edit Mode</span>
-                    <p class="text-sm opacity-70">You are editing an existing product</p>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="deleteProduct()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Delete</button>
-                </div>
-            </div>
-
-            <!-- Add Mode Banner (only shown when adding new) -->
-            <div id="add-mode" class="bg-green-100 dark:bg-green-900/30 rounded-lg p-4 mb-6 hidden">
-                <span class="font-semibold">Add New Product</span>
-                <p class="text-sm opacity-70">Fill in the details to create a new product</p>
-            </div>
-
             <div class="card rounded-xl p-8">
                 <form onsubmit="event.preventDefault(); submitProduct();" class="space-y-6">
-                    <!-- Product Images Section -->
+                    <!-- Images Section -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Product Images <span class="text-red-500">*</span></label>
                         <div class="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition" onclick="document.getElementById('product-images').click()">
@@ -347,6 +331,7 @@
                     <!-- Buttons -->
                     <div class="flex gap-4 pt-4">
                         <button type="submit" class="flex-1 bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition">Save Product</button>
+                        <button type="button" id="delete-btn" onclick="deleteProduct()" class="hidden flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition">Delete Product</button>
                         <a href="/admin-dashboard.html" class="flex-1 border py-3 rounded-lg text-center hover:bg-gray-100 transition">Cancel</a>
                     </div>
                 </form>
