@@ -87,6 +87,7 @@
                 document.getElementById('sale-price').value = p.salePrice || '';
                 document.getElementById('product-condition').value = p.condition || 'New';
                 document.getElementById('product-quantity').value = p.quantity || 1;
+                document.getElementById('product-sku').value = p.sku || '';
                 document.getElementById('in-stock').value = p.inStock ? 'yes' : 'no';
                 document.getElementById('product-status').value = p.status || 'published';
                 document.getElementById('product-brand').value = p.brand || '';
@@ -174,12 +175,20 @@
             const category = document.getElementById('product-category').value;
             const price = document.getElementById('product-price').value;
             const description = quillEditor ? quillEditor.root.innerHTML : '';
+            const sku = document.getElementById('product-sku').value;
             
+            // Validation
             if (!name) { alert('Please enter product name'); return; }
             if (!category) { alert('Please select a category'); return; }
             if (!price || price <= 0) { alert('Please enter a valid price'); return; }
             if (!description || description === '<p><br></p>') { alert('Please enter product description'); return; }
             if (uploadedImages.length === 0) { alert('Please upload at least one product image'); return; }
+            
+            // SKU validation (max 5 characters, alphanumeric)
+            if (sku && !/^[A-Za-z0-9]{1,5}$/.test(sku)) {
+                alert('SKU must be 1-5 characters (letters and numbers only)');
+                return;
+            }
 
             const productData = {
                 name: name,
@@ -189,6 +198,7 @@
                 salePrice: document.getElementById('sale-price').value ? parseFloat(document.getElementById('sale-price').value) : null,
                 condition: document.getElementById('product-condition').value,
                 quantity: parseInt(document.getElementById('product-quantity').value),
+                sku: sku || null,
                 inStock: document.getElementById('in-stock').value === 'yes',
                 status: document.getElementById('product-status').value,
                 brand: document.getElementById('product-brand').value,
@@ -232,7 +242,7 @@
         <div class="max-w-4xl mx-auto p-6">
             <div class="card rounded-xl p-8">
                 <form onsubmit="event.preventDefault(); submitProduct();" class="space-y-6">
-                    <!-- Images -->
+                    <!-- Product Images -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Product Images <span class="text-red-500">*</span></label>
                         <div class="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition" onclick="document.getElementById('product-images').click()">
@@ -269,10 +279,11 @@
                         <div>
                             <label class="block text-sm font-medium mb-2">Sale Price (AED)</label>
                             <input type="number" id="sale-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border">
+                            <p class="text-xs opacity-60 mt-1">Leave empty if no sale</p>
                         </div>
                     </div>
 
-                    <!-- Details -->
+                    <!-- Product Details Row 1 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Condition</label>
@@ -291,14 +302,28 @@
                         </div>
                     </div>
 
+                    <!-- Product Details Row 2 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Quantity</label>
                             <input type="number" id="product-quantity" value="1" min="1" class="w-full px-4 py-3 rounded-lg border">
                         </div>
                         <div>
+                            <label class="block text-sm font-medium mb-2">SKU (Optional)</label>
+                            <input type="text" id="product-sku" maxlength="5" placeholder="ABC12" class="w-full px-4 py-3 rounded-lg border">
+                            <p class="text-xs opacity-60 mt-1">Maximum 5 characters (letters and numbers only)</p>
+                        </div>
+                    </div>
+
+                    <!-- Product Details Row 3 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
                             <label class="block text-sm font-medium mb-2">Brand</label>
                             <input type="text" id="product-brand" class="w-full px-4 py-3 rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Color</label>
+                            <input type="text" id="product-color" class="w-full px-4 py-3 rounded-lg border">
                         </div>
                     </div>
 
@@ -318,12 +343,6 @@
                                 <option value="draft">Draft</option>
                             </select>
                         </div>
-                    </div>
-
-                    <!-- Color -->
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Color</label>
-                        <input type="text" id="product-color" class="w-full px-4 py-3 rounded-lg border">
                     </div>
 
                     <!-- Buttons -->
