@@ -148,10 +148,9 @@
                         <div class="flex items-center gap-2 mt-2">
                             ${isOnSale ? `<span class="text-xl font-bold text-red-500">AED ${p.salePrice}</span><span class="text-sm text-gray-400 line-through">AED ${p.price}</span>` : `<span class="text-xl font-bold text-purple-500">AED ${p.price}</span>`}
                         </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-xs px-2 py-1 rounded-full ${p.inStock ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">${p.inStock ? 'In Stock' : 'Out of Stock'}</span>
-                            <span class="text-xs opacity-60">Qty: ${p.stockQuantity || 0}</span>
-                        </div>
+                        <div class="mt-3">
+                        <span class="text-xs px-2 py-1 rounded-full ${p.inStock ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">${p.inStock ? 'In Stock' : 'Out of Stock'}</span>
+                     </div>
                     </div>
                 </div>`;
             }).join('');
