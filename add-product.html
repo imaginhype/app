@@ -7,10 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -28,8 +30,10 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        let currentUser = null;
         let uploadedImages = [];
+        let currentStep = 1;
+        let quillEditor = null;
+        let allSubcategories = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -38,9 +42,25 @@
                 window.location.href = '/seller-dashboard.html';
                 return;
             }
-            currentUser = user;
             loadCategories();
+            loadBrands();
+            initQuill();
         });
+
+        function initQuill() {
+            quillEditor = new Quill('#description-editor', {
+                theme: 'snow',
+                placeholder: 'Describe your product in detail...',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link', 'clean']
+                    ]
+                }
+            });
+        }
 
         async function loadCategories() {
             try {
@@ -50,7 +70,7 @@
                     select.innerHTML = '<option value="">Select category</option>';
                     categoriesSnap.docs.forEach(doc => {
                         const cat = doc.data();
-                        select.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+                        select.innerHTML += `<option value="${cat.name}" data-id="${doc.id}">${cat.name}</option>`;
                     });
                 }
             } catch (error) {
@@ -58,79 +78,163 @@
             }
         }
 
-        // ========== STEPPER FUNCTIONS ==========
-        let currentStep = 1;
-        const totalSteps = 3;
-
-        function updateStepUI() {
-            // Hide all steps
-            for (let i = 1; i <= totalSteps; i++) {
-                const stepDiv = document.getElementById(`step${i}`);
-                if (stepDiv) stepDiv.classList.add('hidden');
+        async function loadBrands() {
+            try {
+                const brandsSnap = await getDocs(collection(db, 'brands'));
+                const datalist = document.getElementById('brand-list');
+                if (datalist) {
+                    brandsSnap.docs.forEach(doc => {
+                        const option = document.createElement('option');
+                        option.value = doc.data().name;
+                        datalist.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading brands:", error);
             }
-            // Show current step
-            const currentStepDiv = document.getElementById(`step${currentStep}`);
-            if (currentStepDiv) currentStepDiv.classList.remove('hidden');
+        }
+
+        async function loadSubcategories(categoryId) {
+            try {
+                const subcatsSnap = await getDocs(query(collection(db, 'subcategories'), where('categoryId', '==', categoryId)));
+                const select = document.getElementById('product-subcategory');
+                if (select) {
+                    select.innerHTML = '<option value="">Select subcategory</option>';
+                    subcatsSnap.docs.forEach(doc => {
+                        select.innerHTML += `<option value="${doc.data().name}">${doc.data().name}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading subcategories:", error);
+            }
+        }
+
+        function toggleShippingFields() {
+            const productType = document.getElementById('product-type').value;
+            const shippingSection = document.getElementById('shipping-section');
+            if (shippingSection) {
+                shippingSection.style.display = productType === 'physical' ? 'block' : 'none';
+            }
+        }
+
+        function toggleSaleFields() {
+            const hasSale = document.getElementById('has-sale').checked;
+            const saleFields = document.getElementById('sale-fields');
+            if (saleFields) {
+                saleFields.style.display = hasSale ? 'block' : 'none';
+            }
+        }
+
+        function toggleStockFields() {
+            const inStock = document.getElementById('in-stock').value;
+            const quantityField = document.getElementById('stock-quantity-field');
+            if (quantityField) {
+                quantityField.style.display = inStock === 'yes' ? 'block' : 'none';
+            }
+        }
+
+        let currentTags = [];
+        function addTag() {
+            const input = document.getElementById('tag-input');
+            const tag = input.value.trim();
+            if (tag && !currentTags.includes(tag)) {
+                currentTags.push(tag);
+                renderTags();
+                input.value = '';
+            }
+        }
+
+        function renderTags() {
+            const container = document.getElementById('tags-container');
+            if (container) {
+                container.innerHTML = currentTags.map(tag => `
+                    <span class="inline-flex items-center bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm">
+                        ${tag}
+                        <button type="button" class="ml-2 text-purple-500 hover:text-purple-700" onclick="removeTag('${tag}')">&times;</button>
+                    </span>
+                `).join('');
+            }
+        }
+
+        window.removeTag = function(tag) {
+            currentTags = currentTags.filter(t => t !== tag);
+            renderTags();
+        };
+
+        function showStep(step) {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step4').classList.add('hidden');
+            document.getElementById('step5').classList.add('hidden');
+            document.getElementById(`step${step}`).classList.remove('hidden');
             
-            // Update circles
-            for (let i = 1; i <= totalSteps; i++) {
+            for (let i = 1; i <= 5; i++) {
                 const circle = document.getElementById(`step${i}-circle`);
-                if (circle) {
-                    if (i < currentStep) {
-                        circle.classList.remove('bg-gray-300', 'text-gray-600', 'bg-purple-500');
-                        circle.classList.add('bg-green-500', 'text-white');
-                    } else if (i === currentStep) {
-                        circle.classList.remove('bg-gray-300', 'text-gray-600', 'bg-green-500');
-                        circle.classList.add('bg-purple-500', 'text-white');
-                    } else {
-                        circle.classList.remove('bg-purple-500', 'text-white', 'bg-green-500');
-                        circle.classList.add('bg-gray-300', 'text-gray-600');
-                    }
+                if (i < step) {
+                    circle.className = 'w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-2';
+                } else if (i === step) {
+                    circle.className = 'w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center mx-auto mb-2';
+                } else {
+                    circle.className = 'w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2';
                 }
             }
             
-            // Update buttons
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
             const submitBtn = document.getElementById('submit-btn');
             
-            if (prevBtn) {
-                prevBtn.classList.toggle('hidden', currentStep === 1);
-            }
-            if (nextBtn && submitBtn) {
-                nextBtn.classList.toggle('hidden', currentStep === totalSteps);
-                submitBtn.classList.toggle('hidden', currentStep !== totalSteps);
+            if (step === 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'inline-block';
+                submitBtn.style.display = 'none';
+            } else if (step === 5) {
+                prevBtn.style.display = 'inline-block';
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'inline-block';
+            } else {
+                prevBtn.style.display = 'inline-block';
+                nextBtn.style.display = 'inline-block';
+                submitBtn.style.display = 'none';
             }
         }
 
         window.nextStep = function() {
-            // Validate current step
             if (currentStep === 1) {
                 const name = document.getElementById('product-name')?.value;
                 const category = document.getElementById('product-category')?.value;
-                const price = document.getElementById('product-price')?.value;
-                if (!name) { alert('Please enter product title'); return; }
+                const productType = document.getElementById('product-type')?.value;
+                if (!name) { alert('Please enter product name'); return; }
                 if (!category) { alert('Please select a category'); return; }
+                if (!productType) { alert('Please select product type'); return; }
+                currentStep = 2;
+                showStep(currentStep);
+            } else if (currentStep === 2) {
+                const price = document.getElementById('product-price')?.value;
                 if (!price || price <= 0) { alert('Please enter a valid price'); return; }
-            }
-            if (currentStep === 2) {
-                const description = document.getElementById('product-description')?.value;
-                if (!description) { alert('Please enter product description'); return; }
-            }
-            if (currentStep < totalSteps) {
-                currentStep++;
-                updateStepUI();
+                currentStep = 3;
+                showStep(currentStep);
+            } else if (currentStep === 3) {
+                const sku = document.getElementById('product-sku')?.value;
+                if (!sku) { alert('Please enter SKU'); return; }
+                currentStep = 4;
+                showStep(currentStep);
+                if (document.getElementById('product-type').value === 'physical') {
+                    document.getElementById('shipping-section').style.display = 'block';
+                }
+            } else if (currentStep === 4) {
+                currentStep = 5;
+                showStep(currentStep);
             }
         };
 
         window.prevStep = function() {
             if (currentStep > 1) {
                 currentStep--;
-                updateStepUI();
+                showStep(currentStep);
             }
         };
 
-        // ========== IMAGE UPLOAD ==========
         async function uploadImage(file) {
             if (file.size > 5 * 1024 * 1024) {
                 alert('Image too large. Max 5MB.');
@@ -144,8 +248,7 @@
                     body: fd
                 });
                 const data = await res.json();
-                if (data?.data?.url) return data.data.url;
-                throw new Error('Upload failed');
+                return data?.data?.url || null;
             } catch (e) {
                 alert('Upload failed: ' + e.message);
                 return null;
@@ -161,13 +264,12 @@
                 div.className = 'relative w-24 h-24 rounded-lg overflow-hidden border';
                 div.innerHTML = `
                     <img src="${img.url}" class="w-full h-full object-cover">
-                    <button type="button" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center" onclick="removeImage(${index})">×</button>
+                    <button type="button" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs" onclick="removeImage(${index})">×</button>
                     ${index === 0 ? '<span class="absolute bottom-1 left-1 text-xs bg-purple-500 text-white px-1 rounded">Main</span>' : ''}
                 `;
                 container.appendChild(div);
             });
-            const countSpan = document.getElementById('image-count');
-            if (countSpan) countSpan.textContent = `${uploadedImages.length}/5 images`;
+            document.getElementById('image-count').textContent = `${uploadedImages.length}/5 images`;
         }
 
         window.removeImage = function(index) {
@@ -175,7 +277,6 @@
             displayImages();
         };
 
-        // File upload handler
         const imageInput = document.getElementById('product-images');
         if (imageInput) {
             imageInput.addEventListener('change', async (e) => {
@@ -187,7 +288,7 @@
                     }
                     const url = await uploadImage(file);
                     if (url) {
-                        uploadedImages.push({ url, file });
+                        uploadedImages.push({ url });
                         displayImages();
                     }
                 }
@@ -195,18 +296,46 @@
             });
         }
 
-        // ========== SUBMIT PRODUCT ==========
+        window.addNewBrand = function() {
+            const newBrand = prompt('Enter new brand name:');
+            if (newBrand) {
+                const datalist = document.getElementById('brand-list');
+                const option = document.createElement('option');
+                option.value = newBrand;
+                datalist.appendChild(option);
+                document.getElementById('product-brand').value = newBrand;
+                // Save to Firebase
+                addDoc(collection(db, 'brands'), { name: newBrand, createdAt: new Date().toISOString() });
+            }
+        };
+
         window.submitProduct = async function() {
+            const description = quillEditor ? quillEditor.root.innerHTML : '';
+            
             const productData = {
                 name: document.getElementById('product-name').value,
-                description: document.getElementById('product-description').value,
+                description: description,
+                productType: document.getElementById('product-type').value,
                 category: document.getElementById('product-category').value,
+                subcategory: document.getElementById('product-subcategory').value,
+                tags: currentTags,
                 price: parseFloat(document.getElementById('product-price').value),
-                brand: document.getElementById('product-brand').value,
-                condition: document.getElementById('product-condition').value,
-                quantity: parseInt(document.getElementById('product-quantity').value),
-                material: document.getElementById('product-material').value,
+                salePrice: document.getElementById('has-sale').checked ? parseFloat(document.getElementById('sale-price').value) : null,
+                saleStartDate: document.getElementById('has-sale').checked ? document.getElementById('sale-start-date').value : null,
+                saleEndDate: document.getElementById('has-sale').checked ? document.getElementById('sale-end-date').value : null,
                 sku: document.getElementById('product-sku').value,
+                inStock: document.getElementById('in-stock').value === 'yes',
+                stockQuantity: document.getElementById('in-stock').value === 'yes' ? parseInt(document.getElementById('stock-quantity').value) : 0,
+                status: document.getElementById('product-status').value,
+                weight: document.getElementById('product-type').value === 'physical' ? parseFloat(document.getElementById('product-weight').value) : null,
+                weightUnit: document.getElementById('product-type').value === 'physical' ? document.getElementById('weight-unit').value : null,
+                length: document.getElementById('product-type').value === 'physical' ? parseFloat(document.getElementById('product-length').value) : null,
+                width: document.getElementById('product-type').value === 'physical' ? parseFloat(document.getElementById('product-width').value) : null,
+                height: document.getElementById('product-type').value === 'physical' ? parseFloat(document.getElementById('product-height').value) : null,
+                dimensionUnit: document.getElementById('product-type').value === 'physical' ? document.getElementById('dimension-unit').value : null,
+                shippingClass: document.getElementById('product-type').value === 'physical' ? document.getElementById('shipping-class').value : null,
+                color: document.getElementById('product-color').value,
+                brand: document.getElementById('product-brand').value,
                 images: uploadedImages.map(img => img.url),
                 imageUrl: uploadedImages[0]?.url || '',
                 createdAt: new Date().toISOString()
@@ -221,20 +350,17 @@
             }
         };
 
-        // ========== THEME ==========
         window.toggleTheme = function() {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
 
-        // Initialize
-        updateStepUI();
+        showStep(1);
     </script>
 </head>
 <body class="transition-colors duration-300">
     <div class="min-h-screen">
-        <!-- Top Bar -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <a href="/admin-dashboard.html" class="text-purple-500 hover:text-purple-600">
@@ -254,21 +380,14 @@
             </div>
         </div>
 
-        <div class="max-w-4xl mx-auto p-6">
-            <!-- Progress Steps -->
+        <div class="max-w-5xl mx-auto p-6">
+            <!-- Progress Steps - 5 Steps -->
             <div class="flex mb-8">
-                <div class="flex-1 text-center">
-                    <div class="w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center mx-auto mb-2" id="step1-circle">1</div>
-                    <span class="text-sm font-medium">Basic Information</span>
-                </div>
-                <div class="flex-1 text-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2" id="step2-circle">2</div>
-                    <span class="text-sm font-medium">Additional Details</span>
-                </div>
-                <div class="flex-1 text-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2" id="step3-circle">3</div>
-                    <span class="text-sm font-medium">Product Images</span>
-                </div>
+                <div class="flex-1 text-center"><div class="w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center mx-auto mb-2" id="step1-circle">1</div><span class="text-sm font-medium">Basic Info</span></div>
+                <div class="flex-1 text-center"><div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2" id="step2-circle">2</div><span class="text-sm font-medium">Pricing</span></div>
+                <div class="flex-1 text-center"><div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2" id="step3-circle">3</div><span class="text-sm font-medium">Inventory</span></div>
+                <div class="flex-1 text-center"><div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2" id="step4-circle">4</div><span class="text-sm font-medium">Shipping</span></div>
+                <div class="flex-1 text-center"><div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-2" id="step5-circle">5</div><span class="text-sm font-medium">Images</span></div>
             </div>
 
             <!-- Step 1: Basic Information -->
@@ -277,108 +396,237 @@
                     <h2 class="text-xl font-bold mb-6">Basic Information</h2>
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-sm font-medium mb-2">Product Title <span class="text-red-500">*</span></label>
-                            <input type="text" id="product-name" placeholder="e.g., Modern Leather Sofa" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
-                            <p class="text-xs opacity-60 mt-1">A clear, descriptive title helps buyers find your product</p>
+                            <label class="block text-sm font-medium mb-2">Product Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="product-name" placeholder="e.g., Modern Leather Sofa" class="w-full px-4 py-3 rounded-lg border">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Category <span class="text-red-500">*</span></label>
-                            <select id="product-category" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
-                                <option value="">Select category</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Price (AED) <span class="text-red-500">*</span></label>
-                            <input type="number" id="product-price" placeholder="0" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Condition <span class="text-red-500">*</span></label>
-                            <select id="product-condition" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
-                                <option value="New">New</option>
-                                <option value="Like New">Like New</option>
-                                <option value="Good">Good</option>
-                                <option value="Fair">Fair</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 2: Additional Details -->
-            <div id="step2" class="step-content hidden">
-                <div class="card rounded-xl p-8">
-                    <h2 class="text-xl font-bold mb-6">Additional Details</h2>
-                    <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Description <span class="text-red-500">*</span></label>
-                            <textarea id="product-description" rows="5" placeholder="Describe your product in detail. Include information about materials, dimensions, features, and condition..." class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500"></textarea>
+                            <div id="description-editor" style="height: 200px;"></div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium mb-2">Brand</label>
-                                <input type="text" id="product-brand" placeholder="e.g., IKEA, Ashley Furniture" class="w-full px-4 py-3 rounded-lg border">
+                                <label class="block text-sm font-medium mb-2">Product Type <span class="text-red-500">*</span></label>
+                                <select id="product-type" onchange="toggleShippingFields()" class="w-full px-4 py-3 rounded-lg border">
+                                    <option value="">Select type</option>
+                                    <option value="physical">Physical Product</option>
+                                    <option value="digital">Digital Product</option>
+                                    <option value="service">Service</option>
+                                    <option value="subscription">Subscription</option>
+                                </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2">Quantity <span class="text-red-500">*</span></label>
-                                <input type="number" id="product-quantity" value="1" min="1" class="w-full px-4 py-3 rounded-lg border">
+                                <label class="block text-sm font-medium mb-2">Category <span class="text-red-500">*</span></label>
+                                <select id="product-category" class="w-full px-4 py-3 rounded-lg border">
+                                    <option value="">Select category</option>
+                                </select>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium mb-2">Material</label>
-                                <input type="text" id="product-material" placeholder="e.g., Wood, Leather, Fabric" class="w-full px-4 py-3 rounded-lg border">
+                                <label class="block text-sm font-medium mb-2">Subcategory</label>
+                                <select id="product-subcategory" class="w-full px-4 py-3 rounded-lg border">
+                                    <option value="">Select subcategory</option>
+                                </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2">SKU (Stock Keeping Unit)</label>
-                                <input type="text" id="product-sku" placeholder="e.g., SOFA-001" class="w-full px-4 py-3 rounded-lg border">
-                                <p class="text-xs opacity-60 mt-1">Optional unique identifier for your product</p>
+                                <label class="block text-sm font-medium mb-2">Tags</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="tag-input" placeholder="Add tag" class="flex-1 px-4 py-3 rounded-lg border">
+                                    <button type="button" onclick="addTag()" class="px-4 py-3 bg-gray-500 text-white rounded-lg">Add</button>
+                                </div>
+                                <div id="tags-container" class="flex flex-wrap gap-2 mt-3"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Step 3: Product Images -->
+            <!-- Step 2: Pricing -->
+            <div id="step2" class="step-content hidden">
+                <div class="card rounded-xl p-8">
+                    <h2 class="text-xl font-bold mb-6">Pricing</h2>
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Regular Price (AED) <span class="text-red-500">*</span></label>
+                                <input type="number" id="product-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Compare at Price (AED)</label>
+                                <input type="number" id="compare-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border">
+                                <p class="text-xs opacity-60 mt-1">Shows original price crossed out next to sale price</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="has-sale" onchange="toggleSaleFields()" class="w-4 h-4">
+                                <span class="text-sm font-medium">Enable Sale Price</span>
+                            </label>
+                        </div>
+                        <div id="sale-fields" style="display: none;" class="space-y-4 pl-6 border-l-2 border-purple-300">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Sale Price (AED)</label>
+                                    <input type="number" id="sale-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Sale Start Date</label>
+                                    <input type="date" id="sale-start-date" class="w-full px-4 py-3 rounded-lg border">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Sale End Date</label>
+                                    <input type="date" id="sale-end-date" class="w-full px-4 py-3 rounded-lg border">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Inventory & Stock -->
             <div id="step3" class="step-content hidden">
                 <div class="card rounded-xl p-8">
-                    <h2 class="text-xl font-bold mb-6">Product Images</h2>
-                    
-                    <!-- Upload Area -->
-                    <div class="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition" onclick="document.getElementById('product-images').click()">
-                        <i class="fas fa-cloud-upload-alt text-5xl text-purple-500 mb-4"></i>
-                        <p class="text-lg font-medium">Click or drag to upload</p>
-                        <p class="text-sm opacity-60 mt-1">Upload up to 5 high-quality images</p>
-                        <input type="file" id="product-images" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
+                    <h2 class="text-xl font-bold mb-6">Inventory & Stock</h2>
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">SKU <span class="text-red-500">*</span></label>
+                                <input type="text" id="product-sku" placeholder="Unique product code" class="w-full px-4 py-3 rounded-lg border">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Stock Status</label>
+                                <select id="in-stock" onchange="toggleStockFields()" class="w-full px-4 py-3 rounded-lg border">
+                                    <option value="yes">In Stock</option>
+                                    <option value="no">Out of Stock</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="stock-quantity-field">
+                            <label class="block text-sm font-medium mb-2">Stock Quantity</label>
+                            <input type="number" id="stock-quantity" value="0" min="0" class="w-full px-4 py-3 rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Product Status</label>
+                            <select id="product-status" class="w-full px-4 py-3 rounded-lg border">
+                                <option value="draft">Draft</option>
+                                <option value="published">Published</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
                     </div>
-                    
-                    <!-- Image Count -->
-                    <div class="mt-4 text-right">
-                        <span id="image-count" class="text-sm opacity-60">0/5 images</span>
+                </div>
+            </div>
+
+            <!-- Step 4: Shipping (Physical Products Only) -->
+            <div id="step4" class="step-content hidden">
+                <div class="card rounded-xl p-8">
+                    <h2 class="text-xl font-bold mb-6">Shipping Information</h2>
+                    <div id="shipping-section" style="display: none;">
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Weight</label>
+                                    <div class="flex gap-2">
+                                        <input type="number" id="product-weight" step="0.01" class="flex-1 px-4 py-3 rounded-lg border">
+                                        <select id="weight-unit" class="w-24 px-4 py-3 rounded-lg border">
+                                            <option value="kg">kg</option>
+                                            <option value="lb">lb</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Shipping Class</label>
+                                    <select id="shipping-class" class="w-full px-4 py-3 rounded-lg border">
+                                        <option value="standard">Standard</option>
+                                        <option value="express">Express</option>
+                                        <option value="fragile">Fragile</option>
+                                        <option value="oversized">Oversized</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Dimensions (L × W × H)</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <input type="number" id="product-length" placeholder="Length" step="0.01" class="px-4 py-3 rounded-lg border">
+                                    <input type="number" id="product-width" placeholder="Width" step="0.01" class="px-4 py-3 rounded-lg border">
+                                    <input type="number" id="product-height" placeholder="Height" step="0.01" class="px-4 py-3 rounded-lg border">
+                                </div>
+                                <div class="mt-2">
+                                    <select id="dimension-unit" class="w-24 px-4 py-2 rounded-lg border">
+                                        <option value="cm">cm</option>
+                                        <option value="in">in</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <!-- Images Preview Grid -->
-                    <div id="images-preview-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+                    <div id="shipping-na" class="text-center py-8 opacity-60">
+                        <i class="fas fa-truck text-4xl mb-2"></i>
+                        <p>Shipping information only applies to physical products.</p>
+                        <p class="text-sm">Select "Physical Product" in Basic Info to enable shipping fields.</p>
                     </div>
-                    
-                    <!-- Image Guidelines -->
-                    <div class="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                        <h4 class="font-semibold mb-2">Image Guidelines</h4>
-                        <ul class="text-sm opacity-70 space-y-1">
-                            <li>• Upload up to 5 high-quality images</li>
-                            <li>• Supported formats: JPEG, PNG, WebP</li>
-                            <li>• Images are automatically compressed for faster uploads</li>
-                            <li>• First image will be used as the main product image</li>
-                            <li>• Use good lighting and show multiple angles</li>
-                        </ul>
+                </div>
+            </div>
+
+            <!-- Step 5: Attributes & Images -->
+            <div id="step5" class="step-content hidden">
+                <div class="card rounded-xl p-8">
+                    <h2 class="text-xl font-bold mb-6">Attributes & Images</h2>
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Color</label>
+                                <div class="flex gap-2">
+                                    <select id="product-color" class="flex-1 px-4 py-3 rounded-lg border">
+                                        <option value="">Select color</option>
+                                        <option value="Red">Red</option>
+                                        <option value="Blue">Blue</option>
+                                        <option value="Green">Green</option>
+                                        <option value="Black">Black</option>
+                                        <option value="White">White</option>
+                                        <option value="Brown">Brown</option>
+                                        <option value="Gray">Gray</option>
+                                        <option value="Yellow">Yellow</option>
+                                    </select>
+                                    <input type="color" id="product-color-hex" class="w-16 h-12 rounded-lg border cursor-pointer">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Brand / Supplier</label>
+                                <input type="text" id="product-brand" list="brand-list" placeholder="Type or select brand" class="w-full px-4 py-3 rounded-lg border">
+                                <datalist id="brand-list"></datalist>
+                                <button type="button" onclick="addNewBrand()" class="text-purple-500 text-sm mt-1 hover:underline">+ Add new brand</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Product Images</label>
+                            <div class="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center cursor-pointer hover:bg-purple-50 transition" onclick="document.getElementById('product-images').click()">
+                                <i class="fas fa-cloud-upload-alt text-5xl text-purple-500 mb-4"></i>
+                                <p class="text-lg font-medium">Click or drag to upload</p>
+                                <p class="text-sm opacity-60 mt-1">Upload up to 5 high-quality images</p>
+                                <input type="file" id="product-images" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
+                            </div>
+                            <div class="mt-4 text-right"><span id="image-count" class="text-sm opacity-60">0/5 images</span></div>
+                            <div id="images-preview-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6"></div>
+                            <div class="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                <h4 class="font-semibold mb-2">Image Guidelines</h4>
+                                <ul class="text-sm opacity-70 space-y-1">
+                                    <li>• Upload up to 5 high-quality images</li>
+                                    <li>• Supported formats: JPEG, PNG, WebP</li>
+                                    <li>• First image will be used as the main product image</li>
+                                    <li>• Use good lighting and show multiple angles</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Navigation Buttons -->
             <div class="flex justify-between mt-8">
-                <button id="prev-btn" onclick="prevStep()" class="px-8 py-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition hidden">← Back</button>
+                <button id="prev-btn" onclick="prevStep()" class="px-8 py-3 border rounded-lg hover:bg-gray-100 transition" style="display: none;">← Back</button>
                 <button id="next-btn" onclick="nextStep()" class="px-8 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition ml-auto">Next →</button>
-                <button id="submit-btn" onclick="submitProduct()" class="px-8 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition hidden">Create Product</button>
+                <button id="submit-btn" onclick="submitProduct()" class="px-8 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition" style="display: none;">Create Product</button>
             </div>
         </div>
     </div>
