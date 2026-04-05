@@ -71,7 +71,6 @@
         function checkForSection() {
             const urlParams = new URLSearchParams(window.location.search);
             const section = urlParams.get('section');
-            
             if (section === 'products') {
                 setTimeout(() => {
                     const productsNav = Array.from(document.querySelectorAll('.nav-item')).find(n => n.textContent.trim() === 'Products');
@@ -121,7 +120,9 @@
             if (dropdown) {
                 const isHidden = dropdown.classList.contains('hidden');
                 dropdown.classList.toggle('hidden');
-                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+                if (chevron) {
+                    chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+                }
             }
         };
 
@@ -256,40 +257,26 @@
 
         // ========== PRODUCT FUNCTIONS ==========
         async function loadProducts() {
-            const container = document.getElementById('products-grid-container');
+            const container = document.getElementById('products-list');
             if (!container) return;
-            container.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">Loading...</div>';
+            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading products...</div>';
             try {
                 const snap = await getDocs(query(collection(db, 'products'), orderBy('createdAt', 'desc')));
-                allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderProducts();
-            } catch (e) { container.innerHTML = '<div class="text-center py-8 col-span-full text-red-500">Error loading products.</div>'; }
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No products yet. <a href="/add-product.html" class="text-purple-500">Add your first product</a></div>';
+                    return;
+                }
+                let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Image</th><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Price</th><th class="px-4 py-2 text-left">Stock</th><th class="px-4 py-2 text-left">Actions</th></thead><tbody>';
+                snap.docs.forEach(doc => {
+                    const p = doc.data();
+                    html += `<tr class="border-b"><td class="px-4 py-2">${p.imageUrl ? `<img src="${p.imageUrl}" class="w-10 h-10 object-cover rounded">` : '<div class="w-10 h-10 bg-gray-200 rounded"></div>'}</td><td class="px-4 py-2">${p.name}</td><td class="px-4 py-2">AED ${p.price}</td><td class="px-4 py-2">${p.inStock ? 'In Stock' : 'Out of Stock'}</td><td class="px-4 py-2"><a href="/add-product.html?id=${doc.id}" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></a><button onclick="deleteProduct('${doc.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`;
+                });
+                html += '</tbody></table></div><div class="mt-4"><a href="/add-product.html" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition inline-block">+ Add New Product</a></div>';
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading products</div>';
+            }
         }
-
-        function renderProducts() {
-            const container = document.getElementById('products-grid-container');
-            if (!container) return;
-            let list = allProducts;
-            if (currentFilter !== 'all') list = list.filter(p => p.category === currentFilter);
-            if (currentSearch) { const q = currentSearch.toLowerCase(); list = list.filter(p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)); }
-            if (!list.length) { container.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">No products found.</div>'; return; }
-            
-            container.innerHTML = list.map(p => {
-                const isOnSale = p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
-                const shortDesc = (p.description || 'No description').replace(/<[^>]*>/g, '').substring(0, 80);
-                const displayImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || null);
-                return `<div class="product-card card rounded-xl overflow-hidden hover:shadow-lg transition-all" onclick="window.location.href='/product-view.html?id=${p.id}&from=products&section=products'"><div class="relative"><div class="aspect-square bg-gray-100 flex items-center justify-center">${displayImage ? `<img src="${displayImage}" class="w-full h-full object-cover" alt="${p.name}">` : `<i class="fas fa-box text-6xl text-gray-400"></i>`}</div>${isOnSale ? '<span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">SALE</span>' : ''}</div><div class="p-4"><div class="flex justify-between items-center mb-1"><div class="text-xs text-purple-500">${p.category || 'Uncategorized'}</div><div class="relative"><button onclick="event.stopPropagation(); toggleProductMenu('${p.id}')" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"><i class="fas fa-ellipsis-v"></i></button><div id="menu-${p.id}" class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-10 border"><a href="/product-view.html?id=${p.id}" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-eye text-blue-500 w-4"></i>View</a><a href="/add-product.html?id=${p.id}" class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-edit text-green-500 w-4"></i>Edit</a><button onclick="event.stopPropagation(); deleteProduct('${p.id}')" class="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-trash w-4"></i>Delete</button></div></div></div><h4 class="font-semibold text-lg mb-1 line-clamp-1">${p.name || 'Untitled'}</h4><p class="text-sm opacity-70 mb-2 line-clamp-2">${shortDesc}...</p><div class="flex items-center gap-2 mt-2">${isOnSale ? `<span class="text-xl font-bold text-red-500">AED ${p.salePrice}</span><span class="text-sm text-gray-400 line-through">AED ${p.price}</span>` : `<span class="text-xl font-bold text-purple-500">AED ${p.price}</span>`}</div><div class="mt-3"><span class="text-xs px-2 py-1 rounded-full ${p.inStock ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}">${p.inStock ? 'In Stock' : 'Out of Stock'}</span></div></div></div>`;
-            }).join('');
-        }
-
-        window.toggleProductMenu = function(productId) {
-            event.stopPropagation();
-            document.querySelectorAll('[id^="menu-"]').forEach(menu => { if (menu.id !== `menu-${productId}`) menu.classList.add('hidden'); });
-            const menu = document.getElementById(`menu-${productId}`);
-            if (menu) menu.classList.toggle('hidden');
-        };
-
-        document.addEventListener('click', function() { document.querySelectorAll('[id^="menu-"]').forEach(menu => menu.classList.add('hidden')); });
 
         window.deleteProduct = async (id) => {
             if (!confirm('Delete this product? This cannot be undone.')) return;
@@ -297,39 +284,26 @@
             catch (error) { showNotification('Error deleting product', 'error'); }
         };
 
-        window.filterProducts = (cat) => {
-            currentFilter = cat;
-            document.querySelectorAll('.category-filter').forEach(b => b.classList.toggle('active', b.getAttribute('data-category') === cat));
-            renderProducts();
-        };
-
-        const searchInput = document.getElementById('product-search');
-        if (searchInput) { searchInput.addEventListener('input', (e) => { currentSearch = e.target.value; renderProducts(); }); }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
-        }
-
         // ========== CATEGORY FUNCTIONS ==========
         async function loadCategories() {
-            const snap = await getDocs(collection(db, 'categories'));
-            const allCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            const filterContainer = document.getElementById('category-filter-buttons');
-            if (filterContainer) {
-                filterContainer.innerHTML = `<button onclick="filterProducts('all')" data-category="all" class="category-filter active px-4 py-2 rounded-lg text-sm font-medium transition">All</button>`;
-                allCategories.forEach(c => filterContainer.innerHTML += `<button onclick="filterProducts('${c.name}')" data-category="${c.name}" class="category-filter px-4 py-2 rounded-lg text-sm font-medium transition">${c.name}</button>`);
-            }
             const container = document.getElementById('categories-list');
-            if (container) {
-                if (!allCategories.length) { container.innerHTML = '<div class="text-center py-8 opacity-60">No categories yet.</div>'; return; }
-                let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Created</th><th class="px-4 py-2 text-left">Action</th></thead><tbody>';
-                allCategories.forEach(c => html += `<tr class="border-b"><td class="px-4 py-2">${c.name}</td><td class="px-4 py-2 text-sm opacity-70">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td><td class="px-4 py-2"><button onclick="deleteCategory('${c.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`);
-                html += '</tbody></table>';
+            if (!container) return;
+            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading categories...</div>';
+            try {
+                const snap = await getDocs(collection(db, 'categories'));
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No categories yet.</div>';
+                    return;
+                }
+                let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Created</th><th class="px-4 py-2 text-left">Actions</th></thead><tbody>';
+                snap.docs.forEach(doc => {
+                    const c = doc.data();
+                    html += `<tr class="border-b"><td class="px-4 py-2">${c.name}</td><td class="px-4 py-2 text-sm">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td><td class="px-4 py-2"><button onclick="deleteCategory('${doc.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`;
+                });
+                html += '</tbody></table></div><div class="mt-4"><button onclick="showAddCategoryModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">+ Add Category</button></div>';
                 container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading categories</div>';
             }
         }
 
@@ -346,47 +320,97 @@
             await deleteDoc(doc(db, 'categories', id)); showNotification('Category deleted'); loadCategories();
         };
 
-        // ========== SELLER & ORDER FUNCTIONS ==========
+        // ========== SELLER FUNCTIONS ==========
         async function loadSellers() {
-            const snap = await getDocs(collection(db, 'users'));
-            const sellers = snap.docs.filter(d => d.data().role === 'seller');
-            const container = document.getElementById('sellers-table-container');
+            const container = document.getElementById('sellers-list');
             if (!container) return;
-            if (!sellers.length) { container.innerHTML = '<div class="text-center py-8 opacity-60">No sellers yet.</div>'; return; }
-            let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Email</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th></thead><tbody>';
-            sellers.forEach(d => { const s = d.data(); html += `<tr class="border-b"><td class="px-4 py-2">${s.name || 'N/A'}</td><td class="px-4 py-2">${s.email}</td><td class="px-4 py-2"><span class="text-green-500">Active</span></td><td class="px-4 py-2 text-sm opacity-70">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}</td></tr>`; });
-            html += '</tbody></table>';
-            container.innerHTML = html;
+            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading sellers...</div>';
+            try {
+                const snap = await getDocs(collection(db, 'users'));
+                const sellers = snap.docs.filter(d => d.data().role === 'seller');
+                if (sellers.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No sellers yet.</div>';
+                    return;
+                }
+                let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Email</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th></thead><tbody>';
+                sellers.forEach(doc => {
+                    const s = doc.data();
+                    html += `<tr class="border-b"><td class="px-4 py-2">${s.name || 'N/A'}</td><td class="px-4 py-2">${s.email}</td><td class="px-4 py-2"><span class="text-green-500">Active</span></td><td class="px-4 py-2 text-sm">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}</td>`;
+                });
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading sellers</div>';
+            }
         }
 
+        // ========== ORDER FUNCTIONS ==========
         async function loadOrders() {
-            const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
-            const container = document.getElementById('orders-table-container');
+            const container = document.getElementById('orders-list');
             if (!container) return;
-            if (snap.empty) { container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet.</div>'; return; }
-            let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th></thead><tbody>';
-            snap.docs.forEach(d => { const o = d.data(); html += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${o.customerName || 'N/A'}</td><td class="px-4 py-2">AED ${o.totalAmount}</td><td class="px-4 py-2"><span class="status-badge status-${o.status || 'pending'}">${o.status || 'pending'}</span></td><td class="px-4 py-2 text-sm opacity-70">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td></tr>`; });
-            html += '</tbody></table>';
-            container.innerHTML = html;
+            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading orders...</div>';
+            try {
+                const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet.</div>';
+                    return;
+                }
+                let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th></thead><tbody>';
+                snap.docs.forEach(doc => {
+                    const o = doc.data();
+                    html += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${doc.id.slice(0,8)}</td><td class="px-4 py-2">${o.customerName || 'N/A'}</td><td class="px-4 py-2">AED ${o.totalAmount}</td><td class="px-4 py-2"><span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-500">${o.status}</span></td><td class="px-4 py-2 text-sm">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>`;
+                });
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading orders</div>';
+            }
         }
 
+        // ========== NOTIFICATIONS & SETTINGS ==========
         function loadNotifications() { const el = document.getElementById('notifications-list'); if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Notifications will appear here.</div>'; }
         function loadSettings() { const el = document.getElementById('settings-content'); if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Settings panel coming soon.</div>'; }
 
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
         window.viewOrderDetails = (id) => alert(`Order #${id.slice(0,8)} — Full details coming soon.`);
         
+        // ========== MAIN NAVIGATION ==========
         window.showSection = (section, clickedEl) => {
+            // Hide all sections
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(`section-${section}`)?.classList.remove('hidden');
+            
+            // Show selected section
+            const targetSection = document.getElementById(`section-${section}`);
+            if (targetSection) targetSection.classList.remove('hidden');
+            
+            // Update active nav item
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            clickedEl?.classList.add('active');
-            if (section === 'dashboard') loadDashboard();
-            if (section === 'products') loadProducts();
-            if (section === 'sellers') loadSellers();
-            if (section === 'orders') loadOrders();
-            if (section === 'categories') loadCategories();
-            if (section === 'notifications') loadNotifications();
-            if (section === 'settings') loadSettings();
+            if (clickedEl) clickedEl.classList.add('active');
+            
+            // Load data based on section
+            if (section === 'dashboard') {
+                loadDashboard();
+            } else if (section === 'products') {
+                loadProducts();
+            } else if (section === 'categories') {
+                loadCategories();
+            } else if (section === 'orders') {
+                loadOrders();
+            } else if (section === 'sellers') {
+                loadSellers();
+            } else if (section === 'notifications') {
+                loadNotifications();
+            } else if (section === 'settings') {
+                loadSettings();
+            }
+            
             closeMobileMenu();
         };
 
@@ -398,6 +422,7 @@
 <body class="transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
+    <!-- Mobile Sidebar -->
     <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
         <div class="p-4 border-b flex justify-between items-center">
             <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
@@ -418,6 +443,7 @@
         <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
     </aside>
 
+    <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
         <div class="p-4 border-b"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Admin Panel</p></div>
         <nav class="p-4">
@@ -432,6 +458,7 @@
         <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
     </aside>
 
+    <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -476,33 +503,42 @@
             <!-- Products Section -->
             <div id="section-products" class="section hidden">
                 <div class="card p-6 rounded-xl">
-                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                        <h3 class="text-lg font-semibold">Products</h3>
-                        <div class="flex gap-3 flex-wrap">
-                            <div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="product-search" placeholder="Search products..." class="pl-10 pr-4 py-2 rounded-lg border"></div>
-                            <a href="/add-product.html" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition inline-block">+ Add Product</a>
-                        </div>
-                    </div>
-                    <div class="mb-6"><div class="flex flex-wrap gap-2" id="category-filter-buttons"><button onclick="filterProducts('all')" data-category="all" class="category-filter active px-4 py-2 rounded-lg text-sm font-medium transition">All</button></div></div>
-                    <div id="products-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"><div class="text-center py-8 col-span-full opacity-60">Loading...</div></div>
+                    <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Products</h3><a href="/add-product.html" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">+ Add Product</a></div>
+                    <div id="products-list" class="overflow-x-auto"><div class="text-center py-8 opacity-60">Loading products...</div></div>
                 </div>
             </div>
 
             <!-- Categories Section -->
             <div id="section-categories" class="section hidden">
                 <div class="card p-6 rounded-xl">
-                    <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Categories</h3><button onclick="showAddCategoryModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg">+ Add Category</button></div>
-                    <div id="categories-list" class="overflow-x-auto">Loading...</div>
+                    <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Categories</h3></div>
+                    <div id="categories-list" class="overflow-x-auto"><div class="text-center py-8 opacity-60">Loading categories...</div></div>
                 </div>
             </div>
 
-            <div id="section-orders" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">All Orders</h3><div id="orders-table-container" class="overflow-x-auto">Loading...</div></div></div>
-            <div id="section-sellers" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Seller Management</h3><div id="sellers-table-container" class="overflow-x-auto">Loading...</div></div></div>
-            <div id="section-notifications" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Notifications</h3><div id="notifications-list">Loading...</div></div></div>
-            <div id="section-settings" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div></div>
+            <!-- Orders Section -->
+            <div id="section-orders" class="section hidden">
+                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">All Orders</h3><div id="orders-list" class="overflow-x-auto"><div class="text-center py-8 opacity-60">Loading orders...</div></div></div>
+            </div>
+
+            <!-- Sellers Section -->
+            <div id="section-sellers" class="section hidden">
+                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Seller Management</h3><div id="sellers-list" class="overflow-x-auto"><div class="text-center py-8 opacity-60">Loading sellers...</div></div></div>
+            </div>
+
+            <!-- Notifications Section -->
+            <div id="section-notifications" class="section hidden">
+                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Notifications</h3><div id="notifications-list">Loading...</div></div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="section-settings" class="section hidden">
+                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div>
+            </div>
         </div>
     </main>
 
+    <!-- Category Modal -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="card rounded-xl p-6 max-w-md w-full mx-4">
             <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Add Category</h3><button onclick="closeCategoryModal()" class="text-2xl">&times;</button></div>
