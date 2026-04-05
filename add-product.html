@@ -32,7 +32,7 @@
 
         let quillEditor = null;
         let productId = null;
-        let uploadedImageUrl = null;
+        let uploadedImages = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -73,7 +73,10 @@
             if (productId) {
                 document.getElementById('form-title').textContent = 'Edit Product';
                 document.getElementById('delete-btn').classList.remove('hidden');
+                document.getElementById('edit-mode').classList.add('hidden');
                 loadProductData();
+            } else {
+                document.getElementById('add-mode').classList.remove('hidden');
             }
         }
 
@@ -90,10 +93,12 @@
                 document.getElementById('product-brand').value = p.brand || '';
                 document.getElementById('product-color').value = p.color || '';
                 if (quillEditor) quillEditor.root.innerHTML = p.description || '';
-                if (p.imageUrl) {
-                    uploadedImageUrl = p.imageUrl;
-                    document.getElementById('image-preview').innerHTML = `<img src="${p.imageUrl}" class="w-32 h-32 object-cover rounded-lg"><button type="button" onclick="removeImage()" class="text-red-500 text-sm mt-1">Remove</button>`;
-                    document.getElementById('image-preview').classList.remove('hidden');
+                if (p.images && p.images.length > 0) {
+                    uploadedImages = p.images.map(url => ({ url }));
+                    displayImages();
+                } else if (p.imageUrl) {
+                    uploadedImages = [{ url: p.imageUrl }];
+                    displayImages();
                 }
             }
         }
@@ -109,25 +114,50 @@
             } catch (e) { alert('Upload failed: ' + e.message); return null; }
         }
 
-        window.previewImage = function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('image-preview').innerHTML = `<img src="${e.target.result}" class="w-32 h-32 object-cover rounded-lg"><button type="button" onclick="removeImage()" class="text-red-500 text-sm mt-1">Remove</button>`;
-                    document.getElementById('image-preview').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-                uploadImage(file).then(url => { if (url) uploadedImageUrl = url; });
-            }
+        function displayImages() {
+            const container = document.getElementById('images-preview-container');
+            if (!container) return;
+            container.innerHTML = '';
+            uploadedImages.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'relative w-24 h-24 rounded-lg overflow-hidden border';
+                div.innerHTML = `
+                    <img src="${img.url}" class="w-full h-full object-cover">
+                    <button type="button" class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600" onclick="removeImage(${index})">×</button>
+                    ${index === 0 ? '<span class="absolute bottom-1 left-1 text-xs bg-purple-500 text-white px-1 rounded">Main</span>' : ''}
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('image-count').textContent = `${uploadedImages.length}/5 images`;
+        }
+
+        window.removeImage = function(index) {
+            uploadedImages.splice(index, 1);
+            displayImages();
         };
 
-        window.removeImage = function() {
-            uploadedImageUrl = null;
-            document.getElementById('image-preview').innerHTML = '';
-            document.getElementById('image-preview').classList.add('hidden');
-            document.getElementById('product-image').value = '';
+        window.addMoreImages = function() {
+            document.getElementById('product-images').click();
         };
+
+        const imageInput = document.getElementById('product-images');
+        if (imageInput) {
+            imageInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                for (const file of files) {
+                    if (uploadedImages.length >= 5) {
+                        alert('Maximum 5 images allowed');
+                        break;
+                    }
+                    const url = await uploadImage(file);
+                    if (url) {
+                        uploadedImages.push({ url });
+                        displayImages();
+                    }
+                }
+                imageInput.value = '';
+            });
+        }
 
         window.deleteProduct = async function() {
             if (!confirm('Delete this product? This cannot be undone.')) return;
@@ -150,7 +180,7 @@
             if (!category) { alert('Please select a category'); return; }
             if (!price || price <= 0) { alert('Please enter a valid price'); return; }
             if (!description || description === '<p><br></p>') { alert('Please enter product description'); return; }
-            if (!uploadedImageUrl) { alert('Please upload a product image'); return; }
+            if (uploadedImages.length === 0) { alert('Please upload at least one product image'); return; }
 
             const productData = {
                 name: name,
@@ -162,7 +192,8 @@
                 status: document.getElementById('product-status').value,
                 brand: document.getElementById('product-brand').value,
                 color: document.getElementById('product-color').value,
-                imageUrl: uploadedImageUrl,
+                images: uploadedImages.map(img => img.url),
+                imageUrl: uploadedImages[0]?.url || '',
                 updatedAt: new Date().toISOString()
             };
             
@@ -186,6 +217,7 @@
 </head>
 <body class="transition-colors duration-300">
     <div class="min-h-screen">
+        <!-- Top Bar -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <a href="/admin-dashboard.html" class="text-purple-500 hover:text-purple-600"><i class="fas fa-arrow-left text-xl"></i></a>
@@ -198,28 +230,54 @@
         </div>
 
         <div class="max-w-4xl mx-auto p-6">
+            <!-- Edit Mode Banner (only shown when editing) -->
+            <div id="edit-mode" class="bg-purple-100 dark:bg-purple-900/30 rounded-lg p-4 mb-6 flex justify-between items-center">
+                <div>
+                    <span class="font-semibold">Edit Mode</span>
+                    <p class="text-sm opacity-70">You are editing an existing product</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="deleteProduct()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Delete</button>
+                </div>
+            </div>
+
+            <!-- Add Mode Banner (only shown when adding new) -->
+            <div id="add-mode" class="bg-green-100 dark:bg-green-900/30 rounded-lg p-4 mb-6 hidden">
+                <span class="font-semibold">Add New Product</span>
+                <p class="text-sm opacity-70">Fill in the details to create a new product</p>
+            </div>
+
             <div class="card rounded-xl p-8">
                 <form onsubmit="event.preventDefault(); submitProduct();" class="space-y-6">
-                    <!-- 1. Product Image -->
+                    <!-- Product Images Section -->
                     <div>
-                        <label class="block text-sm font-medium mb-2">Product Image <span class="text-red-500">*</span></label>
-                        <input type="file" id="product-image" accept="image/jpeg,image/png,image/webp" onchange="previewImage(event)" class="w-full px-4 py-3 rounded-lg border">
-                        <div id="image-preview" class="mt-3 hidden"></div>
+                        <label class="block text-sm font-medium mb-2">Product Images <span class="text-red-500">*</span></label>
+                        <div class="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition" onclick="document.getElementById('product-images').click()">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-purple-500 mb-2"></i>
+                            <p class="text-sm font-medium">Click or drag to upload images</p>
+                            <p class="text-xs opacity-60 mt-1">Upload up to 5 images (JPEG, PNG, WebP)</p>
+                            <input type="file" id="product-images" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <span id="image-count" class="text-sm opacity-60">0/5 images</span>
+                            <button type="button" onclick="addMoreImages()" class="text-purple-500 text-sm hover:underline">+ Add more images</button>
+                        </div>
+                        <div id="images-preview-container" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4"></div>
                     </div>
 
-                    <!-- 2. Product Name (Full width) -->
+                    <!-- Product Name -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Product Name <span class="text-red-500">*</span></label>
                         <input type="text" id="product-name" class="w-full px-4 py-3 rounded-lg border">
                     </div>
 
-                    <!-- 3. Description (Full width) -->
+                    <!-- Description -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Description <span class="text-red-500">*</span></label>
                         <div id="description-editor" style="height: 200px;"></div>
                     </div>
 
-                    <!-- 4. Sale Price & Regular Price (50/50) -->
+                    <!-- Price Row -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2">Regular Price (AED) <span class="text-red-500">*</span></label>
@@ -232,13 +290,15 @@
                         </div>
                     </div>
 
-                    <!-- 5. Stock (50%) and Category (50%) -->
+                    <!-- Product Details Row -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium mb-2">Stock Status</label>
-                            <select id="in-stock" class="w-full px-4 py-3 rounded-lg border">
-                                <option value="yes" selected>In Stock</option>
-                                <option value="no">Out of Stock</option>
+                            <label class="block text-sm font-medium mb-2">Condition</label>
+                            <select id="product-condition" class="w-full px-4 py-3 rounded-lg border">
+                                <option value="New">New</option>
+                                <option value="Like New">Like New</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
                             </select>
                         </div>
                         <div>
@@ -249,14 +309,10 @@
                         </div>
                     </div>
 
-                    <!-- 6. Visibility (50%) and Brand (50%) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium mb-2">Visibility</label>
-                            <select id="product-status" class="w-full px-4 py-3 rounded-lg border">
-                                <option value="published" selected>Published</option>
-                                <option value="draft">Draft</option>
-                            </select>
+                            <label class="block text-sm font-medium mb-2">Quantity</label>
+                            <input type="number" id="product-quantity" value="1" min="1" class="w-full px-4 py-3 rounded-lg border">
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-2">Brand</label>
@@ -264,16 +320,33 @@
                         </div>
                     </div>
 
-                    <!-- 7. Color (Full width optional) -->
+                    <!-- Stock & Visibility -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Stock Status</label>
+                            <select id="in-stock" class="w-full px-4 py-3 rounded-lg border">
+                                <option value="yes" selected>In Stock</option>
+                                <option value="no">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Visibility</label>
+                            <select id="product-status" class="w-full px-4 py-3 rounded-lg border">
+                                <option value="published" selected>Published</option>
+                                <option value="draft">Draft</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Color -->
                     <div>
                         <label class="block text-sm font-medium mb-2">Color</label>
                         <input type="text" id="product-color" class="w-full px-4 py-3 rounded-lg border">
                     </div>
 
-                    <!-- Submit & Delete Buttons -->
+                    <!-- Buttons -->
                     <div class="flex gap-4 pt-4">
                         <button type="submit" class="flex-1 bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition">Save Product</button>
-                        <button type="button" id="delete-btn" onclick="deleteProduct()" class="hidden flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition">Delete Product</button>
                         <a href="/admin-dashboard.html" class="flex-1 border py-3 rounded-lg text-center hover:bg-gray-100 transition">Cancel</a>
                     </div>
                 </form>
