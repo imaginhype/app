@@ -96,7 +96,6 @@
             setTimeout(() => notification.remove(), 3000);
         }
 
-        // ========== PRODUCT MANAGEMENT ==========
         async function loadProducts() {
             const container = document.getElementById('products-grid-container');
             if (!container) return;
@@ -164,11 +163,9 @@
             });
         }
 
-        // ========== CATEGORIES ==========
-        let allCategories = [];
         async function loadCategories() {
             const snap = await getDocs(collection(db, 'categories'));
-            allCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const allCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             const filterContainer = document.getElementById('category-filter-buttons');
             if (filterContainer) {
                 filterContainer.innerHTML = `<button onclick="filterProducts('all')" data-category="all" class="category-filter active px-4 py-2 rounded-lg text-sm font-medium transition">All</button>`;
@@ -179,7 +176,7 @@
                 if (!allCategories.length) { container.innerHTML = '<div class="text-center py-8 opacity-60">No categories yet.</div>'; return; }
                 let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Created</th><th class="px-4 py-2 text-left">Action</th></thead><tbody>';
                 allCategories.forEach(c => html += `<tr class="border-b"><td class="px-4 py-2">${c.name}</td><td class="px-4 py-2 text-sm opacity-70">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td><td class="px-4 py-2"><button onclick="deleteCategory('${c.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`);
-                html += '</tbody></table>';
+                html += '</tbody><tr>';
                 container.innerHTML = html;
             }
         }
@@ -204,7 +201,6 @@
             loadCategories();
         };
 
-        // ========== SELLERS & ORDERS ==========
         async function loadSellers() {
             const snap = await getDocs(collection(db, 'users'));
             const sellers = snap.docs.filter(d => d.data().role === 'seller');
@@ -230,7 +226,7 @@
                 const o = d.data();
                 html += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${o.customerName || 'N/A'}</td><td class="px-4 py-2">AED ${o.totalAmount}</td><td class="px-4 py-2"><span class="status-badge status-${o.status || 'pending'}">${o.status || 'pending'}</span></td><td class="px-4 py-2 text-sm opacity-70">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>`;
             });
-            html += '</tbody><tr>';
+            html += '</tbody></table>';
             container.innerHTML = html;
         }
 
@@ -326,7 +322,6 @@
         </div>
 
         <div class="p-4 md:p-6">
-            <!-- Dashboard -->
             <div id="section-dashboard" class="section">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="stat-card p-4 rounded-xl" id="stat-sellers">Loading...</div>
@@ -337,7 +332,6 @@
                 <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></thead><tbody id="recent-orders-table"></tbody></table></div></div>
             </div>
 
-            <!-- Products -->
             <div id="section-products" class="section hidden">
                 <div class="card p-6 rounded-xl">
                     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
@@ -352,7 +346,6 @@
                 </div>
             </div>
 
-            <!-- Categories -->
             <div id="section-categories" class="section hidden">
                 <div class="card p-6 rounded-xl">
                     <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Categories</h3><button onclick="showAddCategoryModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg">+ Add Category</button></div>
@@ -360,21 +353,13 @@
                 </div>
             </div>
 
-            <!-- Orders -->
             <div id="section-orders" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">All Orders</h3><div id="orders-table-container" class="overflow-x-auto">Loading...</div></div></div>
-
-            <!-- Sellers -->
             <div id="section-sellers" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Seller Management</h3><div id="sellers-table-container" class="overflow-x-auto">Loading...</div></div></div>
-
-            <!-- Notifications -->
             <div id="section-notifications" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Notifications</h3><div id="notifications-list">Loading...</div></div></div>
-
-            <!-- Settings -->
             <div id="section-settings" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div></div>
         </div>
     </main>
 
-    <!-- Category Modal -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="card rounded-xl p-6 max-w-md w-full mx-4">
             <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Add Category</h3><button onclick="closeCategoryModal()" class="text-2xl">&times;</button></div>
