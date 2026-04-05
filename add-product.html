@@ -177,14 +177,12 @@
             const description = quillEditor ? quillEditor.root.innerHTML : '';
             const sku = document.getElementById('product-sku').value;
             
-            // Validation
             if (!name) { alert('Please enter product name'); return; }
             if (!category) { alert('Please select a category'); return; }
             if (!price || price <= 0) { alert('Please enter a valid price'); return; }
             if (!description || description === '<p><br></p>') { alert('Please enter product description'); return; }
             if (uploadedImages.length === 0) { alert('Please upload at least one product image'); return; }
             
-            // SKU validation (max 5 characters, alphanumeric)
             if (sku && !/^[A-Za-z0-9]{1,5}$/.test(sku)) {
                 alert('SKU must be 1-5 characters (letters and numbers only)');
                 return;
