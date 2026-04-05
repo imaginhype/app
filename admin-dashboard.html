@@ -396,7 +396,7 @@
                 const shortDesc = (p.description || 'No description').replace(/<[^>]*>/g, '').substring(0, 80);
                 const displayImage = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || null);
                 return `
-                <div class="product-card card rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer" onclick="window.location.href='/product-view.html?id=${p.id}'">
+                <div class="product-card card rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer" onclick="window.location.href='/product-view.html?id=${p.id}&from=products'">
                     <div class="relative">
                         <div class="aspect-square bg-gray-100 flex items-center justify-center">
                             ${displayImage ? `<img src="${displayImage}" class="w-full h-full object-cover" alt="${p.name}">` : `<i class="fas fa-box text-6xl text-gray-400"></i>`}
