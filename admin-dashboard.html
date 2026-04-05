@@ -645,20 +645,120 @@
     </div>
 
     <!-- Product Detail Modal -->
-    <div id="product-detail-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
-        <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold" id="detail-product-name">Product Details</h3><button onclick="closeProductDetail()" class="text-2xl">&times;</button></div>
-            <div class="flex flex-col md:flex-row gap-6">
-                <div class="md:w-1/2"><div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center"><img id="detail-product-image" class="w-full h-full object-cover rounded-lg hidden" alt=""><div id="detail-no-image" class="text-center"><i class="fas fa-box text-6xl text-gray-400"></i><p class="mt-2 text-sm">No image</p></div></div></div>
-                <div class="md:w-1/2">
-                    <div class="mb-4"><div class="text-3xl font-bold text-purple-500" id="detail-product-price"></div><div class="flex items-center gap-2 mt-1"><span class="text-sm px-2 py-1 bg-green-500/20 text-green-500 rounded" id="detail-product-condition"></span><span class="text-xs opacity-60">ID: #<span id="detail-product-id"></span></span></div></div>
-                    <div class="grid grid-cols-2 gap-4 mb-4"><div class="text-sm" id="detail-product-category"></div><div class="text-sm" id="detail-product-quantity"></div><div class="text-sm" id="detail-product-brand"></div></div>
-                    <div><h4 class="font-semibold mb-2">Description</h4><p class="text-sm opacity-80" id="detail-product-description"></p></div>
+<!-- Product Modal - Step by Step -->
+<div id="product-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
+    <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold" id="modal-title">Add New Product</h3>
+            <button onclick="closeProductModal()" class="text-2xl">&times;</button>
+        </div>
+        
+        <!-- Progress Steps -->
+        <div class="flex mb-6">
+            <div class="flex-1 text-center">
+                <div class="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center mx-auto mb-1" id="step1-circle">1</div>
+                <span class="text-xs" id="step1-label">Basic Info</span>
+            </div>
+            <div class="flex-1 text-center">
+                <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-1" id="step2-circle">2</div>
+                <span class="text-xs" id="step2-label">Details</span>
+            </div>
+            <div class="flex-1 text-center">
+                <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center mx-auto mb-1" id="step3-circle">3</div>
+                <span class="text-xs" id="step3-label">Image</span>
+            </div>
+        </div>
+        
+        <form id="product-form" class="space-y-4">
+            <input type="hidden" id="product-id">
+            
+            <!-- STEP 1: Basic Info -->
+            <div id="step1" class="step-content">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Product Title *</label>
+                        <input type="text" id="product-name" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                        <p class="text-xs opacity-60 mt-1">A clear, descriptive title helps buyers find your product</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Category *</label>
+                        <select id="product-category" required class="w-full px-4 py-2 rounded-lg border">
+                            <option value="">Select category</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Price (AED) *</label>
+                        <input type="number" id="product-price" required min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Condition *</label>
+                        <select id="product-condition" required class="w-full px-4 py-2 rounded-lg border">
+                            <option value="New">New</option>
+                            <option value="Like New">Like New</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <div class="mt-6 pt-4 border-t"><button onclick="closeProductDetail()" class="px-4 py-2 bg-gray-500 text-white rounded-lg">Close</button></div>
-        </div>
+            
+            <!-- STEP 2: Additional Details -->
+            <div id="step2" class="step-content hidden">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Description *</label>
+                        <textarea id="product-description" rows="4" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-purple-500"></textarea>
+                        <p class="text-xs opacity-60 mt-1">Include details about materials, condition, features, and any other relevant information</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Brand</label>
+                            <input type="text" id="product-brand" class="w-full px-4 py-2 rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Quantity *</label>
+                            <input type="number" id="product-quantity" value="1" min="1" required class="w-full px-4 py-2 rounded-lg border">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Material</label>
+                            <input type="text" id="product-material" class="w-full px-4 py-2 rounded-lg border">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">SKU (Optional)</label>
+                            <input type="text" id="product-sku" class="w-full px-4 py-2 rounded-lg border">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- STEP 3: Image Upload -->
+            <div id="step3" class="step-content hidden">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Product Image</label>
+                        <input type="file" id="product-image-file" accept="image/jpeg,image/png,image/webp" class="w-full px-4 py-2 rounded-lg border">
+                        <div id="upload-status" class="text-xs mt-1 hidden"></div>
+                        <p class="text-xs opacity-60 mt-1">JPEG, PNG, WebP. Max 5MB</p>
+                        <div id="image-preview" class="mt-3 hidden">
+                            <img id="preview-img" class="w-32 h-32 object-cover rounded-lg">
+                            <button type="button" onclick="removeImage()" class="text-red-500 text-sm mt-1">Remove image</button>
+                        </div>
+                        <input type="hidden" id="product-image-url">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between pt-4 border-t">
+                <button type="button" id="prev-btn" class="px-6 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition hidden">← Back</button>
+                <button type="button" id="next-btn" class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition ml-auto">Next →</button>
+                <button type="submit" id="submit-btn" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition hidden">Save Product</button>
+            </div>
+        </form>
     </div>
+</div>
 
     <!-- Category Modal — FIX: added missing hidden #category-id input -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
