@@ -129,6 +129,8 @@
                         </div>
                         <span class="px-3 py-1 rounded-full text-xs font-semibold ${sc}">${(o.status||'').toUpperCase()}</span>
                     </div>
+                    ${renderTimeline(o.status)}
+                    </div>
                     ${o.status === 'approved'  ? `<button onclick="markCompleted('${d.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition">Mark as Completed</button>` : ''}
                     ${o.status === 'completed' ? `<button onclick="requestPayout('${d.id}',${o.sellerEarnings||0})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Request Payout</button>` : ''}`;
                 // textContent to avoid XSS from customerName
@@ -222,6 +224,12 @@
 
             if (!customerName || !customerPhone || !customerAddr) {
                 showNotification('Please fill in all required fields.', 'error'); return;
+            }
+            if (!isValidPhone(customerPhone)) {
+                showNotification('Please enter a valid UAE phone number (e.g. 0501234567 or +971501234567).', 'error'); return;
+            }
+            if (!quantity || quantity < 1) {
+                showNotification('Quantity must be at least 1.', 'error'); return;
             }
 
             await addDoc(collection(db, 'orders'), {
@@ -410,6 +418,12 @@
     <style>
         .section { animation: fadeIn .2s ease-out; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+        .timeline { display:flex; gap:0; margin-top:12px; }
+        .timeline-item { display:flex; flex-direction:column; align-items:center; flex:1; font-size:11px; text-align:center; color:var(--text-muted); position:relative; }
+        .timeline-item i { width:28px; height:28px; border-radius:50%; border:2px solid var(--border-color); display:flex; align-items:center; justify-content:center; font-size:11px; background:var(--card-bg); z-index:1; }
+        .timeline-item.completed i { background:#8b5cf6; border-color:#8b5cf6; color:white; }
+        .timeline-item:not(:last-child)::after { content:''; position:absolute; top:13px; left:50%; width:100%; height:2px; background:var(--border-color); z-index:0; }
+        .timeline-item.completed:not(:last-child)::after { background:#8b5cf6; }
         .nav-item { display:flex; align-items:center; gap:.75rem; padding:.75rem 1rem; margin:.25rem 0; border-radius:.5rem; cursor:pointer; transition:all .2s; color:var(--text-secondary); }
         .nav-item:hover { background:var(--hover-bg); color:var(--text-primary); }
         .nav-item.active { background:var(--active-bg); color:var(--active-text); }
