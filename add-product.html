@@ -103,8 +103,8 @@
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <a href="admin-dashboard.html?section=products" class="back-btn">
-                    <i class="fas fa-arrow-left"></i> Back to Products
+                <a href="#" id="backButton" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Product
                 </a>
                 <h1 class="text-xl md:text-2xl font-bold" id="page-title">Add New Product</h1>
             </div>
@@ -271,7 +271,7 @@
                 
                 <!-- Actions -->
                 <div class="flex gap-4 justify-end sticky bottom-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border dark:border-gray-700">
-                    <a href="admin-dashboard.html?section=products" class="cancel-btn px-6 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium"><i class="fas fa-times mr-2"></i> Cancel</a>
+                    <button type="button" id="cancelButton" class="cancel-btn px-6 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium"><i class="fas fa-times mr-2"></i> Cancel</button>
                     <button type="submit" class="save-btn px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-lg transition"><i class="fas fa-save mr-2"></i> Save Product</button>
                 </div>
             </form>
@@ -330,6 +330,40 @@
             });
         }
 
+        // Get the product ID from URL (for new product, this will be the ID we're editing or null)
+        function getCurrentProductId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // Set up back button - always go to product-view with the current product ID
+        function setupBackNavigation() {
+            const currentId = getCurrentProductId();
+            
+            // Back button always goes to product view page with the product ID
+            // If we're adding a new product (no ID), we still need a product ID after creation
+            // For now, if no ID, we'll go to products list, but after save we redirect to product view
+            let backUrl;
+            if (currentId) {
+                backUrl = `product-view.html?id=${currentId}`;
+            } else {
+                // If adding new product and user cancels, go to products list
+                backUrl = 'admin-dashboard.html?section=products';
+            }
+            
+            const backButton = document.getElementById('backButton');
+            if (backButton) {
+                backButton.href = backUrl;
+            }
+            
+            const cancelButton = document.getElementById('cancelButton');
+            if (cancelButton) {
+                cancelButton.onclick = () => {
+                    window.location.href = backUrl;
+                };
+            }
+        }
+
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
@@ -359,6 +393,7 @@
             initQuillEditor();
             await loadCategories();
             await checkForEdit();
+            setupBackNavigation();
         });
 
         async function loadCategories() {
@@ -454,7 +489,7 @@
             const salePrice = parseFloat(document.getElementById('product-sale-price').value) || 0;
             const costPrice = parseFloat(document.getElementById('product-cost-price').value) || 0;
             const profit = salePrice - costPrice;
-            const margin = costPrice > 0 ? (profit / salePrice) * 100 : 0;
+            const margin = salePrice > 0 ? (profit / salePrice) * 100 : 0;
             
             const profitDisplay = document.getElementById('profit-display');
             const profitAmount = document.getElementById('profit-amount');
@@ -551,24 +586,31 @@
                 updatedAt: new Date().toISOString()
             };
             
+            let savedProductId;
+            
             if (productId) {
+                // Editing existing product
                 const finalImages = [...existingImageUrls.filter(url => !url.startsWith('blob:'))];
                 const newImageUrls = await uploadNewImages(productId);
                 finalImages.push(...newImageUrls);
                 productData.images = finalImages;
                 await updateDoc(doc(db, 'products', productId), productData);
+                savedProductId = productId;
                 alert('Product updated successfully!');
             } else {
+                // Adding new product
                 const newProductRef = await addDoc(collection(db, 'products'), {
                     ...productData,
                     createdAt: new Date().toISOString()
                 });
                 const newImageUrls = await uploadNewImages(newProductRef.id);
                 await updateDoc(doc(db, 'products', newProductRef.id), { images: newImageUrls });
+                savedProductId = newProductRef.id;
                 alert('Product added successfully!');
             }
             
-            window.location.href = 'admin-dashboard.html?section=products';
+            // After save, redirect to product view page
+            window.location.href = `product-view.html?id=${savedProductId}`;
         };
     </script>
 </body>
