@@ -99,9 +99,53 @@
         function displayProduct() {
             const isOnSale = product.salePrice && product.salePrice > 0 && product.salePrice < product.price;
             
-            // Product Name & Brand
+            // Product Name
             document.getElementById('product-name').textContent = product.name || 'Untitled';
-            document.getElementById('product-brand').textContent = product.brand || 'Brand';
+            
+            // Brand
+            const brandEl = document.getElementById('product-brand');
+            if (product.brand && product.brand.trim() !== '') {
+                brandEl.textContent = product.brand;
+                brandEl.classList.remove('hidden');
+                document.getElementById('brand-row').classList.remove('hidden');
+            } else {
+                brandEl.classList.add('hidden');
+                document.getElementById('brand-row').classList.add('hidden');
+            }
+            
+            // SKU
+            const skuEl = document.getElementById('product-sku');
+            if (product.sku && product.sku.trim() !== '') {
+                skuEl.textContent = product.sku;
+                skuEl.classList.remove('hidden');
+                document.getElementById('sku-row').classList.remove('hidden');
+            } else {
+                skuEl.classList.add('hidden');
+                document.getElementById('sku-row').classList.add('hidden');
+            }
+            
+            // Category
+            const categoryEl = document.getElementById('product-category');
+            if (product.category && product.category.trim() !== '') {
+                categoryEl.textContent = product.category;
+                categoryEl.classList.remove('hidden');
+                document.getElementById('category-row').classList.remove('hidden');
+            } else {
+                categoryEl.classList.add('hidden');
+                document.getElementById('category-row').classList.add('hidden');
+            }
+            
+            // Condition - plain text, no badge
+            const conditionEl = document.getElementById('product-condition');
+            if (product.condition && product.condition.trim() !== '') {
+                conditionEl.textContent = product.condition;
+                conditionEl.classList.remove('hidden');
+                document.getElementById('condition-row').classList.remove('hidden');
+                conditionEl.className = 'font-medium dark:text-white text-sm mt-1';
+            } else {
+                conditionEl.classList.add('hidden');
+                document.getElementById('condition-row').classList.add('hidden');
+            }
             
             // Price
             const priceEl = document.getElementById('product-price');
@@ -111,8 +155,19 @@
                 priceEl.innerHTML = `<span class="text-2xl font-bold">AED ${product.price}</span>`;
             }
             
-            // Color - only show selected color
-            document.getElementById('product-color').textContent = product.color || 'Default';
+            // Color
+            const colorEl = document.getElementById('product-color');
+            if (product.color && product.color.trim() !== '') {
+                colorEl.textContent = product.color;
+                colorEl.classList.remove('hidden');
+                document.getElementById('color-row').classList.remove('hidden');
+            } else {
+                colorEl.classList.add('hidden');
+                document.getElementById('color-row').classList.add('hidden');
+            }
+            
+            // Quantity
+            document.getElementById('product-quantity').textContent = product.quantity || 1;
             
             // Stock Status
             const stockEl = document.getElementById('stock-status');
@@ -122,7 +177,7 @@
                 stockEl.innerHTML = '<span class="text-red-600 dark:text-red-400 text-sm"><i class="fas fa-times-circle mr-1"></i> Out of Stock</span>';
             }
             
-            // Description - always visible
+            // Description
             document.getElementById('product-description').innerHTML = product.description || 'No description available.';
             
             // Images
@@ -135,12 +190,11 @@
                 mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg"><i class="fas fa-box text-6xl text-gray-400"></i></div>';
             }
             
-            // Size section - only show if product has sizes
+            // Sizes
             const hasSizes = product.sizes && product.sizes.length > 0;
             const sizeSection = document.getElementById('size-section');
             if (sizeSection && hasSizes) {
                 sizeSection.classList.remove('hidden');
-                // Populate sizes
                 const sizeContainer = document.getElementById('size-buttons');
                 if (sizeContainer && product.sizes) {
                     sizeContainer.innerHTML = '';
@@ -183,6 +237,12 @@
             border-color: #000;
             background-color: #000;
             color: white;
+        }
+        .info-card {
+            transition: all 0.2s ease;
+        }
+        .info-card:hover {
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -246,54 +306,70 @@
 
                 <!-- Right Column - Product Info -->
                 <div class="lg:w-1/2">
-                    <!-- Brand & Name -->
-                    <div class="mb-2">
-                        <span id="product-brand" class="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">Brand</span>
-                        <h1 id="product-name" class="text-3xl md:text-4xl font-bold mt-1 dark:text-white">Loading...</h1>
-                    </div>
+                    <!-- Product Name -->
+                    <h1 id="product-name" class="text-3xl md:text-4xl font-bold mt-1 dark:text-white mb-4">Loading...</h1>
 
                     <!-- Price -->
-                    <div class="mt-4">
-                        <div id="product-price" class="text-2xl font-bold dark:text-white">Loading...</div>
-                    </div>
+                    <div id="product-price" class="text-2xl font-bold dark:text-white mb-4">Loading...</div>
 
                     <!-- Stock Status -->
-                    <div class="mt-4" id="stock-status"></div>
+                    <div class="mb-6" id="stock-status"></div>
 
-                    <!-- Color Selection - Only selected color -->
-                    <div class="mt-6">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium dark:text-white">Color: <span id="product-color">Default</span></span>
+                    <!-- Details Grid -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <!-- Brand Row -->
+                        <div id="brand-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">BRAND</div>
+                            <div id="product-brand" class="font-medium dark:text-white text-sm mt-1">-</div>
+                        </div>
+                        
+                        <!-- SKU Row -->
+                        <div id="sku-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">SKU</div>
+                            <div id="product-sku" class="font-medium dark:text-white text-sm mt-1">-</div>
+                        </div>
+                        
+                        <!-- Category Row -->
+                        <div id="category-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">CATEGORY</div>
+                            <div id="product-category" class="font-medium dark:text-white text-sm mt-1">-</div>
+                        </div>
+                        
+                        <!-- Condition Row -->
+                        <div id="condition-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">CONDITION</div>
+                            <div id="product-condition" class="font-medium dark:text-white text-sm mt-1">-</div>
+                        </div>
+                        
+                        <!-- Color Row -->
+                        <div id="color-row" class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">COLOR</div>
+                            <div id="product-color" class="font-medium dark:text-white text-sm mt-1">-</div>
+                        </div>
+                        
+                        <!-- Quantity Row -->
+                        <div class="info-card bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">QUANTITY</div>
+                            <div id="product-quantity" class="font-medium dark:text-white text-sm mt-1">-</div>
                         </div>
                     </div>
 
                     <!-- Size Section (Hidden by default, shows only if product has sizes) -->
                     <div id="size-section" class="mt-6 hidden">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between mb-3">
                             <span class="text-sm font-medium dark:text-white">Size:</span>
                             <a href="#" class="text-xs text-gray-500 dark:text-gray-400 hover:underline">Size Guide</a>
                         </div>
-                        <div id="size-buttons" class="flex flex-wrap gap-2 mt-3"></div>
+                        <div id="size-buttons" class="flex flex-wrap gap-2"></div>
                     </div>
 
-                    <!-- Description Section (Always Open) -->
+                    <!-- Description Section -->
                     <div class="mt-8 border-t dark:border-gray-800">
                         <div class="py-4">
                             <span class="font-medium dark:text-white">DESCRIPTION</span>
                         </div>
                         <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm leading-relaxed" id="product-description">
                             Loading...
-                        </div>
-                    </div>
-
-                    <!-- Shipping & Returns (Optional Section) -->
-                    <div class="mt-4 border-t dark:border-gray-800">
-                        <div class="py-4">
-                            <span class="font-medium dark:text-white">SHIPPING & RETURNS</span>
-                        </div>
-                        <div class="pb-4 text-gray-600 dark:text-gray-400 text-sm">
-                            <p>Free shipping on orders over AED 200. Standard delivery 3-5 business days.</p>
-                            <p class="mt-2">Easy returns within 14 days of delivery. Conditions apply.</p>
                         </div>
                     </div>
                 </div>
