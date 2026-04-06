@@ -44,7 +44,7 @@
     <!-- Pricing -->
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl grid grid-cols-2 gap-4">
       <input id="price" type="number" placeholder="Price" class="p-3 border rounded-lg">
-      <input id="salePrice" type="number" placeholder="Sale Price" class="p-3 border rounded-lg">
+      <input id="salePrice" type="number" placeholder="Sale Price (optional)" class="p-3 border rounded-lg">
     </div>
 
   </div>
@@ -55,7 +55,7 @@
     <!-- Preview -->
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl">
       <h2 class="font-semibold mb-3 dark:text-white">Preview</h2>
-      <div id="previewBox" class="h-40 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+      <div id="previewBox" class="h-40 bg-gray-100 rounded-lg flex items-start justify-start flex-wrap overflow-auto p-2">
         <span class="text-gray-400">No Image</span>
       </div>
     </div>
@@ -83,37 +83,62 @@
 
 <!-- SCRIPT -->
 <script>
+// DYNAMIC CATEGORY LOADING
+const categories = ["Furniture", "Electronics", "Clothing", "Toys"];
+const categorySelect = document.getElementById('category');
+
+categories.forEach(cat => {
+  const option = document.createElement('option');
+  option.value = cat.toLowerCase();
+  option.textContent = cat;
+  categorySelect.appendChild(option);
+});
 
 // IMAGE PREVIEW
 const imageInput = document.getElementById('imageInput');
 const previewBox = document.getElementById('previewBox');
 
 imageInput.addEventListener('change', function() {
-  const file = this.files[0];
-  if (!file) return;
+  previewBox.innerHTML = ''; // clear previous
+  if (this.files.length === 0) {
+    previewBox.innerHTML = `<span class="text-gray-400">No Image</span>`;
+    return;
+  }
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    previewBox.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
-  };
-  reader.readAsDataURL(file);
+  Array.from(this.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = "w-24 h-24 object-cover rounded-md m-1 hover:scale-105 transition";
+      previewBox.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
 });
 
-// SAVE BUTTON (DEBUG)
+// SAVE BUTTON WITH VALIDATION
 document.getElementById('saveBtn').addEventListener('click', () => {
+  const name = document.getElementById('productName').value.trim();
+  const price = document.getElementById('price').value.trim();
+  
+  if(!name || !price){
+    alert('Please enter Product Name and Price.');
+    return;
+  }
+
   const data = {
-    name: document.getElementById('productName').value,
-    description: document.getElementById('description').value,
-    price: document.getElementById('price').value,
-    salePrice: document.getElementById('salePrice').value,
+    name,
+    description: document.getElementById('description').value.trim(),
+    price,
+    salePrice: document.getElementById('salePrice').value.trim(),
     status: document.getElementById('status').value,
     category: document.getElementById('category').value
   };
 
   console.log('Product Data:', data);
-  alert('Check console. Your data is captured correctly.');
+  alert('Data captured successfully. Check console.');
 });
-
 </script>
 
 </body>
