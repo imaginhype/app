@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Announcements - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .stat-card {
+            transition: all 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .priority-urgent { color: #ef4444; }
+        .priority-high { color: #f59e0b; }
+        .priority-normal { color: #3b82f6; }
+        .priority-low { color: #6b7280; }
+        .status-active { color: #10b981; }
+        .status-expired { color: #ef4444; }
+        .status-draft { color: #6b7280; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div class="min-h-screen">
+        <!-- Top Bar -->
+        <div class="border-b dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="admin-dashboard.html" class="text-purple-500 hover:text-purple-600">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                    </a>
+                    <h1 class="text-xl font-semibold dark:text-white">Announcements</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
+                        <i class="fas fa-moon dark:block hidden"></i>
+                        <i class="fas fa-sun dark:hidden block"></i>
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
+                        </button>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border dark:border-gray-700">
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-user-circle w-5 text-gray-500"></i>
+                                <span>My Profile</span>
+                            </a>
+                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-cog w-5 text-gray-500"></i>
+                                <span>Account Settings</span>
+                            </a>
+                            <div class="border-t dark:border-gray-700"></div>
+                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-sign-out-alt w-5"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                    <div class="text-2xl font-bold text-purple-500" id="stat-total">0</div>
+                    <div class="text-sm text-gray-500">Total Announcements</div>
+                </div>
+                <div class="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                    <div class="text-2xl font-bold text-green-500" id="stat-active">0</div>
+                    <div class="text-sm text-gray-500">Active</div>
+                </div>
+                <div class="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                    <div class="text-2xl font-bold text-red-500" id="stat-expired">0</div>
+                    <div class="text-sm text-gray-500">Expired</div>
+                </div>
+                <div class="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                    <div class="text-2xl font-bold text-blue-500" id="stat-sent">0</div>
+                    <div class="text-sm text-gray-500">Notifications Sent</div>
+                </div>
+            </div>
+
+            <!-- Header with Create Button -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-semibold dark:text-white">All Announcements</h2>
+                <button onclick="openCreateModal()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
+                    <i class="fas fa-plus mr-1"></i> Create Announcement
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-4 mb-6">
+                <div class="flex-1 min-w-[200px]">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-announcements" placeholder="Search announcements..." class="w-full pl-10 pr-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+                <select id="filter-priority" class="px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    <option value="all">All Priorities</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="normal">Normal</option>
+                    <option value="low">Low</option>
+                </select>
+                <select id="filter-status" class="px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                    <option value="draft">Draft</option>
+                </select>
+            </div>
+
+            <!-- Announcements Table -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Title</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Priority</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Target</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Sent To</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Created</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="announcements-table-body">
+                            <tr><td colspan="7" class="text-center py-8">Loading announcements...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex justify-center gap-2 mt-6" id="pagination-container"></div>
+        </div>
+    </div>
+
+    <!-- Create Announcement Modal -->
+    <div id="create-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold dark:text-white">Create Announcement</h2>
+                <button onclick="closeCreateModal()" class="text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-500 mb-4">Create a new announcement to notify users. Notifications will be sent automatically.</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Enter announcement title</label>
+                        <input type="text" id="announcement-title" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="e.g., New Seller Guidelines">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Message</label>
+                        <textarea id="announcement-message" rows="4" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="Enter announcement message"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Priority</label>
+                        <select id="announcement-priority" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            <option value="normal">Normal</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="high">High</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Target Audience</label>
+                        <select id="announcement-target" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            <option value="all_users">All Users</option>
+                            <option value="sellers">All Sellers</option>
+                            <option value="specific">Specific Sellers</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Expiration Date (Optional)</label>
+                        <input type="date" id="announcement-expiry" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                        <p class="text-xs text-gray-500 mt-1">Announcement will be hidden after this date</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button onclick="createAnnouncement()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">
+                        <i class="fas fa-paper-plane mr-1"></i> Send Announcement
+                    </button>
+                    <button onclick="closeCreateModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
+            authDomain: "imaginhype-app.firebaseapp.com",
+            projectId: "imaginhype-app",
+            storageBucket: "imaginhype-app.firebasestorage.app",
+            messagingSenderId: "200919529212",
+            appId: "1:200919529212:web:afa69db5cf256d35f90979"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allAnnouncements = [];
+        let currentPage = 1;
+        let currentSearch = '';
+        let currentPriority = 'all';
+        let currentStatusFilter = 'all';
+        const itemsPerPage = 10;
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        window.toggleUserMenu = function() {
+            const dropdown = document.getElementById('user-dropdown');
+            const chevron = document.getElementById('user-chevron');
+            if (dropdown) {
+                const isHidden = dropdown.classList.contains('hidden');
+                dropdown.classList.toggle('hidden');
+                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        };
+
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('user-dropdown');
+            const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
+            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+                const chevron = document.getElementById('user-chevron');
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        window.toggleTheme = () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        };
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.data()?.role !== 'admin') {
+                window.location.href = '/seller-dashboard.html';
+                return;
+            }
+            document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
+            await loadAnnouncements();
+        });
+
+        async function loadAnnouncements() {
+            const snap = await getDocs(query(collection(db, 'announcements'), orderBy('createdAt', 'desc')));
+            allAnnouncements = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            updateStats();
+            renderAnnouncements();
+        }
+
+        function updateStats() {
+            const total = allAnnouncements.length;
+            const active = allAnnouncements.filter(a => a.status === 'active' || (!a.expiryDate || new Date(a.expiryDate) > new Date())).length;
+            const expired = allAnnouncements.filter(a => a.expiryDate && new Date(a.expiryDate) <= new Date()).length;
+            const sent = allAnnouncements.reduce((sum, a) => sum + (a.sentCount || 0), 0);
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-active').textContent = active;
+            document.getElementById('stat-expired').textContent = expired;
+            document.getElementById('stat-sent').textContent = sent;
+        }
+
+        function renderAnnouncements() {
+            let filtered = allAnnouncements;
+            if (currentSearch) {
+                filtered = filtered.filter(a => a.title?.toLowerCase().includes(currentSearch.toLowerCase()));
+            }
+            if (currentPriority !== 'all') {
+                filtered = filtered.filter(a => a.priority === currentPriority);
+            }
+            if (currentStatusFilter !== 'all') {
+                if (currentStatusFilter === 'active') {
+                    filtered = filtered.filter(a => !a.expiryDate || new Date(a.expiryDate) > new Date());
+                } else if (currentStatusFilter === 'expired') {
+                    filtered = filtered.filter(a => a.expiryDate && new Date(a.expiryDate) <= new Date());
+                } else if (currentStatusFilter === 'draft') {
+                    filtered = filtered.filter(a => a.status === 'draft');
+                }
+            }
+            
+            const total = filtered.length;
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = Math.min(start + itemsPerPage, total);
+            const paginated = filtered.slice(start, end);
+            
+            const tbody = document.getElementById('announcements-table-body');
+            if (!paginated.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No announcements found. Create one!</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = paginated.map(a => {
+                const isActive = !a.expiryDate || new Date(a.expiryDate) > new Date();
+                const priorityClass = `priority-${a.priority || 'normal'}`;
+                return `
+                    <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td class="px-4 py-3">
+                            <div class="font-medium dark:text-white">${escapeHtml(a.title || 'Untitled')}</div>
+                            <div class="text-xs text-gray-500 mt-1 line-clamp-1">${escapeHtml(a.message?.substring(0, 60))}${a.message?.length > 60 ? '...' : ''}</div>
+                        </td>
+                        <td class="px-4 py-3"><span class="${priorityClass} font-medium">${(a.priority || 'normal').toUpperCase()}</span></td>
+                        <td class="px-4 py-3 text-sm">${formatTarget(a.target)}</td>
+                        <td class="px-4 py-3"><span class="status-${isActive ? 'active' : 'expired'}">${isActive ? 'Active' : 'Expired'}</span></td>
+                        <td class="px-4 py-3 text-sm">${a.sentCount || 0} users</td>
+                        <td class="px-4 py-3 text-sm">${a.createdAt ? new Date(a.createdAt).toLocaleDateString() : 'N/A'}</td>
+                        <td class="px-4 py-3">
+                            <button onclick="deleteAnnouncement('${a.id}')" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            renderPagination(total);
+        }
+
+        function renderPagination(total) {
+            const totalPages = Math.ceil(total / itemsPerPage);
+            const container = document.getElementById('pagination-container');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            let html = '';
+            if (currentPage > 1) {
+                html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
+            }
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                html += `<button onclick="goToPage(${i})" class="px-3 py-1 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
+            }
+            if (currentPage < totalPages) {
+                html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        window.goToPage = (page) => {
+            currentPage = page;
+            renderAnnouncements();
+        };
+
+        window.openCreateModal = () => {
+            document.getElementById('create-modal').classList.remove('hidden');
+        };
+
+        window.closeCreateModal = () => {
+            document.getElementById('create-modal').classList.add('hidden');
+        };
+
+        window.createAnnouncement = async () => {
+            const title = document.getElementById('announcement-title').value.trim();
+            const message = document.getElementById('announcement-message').value.trim();
+            const priority = document.getElementById('announcement-priority').value;
+            const target = document.getElementById('announcement-target').value;
+            const expiryDate = document.getElementById('announcement-expiry').value;
+            
+            if (!title || !message) {
+                alert('Please enter both title and message.');
+                return;
+            }
+            
+            await addDoc(collection(db, 'announcements'), {
+                title,
+                message,
+                priority,
+                target,
+                expiryDate: expiryDate || null,
+                status: 'active',
+                sentCount: 0,
+                createdAt: new Date().toISOString()
+            });
+            
+            closeCreateModal();
+            document.getElementById('announcement-title').value = '';
+            document.getElementById('announcement-message').value = '';
+            document.getElementById('announcement-expiry').value = '';
+            await loadAnnouncements();
+            alert('Announcement created and notifications sent!');
+        };
+
+        window.deleteAnnouncement = async (id) => {
+            if (!confirm('Delete this announcement?')) return;
+            await deleteDoc(doc(db, 'announcements', id));
+            await loadAnnouncements();
+        };
+
+        function formatTarget(target) {
+            const targets = {
+                all_users: 'All Users',
+                sellers: 'All Sellers',
+                specific: 'Specific Sellers'
+            };
+            return targets[target] || target;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Search and filters
+        document.getElementById('search-announcements').addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            currentPage = 1;
+            renderAnnouncements();
+        });
+        document.getElementById('filter-priority').addEventListener('change', (e) => {
+            currentPriority = e.target.value;
+            currentPage = 1;
+            renderAnnouncements();
+        });
+        document.getElementById('filter-status').addEventListener('change', (e) => {
+            currentStatusFilter = e.target.value;
+            currentPage = 1;
+            renderAnnouncements();
+        });
+    </script>
+</body>
+</html>
