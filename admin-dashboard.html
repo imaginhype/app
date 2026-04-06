@@ -92,6 +92,8 @@
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
             applyThemeIcons();
+            if (revenueChart) revenueChart.update();
+            if (ordersStatusChart) ordersStatusChart.update();
         };
 
         window.toggleAdminMenu = function() {
@@ -139,7 +141,7 @@
                 
                 document.getElementById('stat-sellers').innerHTML = `<div class="text-2xl font-bold">${sellers}</div><div class="text-sm opacity-70">Sellers</div>`;
                 document.getElementById('stat-orders').innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
-                document.getElementById('stat-pending').innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending</div>`;
+                document.getElementById('stat-pending').innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
                 document.getElementById('stat-products').innerHTML = `<div class="text-2xl font-bold">${productsSnap.size}</div><div class="text-sm opacity-70">Products</div>`;
             } catch (error) {
                 console.error("Error loading stats:", error);
