@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Seller Dashboard - Marketplace Pro</title>
+    <title>Admin Dashboard - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, getDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut }
+            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc,
+                 doc, getDoc, query, orderBy, limit }
+            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -28,7 +32,7 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        let currentUser = null, currentSellerId = null, currentSellerData = null;
+        let currentUser = null, currentUserId = null, currentUserData = null;
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -74,245 +78,573 @@
 
             const userDoc = await getDoc(doc(db, 'users', user.uid));
 
-            if (userDoc.data()?.role === 'admin') {
-                window.location.href = '/admin-dashboard.html';
+            if (userDoc.data()?.role !== 'admin') {
+                window.location.href = '/seller-dashboard.html';
                 return;
             }
 
             currentUser = user;
-            currentSellerId = user.uid;
-            currentSellerData = userDoc.data();
+            currentUserId = user.uid;
+            currentUserData = userDoc.data();
 
-            const sellerNameEl = document.getElementById('seller-name');
-            if (sellerNameEl) sellerNameEl.textContent = currentSellerData?.name || 'Seller';
+            const adminNameEl = document.getElementById('admin-name');
+            if (adminNameEl) adminNameEl.textContent = currentUserData.name || 'Admin';
             applyThemeIcons();
-            await loadSellerDashboard();
+            loadDashboard();
+            loadCategories();
         });
 
-        async function loadSellerDashboard() {
-            await Promise.all([loadSellerStats(), loadMyOrders(), loadProducts(), loadEarnings()]);
+        async function loadDashboard() {
+            await loadStats();
+            await loadRecentOrders();
+            await loadChart();
         }
 
-        async function loadSellerStats() {
-            const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId)));
-            const totalOrders = snap.size;
-            const completedOrders = snap.docs.filter(d => ['completed', 'paid'].includes(d.data().status)).length;
-            const pendingOrders = snap.docs.filter(d => d.data().status === 'pending').length;
-            const earnings = currentSellerData?.totalEarnings || 0;
-            const pending = currentSellerData?.pendingPayout || 0;
-
-            const statTotal = document.getElementById('stat-total-orders');
-            const statCompleted = document.getElementById('stat-completed');
-            const statPending = document.getElementById('stat-pending-orders');
-            const statEarnings = document.getElementById('stat-earnings');
-            const statPayout = document.getElementById('stat-payout');
-
-            if (statTotal) statTotal.innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
-            if (statCompleted) statCompleted.innerHTML = `<div class="text-2xl font-bold">${completedOrders}</div><div class="text-sm opacity-70">Completed</div>`;
-            if (statPending) statPending.innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
-            if (statEarnings) statEarnings.innerHTML = `<div class="text-2xl font-bold">AED ${earnings}</div><div class="text-sm opacity-70">Total Earnings</div>`;
-            if (statPayout) statPayout.innerHTML = `<div class="text-2xl font-bold">AED ${pending}</div><div class="text-sm opacity-70">Pending Payout</div>`;
+        async function loadStats() {
+            try {
+                const [usersSnap, ordersSnap, productsSnap] = await Promise.all([
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'orders')),
+                    getDocs(collection(db, 'products'))
+                ]);
+                const sellers = usersSnap.docs.filter(d => d.data().role === 'seller').length;
+                const pending = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
+                
+                const statSellers = document.getElementById('stat-sellers');
+                const statOrders = document.getElementById('stat-orders');
+                const statPending = document.getElementById('stat-pending');
+                const statProducts = document.getElementById('stat-products');
+                
+                if (statSellers) statSellers.innerHTML = `<div class="text-2xl font-bold">${sellers}</div><div class="text-sm opacity-70">Sellers</div>`;
+                if (statOrders) statOrders.innerHTML = `<div class="text-2xl font-bold">${ordersSnap.size}</div><div class="text-sm opacity-70">Total Orders</div>`;
+                if (statPending) statPending.innerHTML = `<div class="text-2xl font-bold">${pending}</div><div class="text-sm opacity-70">Pending</div>`;
+                if (statProducts) statProducts.innerHTML = `<div class="text-2xl font-bold">${productsSnap.size}</div><div class="text-sm opacity-70">Products</div>`;
+            } catch (e) { console.error('loadStats', e); }
         }
 
-        async function loadMyOrders() {
-            const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), orderBy('createdAt', 'desc'), limit(50)));
-            const container = document.getElementById('my-orders');
-            const fullContainer = document.getElementById('my-orders-full');
-
-            if (!container) return;
-
-            if (snap.empty) {
-                const emptyMsg = '<div class="text-center py-8 opacity-60">No orders yet. Place your first order!</div>';
-                container.innerHTML = emptyMsg;
-                if (fullContainer) fullContainer.innerHTML = emptyMsg;
-                return;
-            }
-
-            container.innerHTML = '';
-            let allOrdersHtml = '';
-
-            for (const d of snap.docs) {
-                const o = d.data();
-                let sc = 'bg-yellow-500/20 text-yellow-500';
-                if (o.status === 'approved') sc = 'bg-blue-500/20 text-blue-500';
-                if (o.status === 'completed') sc = 'bg-green-500/20 text-green-500';
-                if (o.status === 'paid') sc = 'bg-purple-500/20 text-purple-500';
-
-                const orderHtml = `
-                    <div class="border rounded-lg p-4 mb-3">
-                        <div class="flex justify-between items-start flex-wrap gap-2">
-                            <div>
-                                <p class="font-semibold">Order #${d.id.slice(0, 8)}</p>
-                                <p class="text-sm opacity-70">Customer: <span class="customer-name"></span></p>
-                                <p class="text-sm">Amount: AED ${o.totalAmount}</p>
-                                ${o.commissionAmount
-                        ? `<p class="text-sm text-green-500">Your Earnings: AED ${o.sellerEarnings}</p>`
-                        : '<p class="text-sm text-yellow-500">Commission pending approval</p>'}
-                            </div>
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${sc}">${(o.status || '').toUpperCase()}</span>
-                        </div>
-                        ${o.status === 'approved' ? `<button onclick="markCompleted('${d.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition">Mark as Completed</button>` : ''}
-                        ${o.status === 'completed' ? `<button onclick="requestPayout('${d.id}',${o.sellerEarnings || 0})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Request Payout</button>` : ''}
-                    </div>`;
-
-                const div = document.createElement('div');
-                div.innerHTML = orderHtml;
-                const customerNameSpan = div.querySelector('.customer-name');
-                if (customerNameSpan) customerNameSpan.textContent = o.customerName || 'N/A';
-                container.appendChild(div);
-                allOrdersHtml += orderHtml;
-            }
-
-            if (fullContainer) {
-                fullContainer.innerHTML = allOrdersHtml || '<div class="text-center py-8 opacity-60">No orders yet.</div>';
-            }
+        async function loadRecentOrders() {
+            try {
+                const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
+                const tbody = document.getElementById('recent-orders-table');
+                if (!tbody) return;
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 opacity-60">No orders yet.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                for (const d of snap.docs) {
+                    const o = d.data();
+                    const safeStatus = ['pending', 'approved', 'completed', 'paid'].includes(o.status) ? o.status : 'pending';
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b';
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 text-sm">#${d.id.slice(0, 8)}</td>
+                        <td class="px-4 py-2 text-sm customer-name"></td>
+                        <td class="px-4 py-2 text-sm">AED ${o.totalAmount}</td>
+                        <td class="px-4 py-2"><span class="status-badge status-${safeStatus}">${safeStatus}</span></td>
+                        <td class="px-4 py-2"><button onclick="viewOrderDetails('${d.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button></td>`;
+                    const customerNameTd = tr.querySelector('.customer-name');
+                    if (customerNameTd) customerNameTd.textContent = o.customerName || 'N/A';
+                    tbody.appendChild(tr);
+                }
+            } catch (e) { console.error('loadRecentOrders', e); }
         }
 
-        window.markCompleted = async (orderId) => {
-            await updateDoc(doc(db, 'orders', orderId), { status: 'completed', completedAt: new Date().toISOString() });
-            showNotification('Order marked as completed!');
-            await loadMyOrders();
-            await loadSellerStats();
-            await loadEarnings();
-        };
+        async function loadChart() {
+            try {
+                const snap = await getDocs(query(collection(db, 'orders'), limit(100)));
+                const monthly = {};
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                monthNames.forEach(m => monthly[m] = 0);
+                
+                snap.docs.forEach(d => {
+                    const o = d.data();
+                    if (o.createdAt) {
+                        const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' });
+                        monthly[m] = (monthly[m] || 0) + (o.totalAmount || 0);
+                    }
+                });
+                
+                const ctx = document.getElementById('revenueChart');
+                if (!ctx) return;
+                
+                if (window.revenueChartInstance) {
+                    window.revenueChartInstance.destroy();
+                }
+                
+                window.revenueChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(monthly),
+                        datasets: [{ label: 'Revenue (AED)', data: Object.values(monthly), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.4, fill: true }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            } catch (e) { console.error('loadChart', e); }
+        }
 
-        window.requestPayout = async (orderId, amount) => {
-            if (!confirm(`Request payout of AED ${amount} for this order?`)) return;
-            await updateDoc(doc(db, 'orders', orderId), { status: 'paid', payoutRequestedAt: new Date().toISOString() });
-            const newPending = (currentSellerData?.pendingPayout || 0) + amount;
-            await updateDoc(doc(db, 'users', currentSellerId), { pendingPayout: newPending });
-            currentSellerData.pendingPayout = newPending;
-            showNotification('Payout requested! Admin will process it soon.');
-            await loadMyOrders();
-            await loadSellerStats();
-            await loadEarnings();
-        };
+        async function uploadImage(file) {
+            if (file.size > 5 * 1024 * 1024) { showNotification('Image too large. Max 5MB.', 'error'); return null; }
+            const fd = new FormData();
+            fd.append('image', file);
+            try {
+                const res = await fetch('https://api.imgbb.com/1/upload?key=2e32852f127a58951950b565e1975d4b', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data?.data?.url) return data.data.url;
+                throw new Error('Upload failed');
+            } catch (e) { showNotification('Upload failed: ' + e.message, 'error'); return null; }
+        }
+
+        let allProducts = [], currentFilter = 'all', currentSearch = '';
 
         async function loadProducts() {
-            const snap = await getDocs(query(collection(db, 'products'), limit(50)));
-            const container = document.getElementById('products-list');
-            if (!container) return;
+            const c = document.getElementById('products-grid-container');
+            if (!c) return;
+            c.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">Loading...</div>';
+            try {
+                const snap = await getDocs(query(collection(db, 'products'), limit(100)));
+                allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderProducts();
+            } catch (e) {
+                c.innerHTML = `<div class="text-center py-8 col-span-full text-red-500">Error loading products.</div>`;
+            }
+        }
 
-            if (snap.empty) {
-                container.innerHTML = '<div class="text-center py-8 opacity-60">No products available yet.</div>';
+        function renderProducts() {
+            const c = document.getElementById('products-grid-container');
+            if (!c) return;
+            let list = allProducts;
+            if (currentFilter !== 'all') list = list.filter(p => p.category === currentFilter);
+            if (currentSearch) {
+                const q = currentSearch.toLowerCase();
+                list = list.filter(p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
+            }
+            if (!list.length) {
+                c.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">No products found.</div>';
                 return;
             }
-
-            container.innerHTML = '';
-            for (const d of snap.docs) {
-                const p = d.data();
-                const div = document.createElement('div');
-                div.className = 'border rounded-lg p-4';
-                const productName = escapeHtml(p.name || 'Untitled');
-                const productDesc = escapeHtml((p.description || '').substring(0, 100));
-                const imageHtml = (p.imageUrl && p.imageUrl !== 'undefined')
-                    ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-40 object-cover rounded-lg mb-3" alt="${productName}" onerror="this.remove()">`
-                    : '';
-
-                div.innerHTML = `
-                    ${imageHtml}
-                    <h4 class="font-semibold product-name"></h4>
-                    <p class="text-sm opacity-70 mt-1 product-desc"></p>
-                    <p class="text-lg font-bold mt-2">AED ${p.price}</p>
-                    <p class="text-xs opacity-60">Category: ${escapeHtml(p.category || 'Uncategorized')}</p>
-                    <button class="order-btn mt-3 w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">Place Order</button>`;
-                
-                const productNameEl = div.querySelector('.product-name');
-                const productDescEl = div.querySelector('.product-desc');
-                const orderBtn = div.querySelector('.order-btn');
-                
-                if (productNameEl) productNameEl.textContent = productName;
-                if (productDescEl) productDescEl.textContent = productDesc;
-                if (orderBtn) orderBtn.onclick = () => openOrderForm(d.id, productName, p.price);
-                
-                container.appendChild(div);
-            }
+            c.innerHTML = list.map(p => {
+                const n = escapeHtml(p.name || 'Untitled');
+                const imgTag = (p.imageUrl && p.imageUrl !== 'undefined')
+                    ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-full object-cover" alt="${n}" onerror="this.src='https://placehold.co/400x400?text=No+Image'">`
+                    : `<i class="fas fa-box text-6xl text-gray-400"></i>`;
+                return `<div class="product-card card rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer" onclick="viewProductDetail('${p.id}')">
+                    <div class="aspect-square bg-gray-100 flex items-center justify-center">${imgTag}</div>
+                    <div class="p-4">
+                        <div class="text-xs text-purple-500 mb-1">${escapeHtml(p.category || 'Uncategorized')}</div>
+                        <h4 class="font-semibold text-lg mb-1 line-clamp-1">${n}</h4>
+                        <p class="text-sm opacity-70 mb-2 line-clamp-2">${escapeHtml((p.description || 'No description').substring(0, 100))}</p>
+                        <div class="flex justify-between items-center mt-3">
+                            <span class="text-xl font-bold text-purple-500">AED ${p.price}</span>
+                            <span class="text-xs opacity-60">Qty: ${p.quantity || 1}</span>
+                        </div>
+                        <div class="flex gap-2 mt-4" onclick="event.stopPropagation()">
+                            <button onclick="editProduct('${p.id}')" class="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition"><i class="fas fa-edit mr-1"></i>Edit</button>
+                            <button onclick="deleteProduct('${p.id}')" class="flex-1 px-3 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition"><i class="fas fa-trash mr-1"></i>Delete</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
-        async function loadEarnings() {
-            const [approvedSnap, completedSnap, paidSnap] = await Promise.all([
-                getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'approved'))),
-                getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'completed'))),
-                getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'paid')))
-            ]);
+        window.viewProductDetail = (id) => {
+            const p = allProducts.find(x => x.id === id);
+            if (!p) return;
+            const detailId = document.getElementById('detail-product-id');
+            const detailName = document.getElementById('detail-product-name');
+            const detailPrice = document.getElementById('detail-product-price');
+            const detailCondition = document.getElementById('detail-product-condition');
+            const detailCategory = document.getElementById('detail-product-category');
+            const detailQuantity = document.getElementById('detail-product-quantity');
+            const detailBrand = document.getElementById('detail-product-brand');
+            const detailDesc = document.getElementById('detail-product-description');
+            const detailImg = document.getElementById('detail-product-image');
+            const detailNoImg = document.getElementById('detail-no-image');
+            
+            if (detailId) detailId.textContent = p.id.slice(0, 8);
+            if (detailName) detailName.textContent = p.name || '';
+            if (detailPrice) detailPrice.textContent = `AED ${p.price}`;
+            if (detailCondition) detailCondition.textContent = p.condition || 'New';
+            if (detailCategory) detailCategory.innerHTML = `<strong>Category</strong><br>${escapeHtml(p.category || 'Uncategorized')}`;
+            if (detailQuantity) detailQuantity.innerHTML = `<strong>Quantity</strong><br>${p.quantity || 1}`;
+            if (detailBrand) detailBrand.innerHTML = `<strong>Brand</strong><br>${escapeHtml(p.brand || 'Not specified')}`;
+            if (detailDesc) detailDesc.textContent = p.description || 'No description.';
+            
+            if (detailImg && detailNoImg) {
+                if (p.imageUrl && p.imageUrl !== 'undefined') {
+                    detailImg.src = p.imageUrl;
+                    detailImg.classList.remove('hidden');
+                    detailNoImg.classList.add('hidden');
+                } else {
+                    detailImg.classList.add('hidden');
+                    detailNoImg.classList.remove('hidden');
+                }
+            }
+            
+            const modal = document.getElementById('product-detail-modal');
+            if (modal) modal.classList.remove('hidden');
+        };
+        
+        window.closeProductDetail = () => {
+            const modal = document.getElementById('product-detail-modal');
+            if (modal) modal.classList.add('hidden');
+        };
 
-            let total = 0;
-            [...approvedSnap.docs, ...completedSnap.docs, ...paidSnap.docs].forEach(d => {
-                total += d.data().sellerEarnings || 0;
+        window.filterProducts = (cat) => {
+            currentFilter = cat;
+            document.querySelectorAll('.category-filter').forEach(b => {
+                if (b.getAttribute('data-category') === cat) {
+                    b.classList.add('active');
+                } else {
+                    b.classList.remove('active');
+                }
             });
+            renderProducts();
+        };
 
-            const earningsDisplay = document.getElementById('total-earnings-display');
-            if (earningsDisplay) {
-                earningsDisplay.innerHTML = `<div class="text-3xl font-bold">AED ${total}</div><div class="text-sm opacity-70 mt-1">Total earned from approved orders</div>`;
-            }
-
-            const profileName = document.getElementById('profile-name');
-            const profileEmail = document.getElementById('profile-email');
-            const profileJoined = document.getElementById('profile-joined');
-            const profileEarnings = document.getElementById('profile-earnings');
-            const profilePending = document.getElementById('profile-pending');
-
-            if (profileName) profileName.textContent = currentSellerData?.name || '';
-            if (profileEmail) profileEmail.textContent = currentSellerData?.email || '';
-            if (profileJoined) profileJoined.textContent = currentSellerData?.createdAt ? new Date(currentSellerData.createdAt).toLocaleDateString() : 'N/A';
-            if (profileEarnings) profileEarnings.textContent = total;
-            if (profilePending) profilePending.textContent = currentSellerData?.pendingPayout || 0;
-        }
-
-        window.openOrderForm = (productId, productName, price) => {
-            const productIdInput = document.getElementById('order-product-id');
-            const priceInput = document.getElementById('order-price');
-            const nameEl = document.getElementById('order-product-name');
+        window.showAddProductModal = () => {
+            const modalTitle = document.getElementById('modal-title');
+            const productForm = document.getElementById('product-form');
+            const productId = document.getElementById('product-id');
+            const imageUrl = document.getElementById('product-image-url');
+            const imagePreview = document.getElementById('image-preview');
+            const uploadStatus = document.getElementById('upload-status');
+            const modal = document.getElementById('product-modal');
             
-            if (productIdInput) productIdInput.value = productId;
-            if (priceInput) priceInput.value = price;
-            if (nameEl) {
-                nameEl.textContent = '';
-                const strong = document.createElement('strong');
-                strong.textContent = productName;
-                nameEl.appendChild(strong);
-                nameEl.append(` — AED ${price}`);
+            if (modalTitle) modalTitle.textContent = 'Add New Product';
+            if (productForm) productForm.reset();
+            if (productId) productId.value = '';
+            if (imageUrl) imageUrl.value = '';
+            if (imagePreview) imagePreview.classList.add('hidden');
+            if (uploadStatus) uploadStatus.classList.add('hidden');
+            if (modal) modal.classList.remove('hidden');
+        };
+        
+        window.closeProductModal = () => {
+            const modal = document.getElementById('product-modal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.editProduct = async (id) => {
+            const snap = await getDoc(doc(db, 'products', id));
+            const p = snap.data();
+            
+            const modalTitle = document.getElementById('modal-title');
+            const productId = document.getElementById('product-id');
+            const productName = document.getElementById('product-name');
+            const productDesc = document.getElementById('product-description');
+            const productCategory = document.getElementById('product-category');
+            const productPrice = document.getElementById('product-price');
+            const productBrand = document.getElementById('product-brand');
+            const productCondition = document.getElementById('product-condition');
+            const productQuantity = document.getElementById('product-quantity');
+            const productMaterial = document.getElementById('product-material');
+            const productSku = document.getElementById('product-sku');
+            const imageUrl = document.getElementById('product-image-url');
+            const previewImg = document.getElementById('preview-img');
+            const imagePreview = document.getElementById('image-preview');
+            const modal = document.getElementById('product-modal');
+            
+            if (modalTitle) modalTitle.textContent = 'Edit Product';
+            if (productId) productId.value = id;
+            if (productName) productName.value = p.name || '';
+            if (productDesc) productDesc.value = p.description || '';
+            if (productCategory) productCategory.value = p.category || '';
+            if (productPrice) productPrice.value = p.price || '';
+            if (productBrand) productBrand.value = p.brand || '';
+            if (productCondition) productCondition.value = p.condition || 'New';
+            if (productQuantity) productQuantity.value = p.quantity || 1;
+            if (productMaterial) productMaterial.value = p.material || '';
+            if (productSku) productSku.value = p.sku || '';
+            if (imageUrl) imageUrl.value = p.imageUrl || '';
+            
+            if (previewImg && imagePreview) {
+                if (p.imageUrl && p.imageUrl !== 'undefined') {
+                    previewImg.src = p.imageUrl;
+                    imagePreview.classList.remove('hidden');
+                } else {
+                    imagePreview.classList.add('hidden');
+                }
             }
             
-            const modal = document.getElementById('order-modal');
             if (modal) modal.classList.remove('hidden');
         };
 
-        window.closeOrderModal = () => {
-            const modal = document.getElementById('order-modal');
-            const form = document.getElementById('order-form');
-            if (modal) modal.classList.add('hidden');
-            if (form) form.reset();
+        window.deleteProduct = async (id) => {
+            if (!confirm('Delete this product? This cannot be undone.')) return;
+            await deleteDoc(doc(db, 'products', id));
+            showNotification('Product deleted', 'success');
+            await loadProducts();
+            await loadStats();
         };
 
-        window.submitOrder = async () => {
-            const productId = document.getElementById('order-product-id')?.value;
-            const customerName = document.getElementById('customer-name')?.value.trim();
-            const customerPhone = document.getElementById('customer-phone')?.value.trim();
-            const customerAddr = document.getElementById('customer-address')?.value.trim();
-            const quantity = parseInt(document.getElementById('quantity')?.value || '1');
-            const price = parseFloat(document.getElementById('order-price')?.value || '0');
-            const notes = document.getElementById('order-notes')?.value || '';
+        window.removeImage = () => {
+            const imageUrl = document.getElementById('product-image-url');
+            const imagePreview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            const fileInput = document.getElementById('product-image-file');
+            
+            if (imageUrl) imageUrl.value = '';
+            if (imagePreview) imagePreview.classList.add('hidden');
+            if (previewImg) previewImg.src = '';
+            if (fileInput) fileInput.value = '';
+        };
 
-            if (!customerName || !customerPhone || !customerAddr) {
-                showNotification('Please fill in all required fields.', 'error');
-                return;
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchEl = document.getElementById('product-search');
+            if (searchEl) {
+                searchEl.addEventListener('input', e => {
+                    currentSearch = e.target.value;
+                    renderProducts();
+                });
             }
 
-            await addDoc(collection(db, 'orders'), {
-                productId, sellerId: currentSellerId,
-                sellerName: currentSellerData?.name || 'Seller',
-                customerName, customerPhone, customerAddress: customerAddr,
-                quantity, unitPrice: price, totalAmount: price * quantity,
-                notes, status: 'pending',
-                createdAt: new Date().toISOString()
-            });
+            const imgEl = document.getElementById('product-image-file');
+            if (imgEl) {
+                imgEl.addEventListener('change', async e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const uploadStatus = document.getElementById('upload-status');
+                    if (uploadStatus) {
+                        uploadStatus.classList.remove('hidden');
+                        uploadStatus.textContent = 'Uploading...';
+                        uploadStatus.style.color = '#f59e0b';
+                    }
+                    const url = await uploadImage(file);
+                    const imageUrl = document.getElementById('product-image-url');
+                    const previewImg = document.getElementById('preview-img');
+                    const imagePreview = document.getElementById('image-preview');
+                    
+                    if (url && imageUrl && previewImg && imagePreview) {
+                        imageUrl.value = url;
+                        previewImg.src = url;
+                        imagePreview.classList.remove('hidden');
+                        if (uploadStatus) {
+                            uploadStatus.textContent = 'Upload complete!';
+                            uploadStatus.style.color = '#10b981';
+                            setTimeout(() => uploadStatus.classList.add('hidden'), 2000);
+                        }
+                    } else if (uploadStatus) {
+                        uploadStatus.textContent = 'Upload failed.';
+                        uploadStatus.style.color = '#ef4444';
+                    }
+                });
+            }
 
-            showNotification('Order placed! Admin will review and approve commission.');
-            window.closeOrderModal();
-            await loadMyOrders();
-            await loadSellerStats();
+            const form = document.getElementById('product-form');
+            if (form) {
+                form.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const id = document.getElementById('product-id')?.value;
+                    let imgUrl = document.getElementById('product-image-url')?.value || '';
+                    if (imgUrl === 'undefined') imgUrl = '';
+                    
+                    const data = {
+                        name: document.getElementById('product-name')?.value || '',
+                        description: document.getElementById('product-description')?.value || '',
+                        category: document.getElementById('product-category')?.value || '',
+                        price: parseFloat(document.getElementById('product-price')?.value || 0),
+                        brand: document.getElementById('product-brand')?.value || '',
+                        condition: document.getElementById('product-condition')?.value || 'New',
+                        quantity: parseInt(document.getElementById('product-quantity')?.value || 1),
+                        material: document.getElementById('product-material')?.value || '',
+                        sku: document.getElementById('product-sku')?.value || '',
+                        imageUrl: imgUrl,
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    try {
+                        if (id) {
+                            await updateDoc(doc(db, 'products', id), data);
+                            showNotification('Product updated!');
+                        } else {
+                            data.createdAt = new Date().toISOString();
+                            await addDoc(collection(db, 'products'), data);
+                            showNotification('Product added!');
+                        }
+                        window.closeProductModal();
+                        await loadProducts();
+                        await loadStats();
+                    } catch (err) {
+                        showNotification('Error: ' + err.message, 'error');
+                    }
+                });
+            }
+        });
+
+        let allCategories = [];
+        
+        async function loadCategories() {
+            const snap = await getDocs(collection(db, 'categories'));
+            allCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderCategoryFilters();
+            renderCategoriesTable();
+            const categorySelect = document.getElementById('product-category');
+            if (categorySelect) {
+                categorySelect.innerHTML = '<option value="">Select category</option>';
+                allCategories.forEach(c => {
+                    categorySelect.innerHTML += `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`;
+                });
+            }
+        }
+
+        function renderCategoryFilters() {
+            const fc = document.getElementById('category-filter-buttons');
+            if (!fc) return;
+            fc.innerHTML = `<button onclick="filterProducts('all')" data-category="all" class="category-filter active px-4 py-2 rounded-lg text-sm font-medium transition">All</button>`;
+            allCategories.forEach(c => {
+                fc.innerHTML += `<button onclick="filterProducts('${c.name}')" data-category="${c.name}" class="category-filter px-4 py-2 rounded-lg text-sm font-medium transition">${escapeHtml(c.name)}</button>`;
+            });
+        }
+
+        function renderCategoriesTable() {
+            const container = document.getElementById('categories-list');
+            if (!container) return;
+            if (!allCategories.length) {
+                container.innerHTML = '<div class="text-center py-8 opacity-60">No categories yet.</div>';
+                return;
+            }
+            let html = '<table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Created</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody>';
+            allCategories.forEach(c => {
+                html += `<tr class="border-b">
+                    <td class="px-4 py-2">${escapeHtml(c.name)}</td>
+                    <td class="px-4 py-2 text-sm opacity-70">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td>
+                    <td class="px-4 py-2"><button onclick="deleteCategory('${c.id}')" class="text-red-500 text-sm hover:underline"><i class="fas fa-trash mr-1"></i>Delete</button></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        window.showAddCategoryModal = () => {
+            const categoryId = document.getElementById('category-id');
+            const categoryName = document.getElementById('category-name');
+            const modal = document.getElementById('category-modal');
+            
+            if (categoryId) categoryId.value = '';
+            if (categoryName) categoryName.value = '';
+            if (modal) modal.classList.remove('hidden');
         };
+        
+        window.closeCategoryModal = () => {
+            const modal = document.getElementById('category-modal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.addCategory = async () => {
+            const name = document.getElementById('category-name')?.value.trim();
+            if (!name) return;
+            try {
+                await addDoc(collection(db, 'categories'), { name, createdAt: new Date().toISOString() });
+                showNotification('Category added!');
+                window.closeCategoryModal();
+                await loadCategories();
+            } catch (e) {
+                showNotification('Error: ' + e.message, 'error');
+            }
+        };
+
+        window.deleteCategory = async (id) => {
+            if (!confirm('Delete this category?')) return;
+            await deleteDoc(doc(db, 'categories', id));
+            showNotification('Category deleted');
+            await loadCategories();
+        };
+
+        async function loadSellers() {
+            try {
+                const snap = await getDocs(collection(db, 'users'));
+                const sellers = snap.docs.filter(d => d.data().role === 'seller');
+                const container = document.getElementById('sellers-table-container');
+                if (!container) return;
+                if (!sellers.length) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No sellers yet.</div>';
+                    return;
+                }
+                let html = '<table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Email</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th><th class="px-4 py-2 text-left">Actions</th></tr></thead><tbody>';
+                sellers.forEach(d => {
+                    const s = d.data();
+                    const badge = s.status === 'suspended'
+                        ? '<span class="text-xs px-2 py-1 bg-red-500/20 text-red-500 rounded-full">Suspended</span>'
+                        : '<span class="text-xs px-2 py-1 bg-green-500/20 text-green-500 rounded-full">Active</span>';
+                    const btn = s.status === 'suspended'
+                        ? `<button onclick="toggleSellerStatus('${d.id}','active')" class="text-green-500 text-sm hover:underline">Reactivate</button>`
+                        : `<button onclick="toggleSellerStatus('${d.id}','suspended')" class="text-red-500 text-sm hover:underline">Suspend</button>`;
+                    html += `<tr class="border-b">
+                        <td class="px-4 py-2">${escapeHtml(s.name || 'N/A')}</td>
+                        <td class="px-4 py-2">${escapeHtml(s.email)}</td>
+                        <td class="px-4 py-2">${badge}</td>
+                        <td class="px-4 py-2 text-sm opacity-70">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}</td>
+                        <td class="px-4 py-2">${btn}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (e) { console.error('loadSellers', e); }
+        }
+
+        window.toggleSellerStatus = async (uid, status) => {
+            if (!confirm(`${status === 'suspended' ? 'Suspend' : 'Reactivate'} this seller?`)) return;
+            await updateDoc(doc(db, 'users', uid), { status });
+            showNotification(`Seller ${status}.`);
+            await loadSellers();
+        };
+
+        async function loadOrders() {
+            try {
+                const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(100)));
+                const container = document.getElementById('orders-table-container');
+                if (!container) return;
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet.</div>';
+                    return;
+                }
+                let html = '<table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Actions</th></tr></thead><tbody>';
+                snap.docs.forEach(d => {
+                    const o = d.data();
+                    const ss = ['pending', 'approved', 'completed', 'paid'].includes(o.status) ? o.status : 'pending';
+                    html += `<tr class="border-b">
+                        <td class="px-4 py-2 text-sm">#${d.id.slice(0, 8)}</td>
+                        <td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td>
+                        <td class="px-4 py-2">AED ${o.totalAmount}</td>
+                        <td class="px-4 py-2"><span class="status-badge status-${ss}">${ss}</span></td>
+                        <td class="px-4 py-2 text-sm opacity-70">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
+                        <td class="px-4 py-2">
+                            ${ss === 'pending' ? `<button onclick="approveOrder('${d.id}',${o.totalAmount})" class="text-green-500 text-sm hover:underline mr-2">Approve</button>` : ''}
+                            <button onclick="viewOrderDetails('${d.id}')" class="text-blue-500 text-sm hover:underline">View</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (e) { console.error('loadOrders', e); }
+        }
+
+        window.approveOrder = async (id, total) => {
+            const commissionPct = 10;
+            const commission = (total * commissionPct) / 100;
+            await updateDoc(doc(db, 'orders', id), {
+                status: 'approved', approvedAt: new Date().toISOString(),
+                commissionAmount: commission, sellerEarnings: Math.max(0, total - commission)
+            });
+            showNotification('Order approved!');
+            await loadOrders();
+            await loadStats();
+        };
+
+        window.viewOrderDetails = (id) => {
+            showNotification(`Order #${id.slice(0, 8)} - Full details coming soon.`, 'info');
+        };
+
+        function loadNotifications() {
+            const el = document.getElementById('notifications-list');
+            if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Notifications will appear here.</div>';
+        }
+        
+        function loadSettings() {
+            const el = document.getElementById('settings-content');
+            if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Settings panel coming soon.</div>';
+        }
 
         window.showSection = (section, clickedEl) => {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
@@ -322,8 +654,18 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             if (clickedEl) clickedEl.classList.add('active');
             
-            if (section === 'earnings') loadEarnings();
-            if (section === 'orders') loadMyOrders();
+            const sectionActions = {
+                dashboard: loadDashboard,
+                products: loadProducts,
+                sellers: loadSellers,
+                orders: loadOrders,
+                categories: loadCategories,
+                notifications: loadNotifications,
+                settings: loadSettings
+            };
+            
+            const action = sectionActions[section];
+            if (action) action();
             
             const closeMobileMenuFn = window.closeMobileMenu;
             if (typeof closeMobileMenuFn === 'function') closeMobileMenuFn();
@@ -354,129 +696,294 @@
 <body class="transition-colors duration-300">
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
-    <div class="flex h-screen overflow-hidden">
-        <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-            <div class="p-4 border-b flex justify-between items-center">
-                <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
-                <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
-            </div>
-            <nav class="p-4">
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <div class="text-xs opacity-60 mb-4">Admin Panel</div>
+            <nav>
                 <div class="nav-item active" onclick="showSection('dashboard',this)"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></div>
                 <div class="nav-item" onclick="showSection('products',this)"><i class="fas fa-box w-5"></i><span>Products</span></div>
-                <div class="nav-item" onclick="showSection('orders',this)"><i class="fas fa-shopping-cart w-5"></i><span>My Orders</span></div>
-                <div class="nav-item" onclick="showSection('earnings',this)"><i class="fas fa-chart-line w-5"></i><span>Earnings</span></div>
-                <div class="nav-item" onclick="showSection('profile',this)"><i class="fas fa-user w-5"></i><span>Profile</span></div>
+                <div class="nav-item" onclick="showSection('categories',this)"><i class="fas fa-tags w-5"></i><span>Categories</span></div>
+                <div class="nav-item" onclick="showSection('orders',this)"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></div>
+                <div class="nav-item" onclick="showSection('sellers',this)"><i class="fas fa-users w-5"></i><span>Sellers</span></div>
+                <div class="nav-item" onclick="showSection('notifications',this)"><i class="fas fa-bell w-5"></i><span>Notifications</span></div>
+                <div class="nav-item" onclick="showSection('settings',this)"><i class="fas fa-cog w-5"></i><span>Settings</span></div>
             </nav>
-            <div class="absolute bottom-0 w-full p-4 border-t">
-                <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
-            </div>
-        </aside>
+        </div>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+        </div>
+    </aside>
 
-        <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
-            <div class="p-4 border-b">
-                <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
-                <p class="text-xs opacity-60 mt-2">Seller Portal</p>
-            </div>
-            <nav class="p-4">
-                <div class="nav-item active" onclick="showSection('dashboard',this)"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></div>
-                <div class="nav-item" onclick="showSection('products',this)"><i class="fas fa-box w-5"></i><span>Products</span></div>
-                <div class="nav-item" onclick="showSection('orders',this)"><i class="fas fa-shopping-cart w-5"></i><span>My Orders</span></div>
-                <div class="nav-item" onclick="showSection('earnings',this)"><i class="fas fa-chart-line w-5"></i><span>Earnings</span></div>
-                <div class="nav-item" onclick="showSection('profile',this)"><i class="fas fa-user w-5"></i><span>Profile</span></div>
-            </nav>
-            <div class="absolute bottom-0 w-full p-4 border-t">
-                <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
-            </div>
-        </aside>
+    <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
+        <div class="p-4 border-b">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <p class="text-xs opacity-60 mt-2">Admin Panel</p>
+        </div>
+        <nav class="p-4">
+            <div class="nav-item active" onclick="showSection('dashboard',this)"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></div>
+            <div class="nav-item" onclick="showSection('products',this)"><i class="fas fa-box w-5"></i><span>Products</span></div>
+            <div class="nav-item" onclick="showSection('categories',this)"><i class="fas fa-tags w-5"></i><span>Categories</span></div>
+            <div class="nav-item" onclick="showSection('orders',this)"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></div>
+            <div class="nav-item" onclick="showSection('sellers',this)"><i class="fas fa-users w-5"></i><span>Sellers</span></div>
+            <div class="nav-item" onclick="showSection('notifications',this)"><i class="fas fa-bell w-5"></i><span>Notifications</span></div>
+            <div class="nav-item" onclick="showSection('settings',this)"><i class="fas fa-cog w-5"></i><span>Settings</span></div>
+        </nav>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+        </div>
+    </aside>
 
-        <main class="main-content flex-1 overflow-y-auto">
-            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                    <h1 class="text-xl md:text-2xl font-bold" id="page-title">Dashboard</h1>
+    <main class="main-content flex-1 md:ml-64">
+        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                <h1 class="text-xl md:text-2xl font-bold">Dashboard</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition" title="Toggle theme">
+                    <i class="fas fa-moon icon-moon"></i>
+                    <i class="fas fa-sun icon-sun" style="display:none"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-user-circle text-2xl"></i>
+                    <span class="hidden md:inline" id="admin-name">Admin</span>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="toggleTheme()" class="p-2 rounded-full transition" title="Toggle theme">
-                        <i class="fas fa-moon icon-moon"></i>
-                        <i class="fas fa-sun icon-sun" style="display:none"></i>
-                    </button>
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-user-circle text-2xl"></i>
-                        <span id="seller-name" class="hidden md:inline">Seller</span>
-                    </div>
-                </div>
             </div>
+        </div>
 
-            <div class="p-4 md:p-6">
-                <div id="section-dashboard" class="section">
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-                        <div class="stat-card p-4 rounded-xl" id="stat-total-orders">Loading...</div>
-                        <div class="stat-card p-4 rounded-xl" id="stat-completed">Loading...</div>
-                        <div class="stat-card p-4 rounded-xl" id="stat-pending-orders">Loading...</div>
-                        <div class="stat-card p-4 rounded-xl" id="stat-earnings">Loading...</div>
-                        <div class="stat-card p-4 rounded-xl" id="stat-payout">Loading...</div>
-                    </div>
+        <div class="p-4 md:p-6">
+            <div id="section-dashboard" class="section">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="stat-card p-4 rounded-xl" id="stat-sellers">Loading...</div>
+                    <div class="stat-card p-4 rounded-xl" id="stat-orders">Loading...</div>
+                    <div class="stat-card p-4 rounded-xl" id="stat-pending">Loading...</div>
+                    <div class="stat-card p-4 rounded-xl" id="stat-products">Loading...</div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <div class="card p-6 rounded-xl">
-                        <h3 class="text-lg font-semibold mb-4">My Recent Orders</h3>
-                        <div id="my-orders"><div class="text-center py-8 opacity-60">Loading...</div></div>
+                        <h3 class="text-lg font-semibold mb-4">Revenue Trend</h3>
+                        <canvas id="revenueChart" height="200"></canvas>
                     </div>
                 </div>
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">Recent Orders</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="border-b">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Order ID</th>
+                                    <th class="px-4 py-2 text-left">Customer</th>
+                                    <th class="px-4 py-2 text-left">Amount</th>
+                                    <th class="px-4 py-2 text-left">Status</th>
+                                    <th class="px-4 py-2 text-left">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-orders-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-                <div id="section-products" class="section hidden">
-                    <div class="card p-6 rounded-xl">
-                        <h3 class="text-lg font-semibold mb-4">Available Products</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="products-list">
-                            <div class="text-center py-8 opacity-60 col-span-full">Loading...</div>
+            <div id="section-products" class="section hidden">
+                <div class="card p-6 rounded-xl">
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                        <h3 class="text-lg font-semibold">Products</h3>
+                        <div class="flex gap-3 flex-wrap">
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="product-search" placeholder="Search products..." class="pl-10 pr-4 py-2 rounded-lg border">
+                            </div>
+                            <button onclick="showAddProductModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">+ Add Product</button>
                         </div>
                     </div>
-                </div>
-
-                <div id="section-orders" class="section hidden">
-                    <div class="card p-6 rounded-xl">
-                        <h3 class="text-lg font-semibold mb-4">All My Orders</h3>
-                        <div id="my-orders-full"><div class="text-center py-8 opacity-60">Loading...</div></div>
-                    </div>
-                </div>
-
-                <div id="section-earnings" class="section hidden">
-                    <div class="card p-6 rounded-xl">
-                        <h3 class="text-lg font-semibold mb-4">My Earnings</h3>
-                        <div id="total-earnings-display" class="mb-6"></div>
-                        <div id="earnings-breakdown"></div>
-                    </div>
-                </div>
-
-                <div id="section-profile" class="section hidden">
-                    <div class="card p-6 rounded-xl">
-                        <h3 class="text-lg font-semibold mb-4">My Profile</h3>
-                        <div class="space-y-3">
-                            <p><strong>Name:</strong> <span id="profile-name"></span></p>
-                            <p><strong>Email:</strong> <span id="profile-email"></span></p>
-                            <p><strong>Member Since:</strong> <span id="profile-joined"></span></p>
-                            <p><strong>Total Earnings:</strong> AED <span id="profile-earnings">0</span></p>
-                            <p><strong>Pending Payout:</strong> AED <span id="profile-pending">0</span></p>
+                    <div class="mb-6">
+                        <div class="flex flex-wrap gap-2" id="category-filter-buttons">
+                            <button onclick="filterProducts('all')" data-category="all" class="category-filter active px-4 py-2 rounded-lg text-sm font-medium transition">All</button>
                         </div>
+                    </div>
+                    <div id="products-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div class="text-center py-8 col-span-full opacity-60">Loading...</div>
                     </div>
                 </div>
             </div>
-        </main>
+
+            <div id="section-categories" class="section hidden">
+                <div class="card p-6 rounded-xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold">Categories</h3>
+                        <button onclick="showAddCategoryModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">+ Add Category</button>
+                    </div>
+                    <div id="categories-list" class="overflow-x-auto">
+                        <div class="text-center py-8 opacity-60">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-orders" class="section hidden">
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">All Orders</h3>
+                    <div id="orders-table-container" class="overflow-x-auto">Loading...</div>
+                </div>
+            </div>
+
+            <div id="section-sellers" class="section hidden">
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">Seller Management</h3>
+                    <div id="sellers-table-container" class="overflow-x-auto">Loading...</div>
+                </div>
+            </div>
+
+            <div id="section-notifications" class="section hidden">
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">Notifications</h3>
+                    <div id="notifications-list">Loading...</div>
+                </div>
+            </div>
+
+            <div id="section-settings" class="section hidden">
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">Settings</h3>
+                    <div id="settings-content">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="product-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
+        <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" id="modal-title">Add New Product</h3>
+                <button onclick="closeProductModal()" class="text-2xl">&times;</button>
+            </div>
+            <form id="product-form" class="space-y-4">
+                <input type="hidden" id="product-id">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Product Title *</label>
+                    <input type="text" id="product-name" required class="w-full px-4 py-2 rounded-lg border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Description *</label>
+                    <textarea id="product-description" rows="3" required class="w-full px-4 py-2 rounded-lg border"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Category *</label>
+                        <select id="product-category" required class="w-full px-4 py-2 rounded-lg border">
+                            <option value="">Select category</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Price (AED) *</label>
+                        <input type="number" id="product-price" required min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Brand</label>
+                        <input type="text" id="product-brand" class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Condition *</label>
+                        <select id="product-condition" required class="w-full px-4 py-2 rounded-lg border">
+                            <option value="New">New</option>
+                            <option value="Like New">Like New</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Quantity *</label>
+                        <input type="number" id="product-quantity" value="1" min="1" required class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Material</label>
+                        <input type="text" id="product-material" class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">SKU (Optional)</label>
+                    <input type="text" id="product-sku" class="w-full px-4 py-2 rounded-lg border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Product Image</label>
+                    <input type="file" id="product-image-file" accept="image/jpeg,image/png,image/webp" class="w-full px-4 py-2 rounded-lg border">
+                    <div id="upload-status" class="text-xs mt-1 hidden"></div>
+                    <div id="image-preview" class="mt-3 hidden">
+                        <img id="preview-img" class="w-32 h-32 object-cover rounded-lg" alt="Preview">
+                        <button type="button" onclick="removeImage()" class="text-red-500 text-sm mt-1 block">Remove image</button>
+                    </div>
+                    <input type="hidden" id="product-image-url">
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save Product</button>
+                    <button type="button" onclick="closeProductModal()" class="flex-1 border py-2 rounded-lg">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div id="order-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="card rounded-xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Place Order</h3><button onclick="closeOrderModal()" class="text-2xl">&times;</button></div>
-            <form id="order-form" class="space-y-4" onsubmit="event.preventDefault(); submitOrder();">
-                <input type="hidden" id="order-product-id">
-                <input type="hidden" id="order-price">
-                <div class="p-3 bg-purple-500/10 rounded-lg" id="order-product-name"></div>
-                <div><input type="text" id="customer-name" placeholder="Customer Full Name *" class="w-full px-4 py-2 rounded-lg border" required></div>
-                <div><input type="tel" id="customer-phone" placeholder="Customer Phone *" class="w-full px-4 py-2 rounded-lg border" required></div>
-                <div><textarea id="customer-address" placeholder="Customer Address *" class="w-full px-4 py-2 rounded-lg border" rows="2" required></textarea></div>
-                <div><input type="number" id="quantity" value="1" min="1" class="w-full px-4 py-2 rounded-lg border"></div>
-                <div><textarea id="order-notes" placeholder="Order Notes (optional)" class="w-full px-4 py-2 rounded-lg border" rows="2"></textarea></div>
-                <div class="flex space-x-3">
-                    <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Place Order</button>
-                    <button type="button" onclick="closeOrderModal()" class="flex-1 border py-2 rounded-lg">Cancel</button>
+    <div id="product-detail-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
+        <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" id="detail-product-name">Product Details</h3>
+                <button onclick="closeProductDetail()" class="text-2xl">&times;</button>
+            </div>
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="md:w-1/2">
+                    <div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+                        <img id="detail-product-image" class="w-full h-full object-cover rounded-lg hidden" alt="">
+                        <div id="detail-no-image" class="text-center">
+                            <i class="fas fa-box text-6xl text-gray-400"></i>
+                            <p class="mt-2 text-sm">No image</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-1/2">
+                    <div class="mb-4">
+                        <div class="text-3xl font-bold text-purple-500" id="detail-product-price"></div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-sm px-2 py-1 bg-green-500/20 text-green-500 rounded" id="detail-product-condition"></span>
+                            <span class="text-xs opacity-60">ID: #<span id="detail-product-id"></span></span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-sm" id="detail-product-category"></div>
+                        <div class="text-sm" id="detail-product-quantity"></div>
+                        <div class="text-sm" id="detail-product-brand"></div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">Description</h4>
+                        <p class="text-sm opacity-80" id="detail-product-description"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 pt-4 border-t">
+                <button onclick="closeProductDetail()" class="px-4 py-2 bg-gray-500 text-white rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="card rounded-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Add Category</h3>
+                <button onclick="closeCategoryModal()" class="text-2xl">&times;</button>
+            </div>
+            <form id="category-form" onsubmit="event.preventDefault(); addCategory();">
+                <input type="hidden" id="category-id">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Category Name *</label>
+                    <input type="text" id="category-name" required class="w-full px-4 py-2 rounded-lg border">
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save</button>
+                    <button type="button" onclick="closeCategoryModal()" class="flex-1 border py-2 rounded-lg">Cancel</button>
                 </div>
             </form>
         </div>
@@ -488,8 +995,18 @@
         .nav-item { display:flex; align-items:center; gap:.75rem; padding:.75rem 1rem; margin:.25rem 0; border-radius:.5rem; cursor:pointer; transition:all .2s; color:var(--text-secondary); }
         .nav-item:hover { background:var(--hover-bg); color:var(--text-primary); }
         .nav-item.active { background:var(--active-bg); color:var(--active-text); }
-        .stat-card { background:var(--card-bg); border:1px solid var(--border-color); transition:transform .2s; }
+        .stat-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:1rem; transition:transform .2s; }
         .stat-card:hover { transform:translateY(-2px); }
+        .status-badge { display:inline-block; padding:.25rem .75rem; border-radius:9999px; font-size:.75rem; font-weight:500; }
+        .status-pending { background:#f59e0b20; color:#f59e0b; }
+        .status-approved { background:#10b98120; color:#10b981; }
+        .status-completed { background:#3b82f620; color:#3b82f6; }
+        .status-paid { background:#8b5cf620; color:#8b5cf6; }
+        .category-filter { background:var(--bg-tertiary); color:var(--text-secondary); border:1px solid var(--border-color); transition:all .2s; cursor:pointer; }
+        .category-filter.active { background:var(--active-bg); color:white; border-color:var(--active-bg); }
+        .line-clamp-1 { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+        .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .aspect-square { aspect-ratio:1/1; }
         #mobile-sidebar { transform:translateX(-100%); transition:transform .3s ease; }
         #mobile-sidebar.show { transform:translateX(0); }
         #sidebar-overlay:not(.show) { display:none; }
