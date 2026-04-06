@@ -148,6 +148,58 @@
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
             border: 1px solid rgba(139, 92, 246, 0.3);
         }
+        
+        /* Back button styles */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .back-btn:hover {
+            background: var(--hover-bg);
+            transform: translateX(-2px);
+        }
+        
+        .cancel-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+        }
+        .cancel-btn:hover {
+            background: var(--hover-bg);
+        }
+        
+        .save-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            font-weight: 500;
+        }
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -205,6 +257,10 @@
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                <!-- Back Button -->
+                <a href="#" id="back-button" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
                 <h1 class="text-xl md:text-2xl font-bold" id="page-title">Add New Product</h1>
             </div>
             <div class="flex items-center space-x-4">
@@ -400,49 +456,12 @@
                     </div>
                 </div>
                 
-                <!-- Section 7: Marketplace & Lead Source (Your Edge) -->
-                <div class="card rounded-xl overflow-hidden form-section">
-                    <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
-                        <h2 class="text-lg font-semibold flex items-center gap-2">
-                            <i class="fas fa-globe-americas text-purple-500"></i> Marketplace & Lead Source
-                        </h2>
-                        <p class="text-xs opacity-60 mt-1">Connect your product to external platforms for better reach</p>
-                    </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Platform</label>
-                                <select id="product-platform" class="w-full px-4 py-3 rounded-lg border">
-                                    <option value="">Select Platform</option>
-                                    <option value="Facebook Marketplace">Facebook Marketplace</option>
-                                    <option value="Dubizzle">Dubizzle</option>
-                                    <option value="Instagram Shop">Instagram Shop</option>
-                                    <option value="Amazon">Amazon</option>
-                                    <option value="Noon">Noon</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Product URL (External)</label>
-                                <input type="url" id="product-external-url" placeholder="https://..." class="w-full px-4 py-3 rounded-lg border">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Country / Region</label>
-                                <input type="text" id="product-country" placeholder="e.g., UAE, Saudi Arabia" class="w-full px-4 py-3 rounded-lg border">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Lead Source / Campaign</label>
-                                <input type="text" id="product-lead-source" placeholder="e.g., Instagram ad, Google Shopping" class="w-full px-4 py-3 rounded-lg border">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Form Actions -->
                 <div class="flex gap-4 justify-end sticky bottom-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border">
-                    <a href="admin-dashboard.html?section=products" class="px-6 py-3 rounded-xl border-2 border-gray-300 hover:bg-gray-50 transition font-medium">
+                    <button type="button" id="cancel-button" class="cancel-btn">
                         <i class="fas fa-times mr-2"></i> Cancel
-                    </a>
-                    <button type="submit" class="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-lg transition">
+                    </button>
+                    <button type="submit" class="save-btn">
                         <i class="fas fa-save mr-2"></i> Save Product
                     </button>
                 </div>
@@ -454,7 +473,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -475,7 +494,7 @@
 
         let productId = null;
         let existingImageUrls = [];
-        let imagesToDelete = [];
+        let pendingNewFiles = [];
 
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -494,6 +513,33 @@
         };
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+        
+        // Get return URL from query parameter or use default
+        function getReturnUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const returnUrl = urlParams.get('return');
+            if (returnUrl) {
+                return returnUrl;
+            }
+            // Default return to products page
+            return 'admin-dashboard.html?section=products';
+        }
+        
+        // Setup back and cancel buttons
+        function setupNavigation() {
+            const returnUrl = getReturnUrl();
+            const backButton = document.getElementById('back-button');
+            const cancelButton = document.getElementById('cancel-button');
+            
+            if (backButton) {
+                backButton.href = returnUrl;
+            }
+            if (cancelButton) {
+                cancelButton.onclick = () => {
+                    window.location.href = returnUrl;
+                };
+            }
+        }
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -505,6 +551,7 @@
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
             await loadCategories();
             await checkForEdit();
+            setupNavigation();
         });
 
         async function loadCategories() {
@@ -526,7 +573,7 @@
         async function loadProductData() {
             const productDoc = await getDoc(doc(db, 'products', productId));
             if (!productDoc.exists()) {
-                window.location.href = 'admin-dashboard.html?section=products';
+                window.location.href = getReturnUrl();
                 return;
             }
             const p = productDoc.data();
@@ -551,10 +598,6 @@
             document.getElementById('product-sku').value = p.sku || '';
             document.getElementById('product-shipping-cost').value = p.shippingCost || p.shippingFee || '';
             document.getElementById('product-delivery-method').value = p.deliveryMethod || p.deliveryType || 'cod';
-            document.getElementById('product-platform').value = p.platform || '';
-            document.getElementById('product-external-url').value = p.externalUrl || p.productLink || '';
-            document.getElementById('product-country').value = p.country || '';
-            document.getElementById('product-lead-source').value = p.leadSource || '';
             
             const conditionRadio = document.querySelector(`input[name="condition"][value="${p.condition}"]`);
             if (conditionRadio) conditionRadio.checked = true;
@@ -581,10 +624,6 @@
         }
 
         window.removeImage = (index) => {
-            const url = existingImageUrls[index];
-            if (url && !url.startsWith('blob:')) {
-                imagesToDelete.push(url);
-            }
             existingImageUrls.splice(index, 1);
             renderImagePreviews();
         };
@@ -633,22 +672,20 @@
                         renderImagePreviews();
                     };
                     reader.readAsDataURL(file);
-                    window.pendingNewFiles = window.pendingNewFiles || [];
-                    window.pendingNewFiles.push(file);
+                    pendingNewFiles.push(file);
                 }
             });
         }
 
-        async function uploadNewImages(productId) {
-            const newFiles = window.pendingNewFiles || [];
+        async function uploadNewImages(productIdForUpload) {
             const urls = [];
-            for (let i = 0; i < newFiles.length; i++) {
-                const storageRef = ref(storage, `products/${productId}/image_${Date.now()}_${i}.jpg`);
-                await uploadBytes(storageRef, newFiles[i]);
+            for (let i = 0; i < pendingNewFiles.length; i++) {
+                const storageRef = ref(storage, `products/${productIdForUpload}/image_${Date.now()}_${i}.jpg`);
+                await uploadBytes(storageRef, pendingNewFiles[i]);
                 const url = await getDownloadURL(storageRef);
                 urls.push(url);
             }
-            window.pendingNewFiles = [];
+            pendingNewFiles = [];
             return urls;
         }
 
@@ -682,17 +719,13 @@
                 sku: document.getElementById('product-sku').value,
                 shippingCost: parseFloat(document.getElementById('product-shipping-cost').value) || 0,
                 deliveryMethod: document.getElementById('product-delivery-method').value,
-                platform: document.getElementById('product-platform').value,
-                externalUrl: document.getElementById('product-external-url').value,
-                country: document.getElementById('product-country').value,
-                leadSource: document.getElementById('product-lead-source').value,
                 condition: conditionRadio ? conditionRadio.value : '',
                 updatedAt: new Date().toISOString()
             };
             
             if (productId) {
                 // Update existing product
-                const finalImages = [...existingImageUrls];
+                const finalImages = [...existingImageUrls.filter(url => !url.startsWith('blob:'))];
                 const newImageUrls = await uploadNewImages(productId);
                 finalImages.push(...newImageUrls);
                 productData.images = finalImages;
@@ -709,7 +742,7 @@
                 alert('Product added successfully!');
             }
             
-            window.location.href = 'admin-dashboard.html?section=products';
+            window.location.href = getReturnUrl();
         };
     </script>
 </body>
