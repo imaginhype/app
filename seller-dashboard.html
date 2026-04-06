@@ -9,10 +9,8 @@
     <link rel="stylesheet" href="style.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut }
-            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, getDoc, query, where, orderBy, limit }
-            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, getDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -23,15 +21,53 @@
             appId: "1:200919529212:web:afa69db5cf256d35f90979"
         };
 
-        const app  = initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db   = getFirestore(app);
+        const db = getFirestore(app);
 
-        // Apply theme immediately
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         let currentUser = null, currentSellerId = null, currentSellerData = null;
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            let box = document.getElementById('toast-container');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'toast-container';
+                box.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
+                document.body.appendChild(box);
+            }
+            const t = document.createElement('div');
+            t.style.cssText = `background:${type === 'success' ? '#10b981' : '#ef4444'};color:white;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:500;box-shadow:0 4px 6px rgba(0,0,0,.15);cursor:pointer;max-width:320px;`;
+            t.textContent = message;
+            t.onclick = () => t.remove();
+            box.appendChild(t);
+            setTimeout(() => { if (t.parentNode) t.remove(); }, 3000);
+        }
+
+        function applyThemeIcons() {
+            const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+            document.querySelectorAll('.icon-moon').forEach(el => el.style.display = theme === 'dark' ? 'inline' : 'none');
+            document.querySelectorAll('.icon-sun').forEach(el => el.style.display = theme === 'light' ? 'inline' : 'none');
+        }
+
+        window.toggleTheme = () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            applyThemeIcons();
+        };
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -43,116 +79,90 @@
                 return;
             }
 
-            currentUser       = user;
-            currentSellerId   = user.uid;
+            currentUser = user;
+            currentSellerId = user.uid;
             currentSellerData = userDoc.data();
 
-            document.getElementById('seller-name').textContent = currentSellerData?.name || 'Seller';
+            const sellerNameEl = document.getElementById('seller-name');
+            if (sellerNameEl) sellerNameEl.textContent = currentSellerData?.name || 'Seller';
             applyThemeIcons();
-            loadSellerDashboard();
+            await loadSellerDashboard();
         });
 
-        // ── Theme ────────────────────────────────────────────────────────────
-        function applyThemeIcons() {
-            const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-            document.querySelectorAll('.icon-moon').forEach(el => el.style.display = theme === 'dark'  ? 'inline' : 'none');
-            document.querySelectorAll('.icon-sun' ).forEach(el => el.style.display = theme === 'light' ? 'inline' : 'none');
-        }
-        window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-            applyThemeIcons();
-        };
-
-        // ── Toast ────────────────────────────────────────────────────────────
-        function showNotification(message, type = 'success') {
-            let box = document.getElementById('toast-container');
-            if (!box) {
-                box = document.createElement('div');
-                box.id = 'toast-container';
-                box.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
-                document.body.appendChild(box);
-            }
-            const t = document.createElement('div');
-            t.style.cssText = `background:${type==='success'?'#10b981':'#ef4444'};color:white;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:500;box-shadow:0 4px 6px rgba(0,0,0,.15);cursor:pointer;max-width:320px;`;
-            t.textContent = message;
-            t.onclick = () => t.remove();
-            box.appendChild(t);
-            setTimeout(() => { if (t.parentNode) t.remove(); }, 3000);
-        }
-
-        // ── Load everything ──────────────────────────────────────────────────
         async function loadSellerDashboard() {
             await Promise.all([loadSellerStats(), loadMyOrders(), loadProducts(), loadEarnings()]);
         }
 
         async function loadSellerStats() {
-            // FIX: Use limit to avoid loading all orders for stats
             const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId)));
-            const totalOrders     = snap.size;
-            const completedOrders = snap.docs.filter(d => ['completed','paid'].includes(d.data().status)).length;
-            const pendingOrders   = snap.docs.filter(d => d.data().status === 'pending').length;
-            const earnings        = currentSellerData?.totalEarnings  || 0;
-            const pending         = currentSellerData?.pendingPayout  || 0;
+            const totalOrders = snap.size;
+            const completedOrders = snap.docs.filter(d => ['completed', 'paid'].includes(d.data().status)).length;
+            const pendingOrders = snap.docs.filter(d => d.data().status === 'pending').length;
+            const earnings = currentSellerData?.totalEarnings || 0;
+            const pending = currentSellerData?.pendingPayout || 0;
 
-            document.getElementById('stat-total-orders'   ).innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
-            document.getElementById('stat-completed'      ).innerHTML = `<div class="text-2xl font-bold">${completedOrders}</div><div class="text-sm opacity-70">Completed</div>`;
-            document.getElementById('stat-pending-orders' ).innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
-            document.getElementById('stat-earnings'       ).innerHTML = `<div class="text-2xl font-bold">AED ${earnings}</div><div class="text-sm opacity-70">Total Earnings</div>`;
-            document.getElementById('stat-payout'         ).innerHTML = `<div class="text-2xl font-bold">AED ${pending}</div><div class="text-sm opacity-70">Pending Payout</div>`;
+            const statTotal = document.getElementById('stat-total-orders');
+            const statCompleted = document.getElementById('stat-completed');
+            const statPending = document.getElementById('stat-pending-orders');
+            const statEarnings = document.getElementById('stat-earnings');
+            const statPayout = document.getElementById('stat-payout');
+
+            if (statTotal) statTotal.innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
+            if (statCompleted) statCompleted.innerHTML = `<div class="text-2xl font-bold">${completedOrders}</div><div class="text-sm opacity-70">Completed</div>`;
+            if (statPending) statPending.innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
+            if (statEarnings) statEarnings.innerHTML = `<div class="text-2xl font-bold">AED ${earnings}</div><div class="text-sm opacity-70">Total Earnings</div>`;
+            if (statPayout) statPayout.innerHTML = `<div class="text-2xl font-bold">AED ${pending}</div><div class="text-sm opacity-70">Pending Payout</div>`;
         }
 
         async function loadMyOrders() {
-            // FIX: Add limit to prevent loading too many orders
             const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), orderBy('createdAt', 'desc'), limit(50)));
             const container = document.getElementById('my-orders');
             const fullContainer = document.getElementById('my-orders-full');
-            
+
             if (!container) return;
-            
-            if (snap.empty) { 
+
+            if (snap.empty) {
                 const emptyMsg = '<div class="text-center py-8 opacity-60">No orders yet. Place your first order!</div>';
                 container.innerHTML = emptyMsg;
                 if (fullContainer) fullContainer.innerHTML = emptyMsg;
-                return; 
+                return;
             }
-            
+
             container.innerHTML = '';
             let allOrdersHtml = '';
-            
-            snap.docs.forEach(d => {
+
+            for (const d of snap.docs) {
                 const o = d.data();
                 let sc = 'bg-yellow-500/20 text-yellow-500';
-                if (o.status === 'approved')  sc = 'bg-blue-500/20 text-blue-500';
+                if (o.status === 'approved') sc = 'bg-blue-500/20 text-blue-500';
                 if (o.status === 'completed') sc = 'bg-green-500/20 text-green-500';
-                if (o.status === 'paid')      sc = 'bg-purple-500/20 text-purple-500';
-                
+                if (o.status === 'paid') sc = 'bg-purple-500/20 text-purple-500';
+
                 const orderHtml = `
                     <div class="border rounded-lg p-4 mb-3">
                         <div class="flex justify-between items-start flex-wrap gap-2">
                             <div>
-                                <p class="font-semibold">Order #${d.id.slice(0,8)}</p>
+                                <p class="font-semibold">Order #${d.id.slice(0, 8)}</p>
                                 <p class="text-sm opacity-70">Customer: <span class="customer-name"></span></p>
                                 <p class="text-sm">Amount: AED ${o.totalAmount}</p>
                                 ${o.commissionAmount
-                                    ? `<p class="text-sm text-green-500">Your Earnings: AED ${o.sellerEarnings}</p>`
-                                    : '<p class="text-sm text-yellow-500">Commission pending approval</p>'}
+                        ? `<p class="text-sm text-green-500">Your Earnings: AED ${o.sellerEarnings}</p>`
+                        : '<p class="text-sm text-yellow-500">Commission pending approval</p>'}
                             </div>
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${sc}">${(o.status||'').toUpperCase()}</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${sc}">${(o.status || '').toUpperCase()}</span>
                         </div>
-                        ${o.status === 'approved'  ? `<button onclick="markCompleted('${d.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition">Mark as Completed</button>` : ''}
-                        ${o.status === 'completed' ? `<button onclick="requestPayout('${d.id}',${o.sellerEarnings||0})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Request Payout</button>` : ''}
+                        ${o.status === 'approved' ? `<button onclick="markCompleted('${d.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition">Mark as Completed</button>` : ''}
+                        ${o.status === 'completed' ? `<button onclick="requestPayout('${d.id}',${o.sellerEarnings || 0})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Request Payout</button>` : ''}
                     </div>`;
-                
+
                 const div = document.createElement('div');
                 div.innerHTML = orderHtml;
-                div.querySelector('.customer-name').textContent = o.customerName || 'N/A';
+                const customerNameSpan = div.querySelector('.customer-name');
+                if (customerNameSpan) customerNameSpan.textContent = o.customerName || 'N/A';
                 container.appendChild(div);
                 allOrdersHtml += orderHtml;
-            });
-            
-            // FIX: Populate the full orders view
+            }
+
             if (fullContainer) {
                 fullContainer.innerHTML = allOrdersHtml || '<div class="text-center py-8 opacity-60">No orders yet.</div>';
             }
@@ -161,9 +171,9 @@
         window.markCompleted = async (orderId) => {
             await updateDoc(doc(db, 'orders', orderId), { status: 'completed', completedAt: new Date().toISOString() });
             showNotification('Order marked as completed!');
-            loadMyOrders(); 
-            loadSellerStats();
-            loadEarnings();
+            await loadMyOrders();
+            await loadSellerStats();
+            await loadEarnings();
         };
 
         window.requestPayout = async (orderId, amount) => {
@@ -173,32 +183,32 @@
             await updateDoc(doc(db, 'users', currentSellerId), { pendingPayout: newPending });
             currentSellerData.pendingPayout = newPending;
             showNotification('Payout requested! Admin will process it soon.');
-            loadMyOrders(); 
-            loadSellerStats();
-            loadEarnings();
+            await loadMyOrders();
+            await loadSellerStats();
+            await loadEarnings();
         };
 
         async function loadProducts() {
             const snap = await getDocs(query(collection(db, 'products'), limit(50)));
-            const container = document.getElementById('products-list'); 
+            const container = document.getElementById('products-list');
             if (!container) return;
-            
-            if (snap.empty) { 
-                container.innerHTML = '<div class="text-center py-8 opacity-60">No products available yet.</div>'; 
-                return; 
+
+            if (snap.empty) {
+                container.innerHTML = '<div class="text-center py-8 opacity-60">No products available yet.</div>';
+                return;
             }
-            
+
             container.innerHTML = '';
-            snap.docs.forEach(d => {
+            for (const d of snap.docs) {
                 const p = d.data();
                 const div = document.createElement('div');
                 div.className = 'border rounded-lg p-4';
                 const productName = escapeHtml(p.name || 'Untitled');
-                const productDesc = escapeHtml((p.description || '').substring(0,100));
-                const imageHtml = (p.imageUrl && p.imageUrl !== 'undefined') 
-                    ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-40 object-cover rounded-lg mb-3" alt="${productName}" onerror="this.remove()">` 
+                const productDesc = escapeHtml((p.description || '').substring(0, 100));
+                const imageHtml = (p.imageUrl && p.imageUrl !== 'undefined')
+                    ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-40 object-cover rounded-lg mb-3" alt="${productName}" onerror="this.remove()">`
                     : '';
-                
+
                 div.innerHTML = `
                     ${imageHtml}
                     <h4 class="font-semibold product-name"></h4>
@@ -206,37 +216,42 @@
                     <p class="text-lg font-bold mt-2">AED ${p.price}</p>
                     <p class="text-xs opacity-60">Category: ${escapeHtml(p.category || 'Uncategorized')}</p>
                     <button class="order-btn mt-3 w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">Place Order</button>`;
-                div.querySelector('.product-name').textContent = productName;
-                div.querySelector('.product-desc').textContent = productDesc;
-                div.querySelector('.order-btn').onclick = () => openOrderForm(d.id, productName, p.price);
+                
+                const productNameEl = div.querySelector('.product-name');
+                const productDescEl = div.querySelector('.product-desc');
+                const orderBtn = div.querySelector('.order-btn');
+                
+                if (productNameEl) productNameEl.textContent = productName;
+                if (productDescEl) productDescEl.textContent = productDesc;
+                if (orderBtn) orderBtn.onclick = () => openOrderForm(d.id, productName, p.price);
+                
                 container.appendChild(div);
-            });
+            }
         }
 
-        // FIX: Fix order status filter - 'in' queries need an index
         async function loadEarnings() {
-            // Get approved orders (status 'approved' or 'completed' or 'paid')
             const [approvedSnap, completedSnap, paidSnap] = await Promise.all([
                 getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'approved'))),
                 getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'completed'))),
                 getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'paid')))
             ]);
-            
-            let total = 0;
-            [...approvedSnap.docs, ...completedSnap.docs, ...paidSnap.docs].forEach(d => { 
-                total += d.data().sellerEarnings || 0; 
-            });
-            
-            const el = document.getElementById('total-earnings-display');
-            if (el) el.innerHTML = `<div class="text-3xl font-bold">AED ${total}</div><div class="text-sm opacity-70 mt-1">Total earned from approved orders</div>`;
 
-            // Update profile section
+            let total = 0;
+            [...approvedSnap.docs, ...completedSnap.docs, ...paidSnap.docs].forEach(d => {
+                total += d.data().sellerEarnings || 0;
+            });
+
+            const earningsDisplay = document.getElementById('total-earnings-display');
+            if (earningsDisplay) {
+                earningsDisplay.innerHTML = `<div class="text-3xl font-bold">AED ${total}</div><div class="text-sm opacity-70 mt-1">Total earned from approved orders</div>`;
+            }
+
             const profileName = document.getElementById('profile-name');
             const profileEmail = document.getElementById('profile-email');
             const profileJoined = document.getElementById('profile-joined');
             const profileEarnings = document.getElementById('profile-earnings');
             const profilePending = document.getElementById('profile-pending');
-            
+
             if (profileName) profileName.textContent = currentSellerData?.name || '';
             if (profileEmail) profileEmail.textContent = currentSellerData?.email || '';
             if (profileJoined) profileJoined.textContent = currentSellerData?.createdAt ? new Date(currentSellerData.createdAt).toLocaleDateString() : 'N/A';
@@ -244,96 +259,102 @@
             if (profilePending) profilePending.textContent = currentSellerData?.pendingPayout || 0;
         }
 
-        // Helper function to prevent XSS
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
-        // ── Order modal ──────────────────────────────────────────────────────
         window.openOrderForm = (productId, productName, price) => {
-            document.getElementById('order-product-id').value = productId;
-            document.getElementById('order-price').value      = price;
+            const productIdInput = document.getElementById('order-product-id');
+            const priceInput = document.getElementById('order-price');
             const nameEl = document.getElementById('order-product-name');
-            nameEl.textContent = '';
-            const strong = document.createElement('strong');
-            strong.textContent = productName;
-            nameEl.appendChild(strong);
-            nameEl.append(` — AED ${price}`);
-            document.getElementById('order-modal').classList.remove('hidden');
+            
+            if (productIdInput) productIdInput.value = productId;
+            if (priceInput) priceInput.value = price;
+            if (nameEl) {
+                nameEl.textContent = '';
+                const strong = document.createElement('strong');
+                strong.textContent = productName;
+                nameEl.appendChild(strong);
+                nameEl.append(` — AED ${price}`);
+            }
+            
+            const modal = document.getElementById('order-modal');
+            if (modal) modal.classList.remove('hidden');
         };
 
         window.closeOrderModal = () => {
-            document.getElementById('order-modal').classList.add('hidden');
-            document.getElementById('order-form').reset();
+            const modal = document.getElementById('order-modal');
+            const form = document.getElementById('order-form');
+            if (modal) modal.classList.add('hidden');
+            if (form) form.reset();
         };
 
         window.submitOrder = async () => {
-            const productId     = document.getElementById('order-product-id').value;
-            const customerName  = document.getElementById('customer-name').value.trim();
-            const customerPhone = document.getElementById('customer-phone').value.trim();
-            const customerAddr  = document.getElementById('customer-address').value.trim();
-            const quantity      = parseInt(document.getElementById('quantity').value);
-            const price         = parseFloat(document.getElementById('order-price').value);
-            const notes         = document.getElementById('order-notes').value;
+            const productId = document.getElementById('order-product-id')?.value;
+            const customerName = document.getElementById('customer-name')?.value.trim();
+            const customerPhone = document.getElementById('customer-phone')?.value.trim();
+            const customerAddr = document.getElementById('customer-address')?.value.trim();
+            const quantity = parseInt(document.getElementById('quantity')?.value || '1');
+            const price = parseFloat(document.getElementById('order-price')?.value || '0');
+            const notes = document.getElementById('order-notes')?.value || '';
 
             if (!customerName || !customerPhone || !customerAddr) {
-                showNotification('Please fill in all required fields.', 'error'); 
+                showNotification('Please fill in all required fields.', 'error');
                 return;
             }
 
             await addDoc(collection(db, 'orders'), {
                 productId, sellerId: currentSellerId,
-                sellerName:      currentSellerData?.name || 'Seller',
-                customerName,    customerPhone, customerAddress: customerAddr,
-                quantity,        unitPrice: price, totalAmount: price * quantity,
-                notes,           status: 'pending',
-                createdAt:       new Date().toISOString()
+                sellerName: currentSellerData?.name || 'Seller',
+                customerName, customerPhone, customerAddress: customerAddr,
+                quantity, unitPrice: price, totalAmount: price * quantity,
+                notes, status: 'pending',
+                createdAt: new Date().toISOString()
             });
 
             showNotification('Order placed! Admin will review and approve commission.');
             window.closeOrderModal();
-            loadMyOrders(); 
-            loadSellerStats();
+            await loadMyOrders();
+            await loadSellerStats();
         };
 
-        // ── Navigation ───────────────────────────────────────────────────────
         window.showSection = (section, clickedEl) => {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(`section-${section}`)?.classList.remove('hidden');
+            const sectionEl = document.getElementById(`section-${section}`);
+            if (sectionEl) sectionEl.classList.remove('hidden');
+            
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             if (clickedEl) clickedEl.classList.add('active');
+            
             if (section === 'earnings') loadEarnings();
             if (section === 'orders') loadMyOrders();
-            window.closeMobileMenu?.();
+            
+            const closeMobileMenuFn = window.closeMobileMenu;
+            if (typeof closeMobileMenuFn === 'function') closeMobileMenuFn();
         };
 
-        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+        window.logout = async () => {
+            await signOut(auth);
+            window.location.href = '/';
+        };
 
         window.toggleMobileMenu = () => {
-            const sb = document.getElementById('mobile-sidebar'), ov = document.getElementById('sidebar-overlay');
-            sb?.classList.toggle('show'); ov?.classList.toggle('show');
+            const sb = document.getElementById('mobile-sidebar');
+            const ov = document.getElementById('sidebar-overlay');
+            if (sb) sb.classList.toggle('show');
+            if (ov) ov.classList.toggle('show');
             document.body.style.overflow = sb?.classList.contains('show') ? 'hidden' : '';
         };
+
         window.closeMobileMenu = () => {
-            document.getElementById('mobile-sidebar')?.classList.remove('show');
-            document.getElementById('sidebar-overlay')?.classList.remove('show');
+            const sb = document.getElementById('mobile-sidebar');
+            const ov = document.getElementById('sidebar-overlay');
+            if (sb) sb.classList.remove('show');
+            if (ov) ov.classList.remove('show');
             document.body.style.overflow = '';
         };
     </script>
 </head>
 <body class="transition-colors duration-300">
-
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
     <div class="flex h-screen overflow-hidden">
-
-        <!-- Mobile Sidebar -->
         <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
             <div class="p-4 border-b flex justify-between items-center">
                 <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
@@ -351,7 +372,6 @@
             </div>
         </aside>
 
-        <!-- Desktop Sidebar -->
         <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
             <div class="p-4 border-b">
                 <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
@@ -369,7 +389,6 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content flex-1 overflow-y-auto">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
@@ -379,7 +398,7 @@
                 <div class="flex items-center space-x-4">
                     <button onclick="toggleTheme()" class="p-2 rounded-full transition" title="Toggle theme">
                         <i class="fas fa-moon icon-moon"></i>
-                        <i class="fas fa-sun  icon-sun" style="display:none"></i>
+                        <i class="fas fa-sun icon-sun" style="display:none"></i>
                     </button>
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-user-circle text-2xl"></i>
@@ -389,8 +408,6 @@
             </div>
 
             <div class="p-4 md:p-6">
-
-                <!-- Dashboard Section -->
                 <div id="section-dashboard" class="section">
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
                         <div class="stat-card p-4 rounded-xl" id="stat-total-orders">Loading...</div>
@@ -405,7 +422,6 @@
                     </div>
                 </div>
 
-                <!-- Products Section -->
                 <div id="section-products" class="section hidden">
                     <div class="card p-6 rounded-xl">
                         <h3 class="text-lg font-semibold mb-4">Available Products</h3>
@@ -415,7 +431,6 @@
                     </div>
                 </div>
 
-                <!-- Orders Section -->
                 <div id="section-orders" class="section hidden">
                     <div class="card p-6 rounded-xl">
                         <h3 class="text-lg font-semibold mb-4">All My Orders</h3>
@@ -423,7 +438,6 @@
                     </div>
                 </div>
 
-                <!-- Earnings Section -->
                 <div id="section-earnings" class="section hidden">
                     <div class="card p-6 rounded-xl">
                         <h3 class="text-lg font-semibold mb-4">My Earnings</h3>
@@ -432,7 +446,6 @@
                     </div>
                 </div>
 
-                <!-- Profile Section -->
                 <div id="section-profile" class="section hidden">
                     <div class="card p-6 rounded-xl">
                         <h3 class="text-lg font-semibold mb-4">My Profile</h3>
@@ -445,12 +458,10 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </main>
     </div>
 
-    <!-- Order Modal -->
     <div id="order-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="card rounded-xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Place Order</h3><button onclick="closeOrderModal()" class="text-2xl">&times;</button></div>
@@ -458,11 +469,11 @@
                 <input type="hidden" id="order-product-id">
                 <input type="hidden" id="order-price">
                 <div class="p-3 bg-purple-500/10 rounded-lg" id="order-product-name"></div>
-                <div><input type="text"   id="customer-name"    placeholder="Customer Full Name *" class="w-full px-4 py-2 rounded-lg border" required></div>
-                <div><input type="tel"    id="customer-phone"   placeholder="Customer Phone *" class="w-full px-4 py-2 rounded-lg border" required></div>
-                <div><textarea            id="customer-address" placeholder="Customer Address *" class="w-full px-4 py-2 rounded-lg border" rows="2" required></textarea></div>
-                <div><input type="number" id="quantity"         value="1" min="1" class="w-full px-4 py-2 rounded-lg border"></div>
-                <div><textarea            id="order-notes"      placeholder="Order Notes (optional)" class="w-full px-4 py-2 rounded-lg border" rows="2"></textarea></div>
+                <div><input type="text" id="customer-name" placeholder="Customer Full Name *" class="w-full px-4 py-2 rounded-lg border" required></div>
+                <div><input type="tel" id="customer-phone" placeholder="Customer Phone *" class="w-full px-4 py-2 rounded-lg border" required></div>
+                <div><textarea id="customer-address" placeholder="Customer Address *" class="w-full px-4 py-2 rounded-lg border" rows="2" required></textarea></div>
+                <div><input type="number" id="quantity" value="1" min="1" class="w-full px-4 py-2 rounded-lg border"></div>
+                <div><textarea id="order-notes" placeholder="Order Notes (optional)" class="w-full px-4 py-2 rounded-lg border" rows="2"></textarea></div>
                 <div class="flex space-x-3">
                     <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Place Order</button>
                     <button type="button" onclick="closeOrderModal()" class="flex-1 border py-2 rounded-lg">Cancel</button>
@@ -487,6 +498,5 @@
         @media(max-width:767px){ .desktop-sidebar{ display:none; } .main-content{ margin-left:0!important; } }
         @media(min-width:769px){ .main-content{ margin-left:16rem; } }
     </style>
-    <!-- Remove duplicate app.js - only keep one -->
 </body>
 </html>
