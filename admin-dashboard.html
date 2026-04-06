@@ -35,9 +35,6 @@
         @media(min-width:769px){ .main-content{ margin-left:16rem; } }
         .product-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
         .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-        .filter-btn { transition: all 0.2s ease; cursor: pointer; }
-        .filter-btn.active { background: var(--active-bg); color: white; }
-        .filter-btn:hover:not(.active) { background: var(--hover-bg); }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -65,6 +62,14 @@
         let currentUserData = null;
         let revenueChart = null;
         let ordersStatusChart = null;
+        let allProducts = [];
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let allOrders = [];
+        let ordersSearch = '';
+        let allUsers = [];
+        let userFilter = 'all';
+        let userSearch = '';
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -79,6 +84,10 @@
             document.getElementById('admin-name').textContent = currentUserData.name || 'Admin';
             applyThemeIcons();
             loadDashboard();
+            loadProducts();
+            loadCategories();
+            loadSellers();
+            loadOrders();
         });
 
         function applyThemeIcons() {
@@ -134,34 +143,22 @@
             await loadOrdersByStatusChart();
             await loadTopProducts();
             await loadTopSellers();
-            await loadProducts();
-            await loadCategories();
-            await loadSellers();
-            await loadOrders();
         }
 
         async function loadStats() {
             try {
                 const usersSnap = await getDocs(collection(db, 'users'));
                 const sellers = usersSnap.docs.filter(d => d.data().role === 'seller').length;
-                
                 const ordersSnap = await getDocs(collection(db, 'orders'));
                 const totalOrders = ordersSnap.size;
                 const pendingOrders = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
-                
                 const productsSnap = await getDocs(collection(db, 'products'));
                 
                 document.getElementById('stat-sellers').innerHTML = `<div class="text-2xl font-bold">${sellers}</div><div class="text-sm opacity-70">Sellers</div>`;
                 document.getElementById('stat-orders').innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
                 document.getElementById('stat-pending').innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
                 document.getElementById('stat-products').innerHTML = `<div class="text-2xl font-bold">${productsSnap.size}</div><div class="text-sm opacity-70">Products</div>`;
-            } catch (error) {
-                console.error("Error loading stats:", error);
-                document.getElementById('stat-sellers').innerHTML = `<div class="text-2xl font-bold">0</div><div class="text-sm opacity-70">Sellers</div>`;
-                document.getElementById('stat-orders').innerHTML = `<div class="text-2xl font-bold">0</div><div class="text-sm opacity-70">Total Orders</div>`;
-                document.getElementById('stat-pending').innerHTML = `<div class="text-2xl font-bold">0</div><div class="text-sm opacity-70">Pending Approval</div>`;
-                document.getElementById('stat-products').innerHTML = `<div class="text-2xl font-bold">0</div><div class="text-sm opacity-70">Products</div>`;
-            }
+            } catch (error) { console.error(error); }
         }
 
         async function loadRecentOrders() {
@@ -169,22 +166,11 @@
                 const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
                 const tbody = document.getElementById('recent-orders-table');
                 if (!tbody) return;
-                if (ordersSnap.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 opacity-60">No orders yet.您们</td></tr>';
-                    return;
-                }
+                if (ordersSnap.empty) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 opacity-60">No orders yet.您们</td></tr>'; return; }
                 tbody.innerHTML = '';
                 ordersSnap.docs.forEach(doc => {
                     const order = doc.data();
-                    tbody.innerHTML += `
-                        <tr class="border-b">
-                            <td class="px-4 py-2 text-sm">#${doc.id.slice(0,8)}</td>
-                            <td class="px-4 py-2 text-sm">${order.customerName || 'N/A'}</td>
-                            <td class="px-4 py-2 text-sm">AED ${order.totalAmount}</td>
-                            <td class="px-4 py-2"><span class="status-badge status-${order.status}">${order.status}</span></td>
-                            <td class="px-4 py-2"><button onclick="viewOrderDetails('${doc.id}')" class="text-blue-500"><i class="fas fa-eye"></i></button></td>
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${doc.id.slice(0,8)}</td><td class="px-4 py-2 text-sm">${order.customerName || 'N/A'}</td><td class="px-4 py-2 text-sm">AED ${order.totalAmount}</td><td class="px-4 py-2"><span class="status-badge status-${order.status}">${order.status}</span></td><td class="px-4 py-2"><button onclick="viewOrderDetails('${doc.id}')" class="text-blue-500"><i class="fas fa-eye"></i></button></td></tr>`;
                 });
             } catch (error) { console.error(error); }
         }
@@ -266,10 +252,6 @@
         }
 
         // ========== PRODUCT FUNCTIONS ==========
-        let allProducts = [];
-        let currentFilter = 'all';
-        let currentSearch = '';
-
         async function loadProducts() {
             const container = document.getElementById('products-grid-container');
             if (!container) return;
@@ -507,16 +489,24 @@
             </div>
 
             <!-- Orders Section -->
-            <div id="section-orders" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">All Orders</h3><div id="orders-table-container" class="overflow-x-auto">Loading...</div></div></div>
+            <div id="section-orders" class="section hidden">
+                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">All Orders</h3><div id="orders-table-container" class="overflow-x-auto">Loading...</div></div>
+            </div>
 
             <!-- Sellers Section -->
-            <div id="section-sellers" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Seller Management</h3><div id="sellers-table-container" class="overflow-x-auto">Loading...</div></div></div>
+            <div id="section-sellers" class="section hidden">
+                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Seller Management</h3><div id="sellers-table-container" class="overflow-x-auto">Loading...</div></div>
+            </div>
 
             <!-- Notifications Section -->
-            <div id="section-notifications" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Notifications</h3><div id="notifications-list">Loading...</div></div></div>
+            <div id="section-notifications" class="section hidden">
+                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Notifications</h3><div id="notifications-list">Loading...</div></div>
+            </div>
 
             <!-- Settings Section -->
-            <div id="section-settings" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div></div>
+            <div id="section-settings" class="section hidden">
+                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div>
+            </div>
         </div>
     </main>
 
