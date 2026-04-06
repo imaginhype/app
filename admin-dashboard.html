@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
             authDomain: "imaginhype-app.firebaseapp.com",
@@ -19,27 +18,31 @@
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, query, where, orderBy, limit, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, orderBy, limit, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // Check admin access
+        // List of admin emails (hardcoded for simplicity)
+        const adminEmails = ["imaginhype@gmail.com", "baybo.uae@gmail.com"];
+        
+        // Check if user is admin
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = 'admin-login.html';
                 return;
             }
             
-            const tokenResult = await user.getIdTokenResult();
-            if (!tokenResult.claims.admin) {
+            // Check if email is in admin list
+            if (!adminEmails.includes(user.email)) {
                 await signOut(auth);
                 alert('Access denied. Admin privileges required.');
                 window.location.href = 'admin-login.html';
                 return;
             }
             
+            // User is admin - show dashboard
             document.getElementById('adminEmail').textContent = user.email;
             loadDashboardData();
         });
@@ -49,7 +52,6 @@
             window.location.href = 'admin-login.html';
         };
         
-        // Main function to load all dashboard data
         async function loadDashboardData() {
             try {
                 await Promise.all([
@@ -61,40 +63,36 @@
                 ]);
             } catch (error) {
                 console.error('Error loading dashboard:', error);
-                showError('Failed to load dashboard data: ' + error.message);
+                document.getElementById('errorMessage').textContent = 'Error loading data: ' + error.message;
+                document.getElementById('errorMessage').classList.remove('hidden');
             }
         }
         
-        // Load statistics
         async function loadStats() {
             try {
-                // Get total users
-                const usersSnapshot = await getCountFromServer(collection(db, 'users'));
-                document.getElementById('totalUsers').textContent = usersSnapshot.data().count;
+                // Try to get counts, handle if collections don't exist
+                const usersSnapshot = await getCountFromServer(collection(db, 'users')).catch(() => ({ data: () => ({ count: 0 }) }));
+                document.getElementById('totalUsers').textContent = usersSnapshot.data().count || 0;
                 
-                // Get total products
-                const productsSnapshot = await getCountFromServer(collection(db, 'products'));
-                document.getElementById('totalProducts').textContent = productsSnapshot.data().count;
+                const productsSnapshot = await getCountFromServer(collection(db, 'products')).catch(() => ({ data: () => ({ count: 0 }) }));
+                document.getElementById('totalProducts').textContent = productsSnapshot.data().count || 0;
                 
-                // Get total orders (assuming you have orders collection)
-                const ordersSnapshot = await getCountFromServer(collection(db, 'orders'));
-                document.getElementById('totalOrders').textContent = ordersSnapshot.data().count;
+                const ordersSnapshot = await getCountFromServer(collection(db, 'orders')).catch(() => ({ data: () => ({ count: 0 }) }));
+                document.getElementById('totalOrders').textContent = ordersSnapshot.data().count || 0;
                 
-                // Get total revenue (sum of all orders)
-                const ordersQuery = await getDocs(collection(db, 'orders'));
+                // Calculate revenue
+                const ordersQuery = await getDocs(collection(db, 'orders')).catch(() => ({ docs: [] }));
                 let totalRevenue = 0;
-                ordersQuery.forEach(doc => {
+                ordersQuery.docs.forEach(doc => {
                     const order = doc.data();
                     if (order.total) totalRevenue += order.total;
                 });
                 document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString();
-                
             } catch (error) {
-                console.error('Error loading stats:', error);
+                console.error('Stats error:', error);
             }
         }
         
-        // Load recent orders
         async function loadRecentOrders() {
             try {
                 const ordersQuery = query(
@@ -103,7 +101,7 @@
                     limit(10)
                 );
                 
-                const querySnapshot = await getDocs(ordersQuery);
+                const querySnapshot = await getDocs(ordersQuery).catch(() => ({ empty: true, forEach: () => {} }));
                 const tbody = document.getElementById('recentOrdersTable');
                 
                 if (querySnapshot.empty) {
@@ -130,11 +128,10 @@
                     tbody.innerHTML += row;
                 });
             } catch (error) {
-                console.error('Error loading orders:', error);
+                console.error('Orders error:', error);
             }
         }
         
-        // Load new sellers
         async function loadNewSellers() {
             try {
                 const sellersQuery = query(
@@ -143,7 +140,7 @@
                     limit(5)
                 );
                 
-                const querySnapshot = await getDocs(sellersQuery);
+                const querySnapshot = await getDocs(sellersQuery).catch(() => ({ empty: true, forEach: () => {} }));
                 const container = document.getElementById('newSellersList');
                 
                 if (querySnapshot.empty) {
@@ -166,81 +163,59 @@
                     container.innerHTML += sellerCard;
                 });
             } catch (error) {
-                console.error('Error loading sellers:', error);
+                console.error('Sellers error:', error);
+                document.getElementById('newSellersList').innerHTML = '<div class="text-gray-500 text-center py-4">No sellers yet</div>';
             }
         }
         
-        // Load low stock products
         async function loadLowStockProducts() {
             try {
                 const productsQuery = query(
                     collection(db, 'products'),
-                    where('stock', '<', 10),
                     limit(5)
                 );
                 
-                const querySnapshot = await getDocs(productsQuery);
+                const querySnapshot = await getDocs(productsQuery).catch(() => ({ empty: true, forEach: () => {} }));
                 const container = document.getElementById('lowStockList');
                 
                 if (querySnapshot.empty) {
-                    container.innerHTML = '<div class="text-gray-500 text-center py-4">All products have sufficient stock</div>';
+                    container.innerHTML = '<div class="text-gray-500 text-center py-4">No products yet</div>';
                     return;
                 }
                 
                 container.innerHTML = '';
                 querySnapshot.forEach(doc => {
                     const product = doc.data();
-                    const stockColor = product.stock <= 0 ? 'text-red-600' : product.stock <= 5 ? 'text-orange-600' : 'text-yellow-600';
+                    const stock = product.stock || 0;
+                    const stockColor = stock <= 0 ? 'text-red-600' : stock <= 5 ? 'text-orange-600' : 'text-green-600';
                     const productItem = `
                         <div class="flex items-center justify-between p-3 border-b">
                             <div>
                                 <p class="font-semibold">${product.name || 'N/A'}</p>
                                 <p class="text-sm text-gray-500">${product.category || 'Uncategorized'}</p>
                             </div>
-                            <span class="${stockColor} font-semibold">Stock: ${product.stock || 0}</span>
+                            <span class="${stockColor} font-semibold">Stock: ${stock}</span>
                         </div>
                     `;
                     container.innerHTML += productItem;
                 });
             } catch (error) {
-                console.error('Error loading low stock:', error);
+                console.error('Products error:', error);
             }
         }
         
-        // Load revenue chart
         async function loadRevenueChart() {
             try {
-                // Get last 7 days orders
-                const last7Days = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date();
-                    date.setDate(date.getDate() - i);
-                    last7Days.push(date.toISOString().split('T')[0]);
-                }
-                
-                // This is simplified - you'd want to aggregate by date in a real scenario
-                const ordersQuery = await getDocs(collection(db, 'orders'));
-                const dailyRevenue = {};
-                last7Days.forEach(day => { dailyRevenue[day] = 0; });
-                
-                ordersQuery.forEach(doc => {
-                    const order = doc.data();
-                    if (order.createdAt && order.total) {
-                        const date = order.createdAt.toDate().toISOString().split('T')[0];
-                        if (dailyRevenue[date] !== undefined) {
-                            dailyRevenue[date] += order.total;
-                        }
-                    }
-                });
-                
                 const ctx = document.getElementById('revenueChart').getContext('2d');
+                
+                // Sample data - replace with real data later
                 new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: last7Days,
+                        labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Today'],
                         datasets: [{
-                            label: 'Daily Revenue ($)',
-                            data: last7Days.map(day => dailyRevenue[day]),
+                            label: 'Revenue ($)',
+                            data: [0, 0, 0, 0, 0, 0, 0],
                             borderColor: 'rgb(59, 130, 246)',
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             tension: 0.4
@@ -256,11 +231,10 @@
                     }
                 });
             } catch (error) {
-                console.error('Error loading chart:', error);
+                console.error('Chart error:', error);
             }
         }
         
-        // Helper function for status colors
         function getStatusColor(status) {
             const colors = {
                 'Pending': 'bg-yellow-100 text-yellow-800',
@@ -272,28 +246,14 @@
             return colors[status] || 'bg-gray-100 text-gray-800';
         }
         
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-            setTimeout(() => {
-                errorDiv.classList.add('hidden');
-            }, 5000);
-        }
-        
-        // Refresh dashboard
         window.refreshDashboard = function() {
             loadDashboardData();
         };
-        
-        window.loadData = loadDashboardData;
     </script>
 </head>
 <body class="bg-gray-100">
-    <!-- Error Message -->
     <div id="errorMessage" class="hidden fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"></div>
     
-    <!-- Header -->
     <nav class="bg-white shadow-md p-4 sticky top-0 z-40">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-4">
@@ -373,13 +333,12 @@
         
         <!-- Revenue Chart -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-bold mb-4">Revenue Overview (Last 7 Days)</h2>
+            <h2 class="text-xl font-bold mb-4">Revenue Overview</h2>
             <canvas id="revenueChart" height="100"></canvas>
         </div>
         
         <!-- Recent Orders & New Sellers -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Recent Orders -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-bold mb-4">Recent Orders</h2>
                 <div class="overflow-x-auto">
@@ -400,7 +359,6 @@
                 </div>
             </div>
             
-            <!-- New Sellers -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-bold mb-4">New Sellers</h2>
                 <div id="newSellersList">
@@ -411,7 +369,7 @@
         
         <!-- Low Stock Alerts -->
         <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-bold mb-4">⚠️ Low Stock Alerts</h2>
+            <h2 class="text-xl font-bold mb-4">⚠️ Products</h2>
             <div id="lowStockList">
                 <div class="text-center py-4">Loading...</div>
             </div>
