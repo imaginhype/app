@@ -46,7 +46,6 @@
 
         let currentUser = null, currentUserId = null, currentUserData = null;
         let allProducts = [], currentFilter = 'all', currentSearch = '';
-        let currentProductImages = [];
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -102,6 +101,7 @@
             applyThemeIcons();
             loadDashboard();
             loadCategories();
+            loadProducts();
         });
 
         async function uploadImageToStorage(file, productId, index) {
@@ -110,15 +110,6 @@
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);
             return url;
-        }
-
-        async function uploadMultipleImages(files, productId) {
-            const urls = [];
-            for (let i = 0; i < files.length; i++) {
-                const url = await uploadImageToStorage(files[i], productId, i);
-                if (url) urls.push(url);
-            }
-            return urls;
         }
 
         async function loadDashboard() {
@@ -238,6 +229,7 @@
                 const imgTag = mainImage
                     ? `<img src="${escapeHtml(mainImage)}" class="w-full h-full object-cover" alt="${n}" onerror="this.src='https://placehold.co/400x400?text=No+Image'">`
                     : `<i class="fas fa-box text-6xl text-gray-400"></i>`;
+                // FIXED: Redirect to product-view.html instead of opening modal
                 return `<div class="product-card card rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer" onclick="viewProductDetail('${p.id}')">
                     <div class="aspect-square bg-gray-100 flex items-center justify-center">${imgTag}</div>
                     <div class="p-4">
@@ -252,118 +244,9 @@
             }).join('');
         }
 
-        window.viewProductDetail = async (id) => {
-            const product = allProducts.find(x => x.id === id);
-            if (!product) return;
-            
-            document.getElementById('product-detail-modal').classList.remove('hidden');
-            document.getElementById('detail-product-name').textContent = 'Loading...';
-            
-            currentProductImages = product.images || (product.imageUrl ? [product.imageUrl] : []);
-            
-            document.getElementById('detail-product-id').textContent = product.id.slice(0, 8);
-            document.getElementById('detail-product-name').textContent = product.name || '';
-            document.getElementById('detail-product-description').textContent = product.description || 'No description.';
-            document.getElementById('detail-sale-price').textContent = `AED ${product.salePrice || product.price || 0}`;
-            document.getElementById('detail-regular-price').innerHTML = product.regularPrice ? `<span class="line-through opacity-60 ml-2">AED ${product.regularPrice}</span>` : '';
-            document.getElementById('detail-stock-status').innerHTML = product.stockStatus === 'in-stock' 
-                ? '<span class="text-green-500"><i class="fas fa-check-circle"></i> In Stock</span>'
-                : '<span class="text-red-500"><i class="fas fa-times-circle"></i> Out of Stock</span>';
-            document.getElementById('detail-visibility').innerHTML = product.visibility === 'published' 
-                ? '<span class="text-green-500"><i class="fas fa-globe"></i> Published</span>'
-                : '<span class="text-yellow-500"><i class="fas fa-eye-slash"></i> Hidden</span>';
-            
-            // Display additional product fields in the detail modal
-            const detailCategory = document.getElementById('detail-product-category');
-            const detailBrand = document.getElementById('detail-product-brand');
-            const detailColor = document.getElementById('detail-product-color');
-            const detailMaterial = document.getElementById('detail-product-material');
-            const detailSize = document.getElementById('detail-product-size');
-            const detailWarranty = document.getElementById('detail-product-warranty');
-            const detailWeight = document.getElementById('detail-product-weight');
-            const detailCondition = document.getElementById('detail-product-condition');
-            const detailWarehouse = document.getElementById('detail-product-warehouse');
-            const detailShipping = document.getElementById('detail-product-shipping');
-            
-            if (detailCategory) detailCategory.innerHTML = `<strong>Category</strong><br>${escapeHtml(product.category || 'N/A')}`;
-            if (detailBrand) detailBrand.innerHTML = `<strong>Brand</strong><br>${escapeHtml(product.brand || 'N/A')}`;
-            if (detailColor) detailColor.innerHTML = `<strong>Color</strong><br>${escapeHtml(product.color || 'N/A')}`;
-            if (detailMaterial) detailMaterial.innerHTML = `<strong>Material</strong><br>${escapeHtml(product.material || 'N/A')}`;
-            if (detailSize) detailSize.innerHTML = `<strong>Size</strong><br>${escapeHtml(product.size || 'N/A')}`;
-            if (detailWarranty) detailWarranty.innerHTML = `<strong>Warranty</strong><br>${escapeHtml(product.warranty || 'N/A')}`;
-            if (detailWeight) detailWeight.innerHTML = `<strong>Weight</strong><br>${escapeHtml(product.weight || 'N/A')}`;
-            if (detailCondition) detailCondition.innerHTML = `<strong>Condition</strong><br>${escapeHtml(product.condition || 'N/A')}`;
-            if (detailWarehouse) detailWarehouse.innerHTML = `<strong>Warehouse</strong><br>${escapeHtml(product.warehouse || 'N/A')}`;
-            if (detailShipping) detailShipping.innerHTML = `<strong>Shipping</strong><br>${product.shippingCost ? `AED ${product.shippingCost}` : 'Free'}`;
-            
-            renderProductImages(currentProductImages);
-            window.currentViewingProductId = id;
-        };
-        
-        function renderProductImages(images) {
-            const mainImageContainer = document.getElementById('detail-main-image');
-            const thumbnailContainer = document.getElementById('detail-thumbnails');
-            
-            if (!images || images.length === 0) {
-                mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100"><i class="fas fa-box text-6xl text-gray-400"></i></div>';
-                thumbnailContainer.innerHTML = '';
-                return;
-            }
-            
-            mainImageContainer.innerHTML = `<img src="${escapeHtml(images[0])}" class="main-product-image" alt="Main product image" onclick="openImageZoom('${escapeHtml(images[0])}')">`;
-            
-            thumbnailContainer.innerHTML = images.map((img, idx) => `
-                <img src="${escapeHtml(img)}" 
-                     class="thumbnail-img ${idx === 0 ? 'active' : ''}" 
-                     onclick="changeMainImage(${idx})"
-                     alt="Thumbnail ${idx + 1}">
-            `).join('');
-        }
-        
-        window.changeMainImage = (index) => {
-            const images = currentProductImages;
-            if (!images || !images[index]) return;
-            
-            const mainImageContainer = document.getElementById('detail-main-image');
-            mainImageContainer.innerHTML = `<img src="${escapeHtml(images[index])}" class="main-product-image" alt="Product image" onclick="openImageZoom('${escapeHtml(images[index])}')">`;
-            
-            document.querySelectorAll('.thumbnail-img').forEach((thumb, i) => {
-                if (i === index) thumb.classList.add('active');
-                else thumb.classList.remove('active');
-            });
-        };
-        
-        window.openImageZoom = (imageUrl) => {
-            const modal = document.getElementById('image-zoom-modal');
-            const img = document.getElementById('zoom-image');
-            img.src = imageUrl;
-            modal.classList.remove('hidden');
-        };
-        
-        window.closeImageZoom = () => {
-            document.getElementById('image-zoom-modal').classList.add('hidden');
-        };
-        
-        window.closeProductDetail = () => {
-            document.getElementById('product-detail-modal').classList.add('hidden');
-            window.currentViewingProductId = null;
-        };
-        
-        // FIXED: Edit function now redirects to add-product.html with the product ID
-        window.editCurrentProduct = async () => {
-            if (!window.currentViewingProductId) return;
-            // Redirect to add-product.html with the product ID for editing
-            window.location.href = `add-product.html?id=${window.currentViewingProductId}`;
-        };
-        
-        window.deleteCurrentProduct = async () => {
-            if (!window.currentViewingProductId) return;
-            if (!confirm('Delete this product? This cannot be undone.')) return;
-            await deleteDoc(doc(db, 'products', window.currentViewingProductId));
-            showNotification('Product deleted', 'success');
-            window.closeProductDetail();
-            await loadProducts();
-            await loadStats();
+        // FIXED: Redirect to product-view.html page instead of opening modal popup
+        window.viewProductDetail = (id) => {
+            window.location.href = `product-view.html?id=${id}&from=products`;
         };
         
         window.filterProducts = (cat) => {
@@ -376,63 +259,7 @@
         };
         
         window.showAddProductModal = () => {
-            // Redirect to add-product.html for new product
             window.location.href = 'add-product.html';
-        };
-        
-        window.closeProductModal = () => {
-            document.getElementById('product-modal').classList.add('hidden');
-        };
-        
-        window.saveProduct = async () => {
-            const id = document.getElementById('product-id')?.value;
-            const name = document.getElementById('product-name')?.value;
-            const description = document.getElementById('product-description')?.value;
-            const category = document.getElementById('product-category')?.value;
-            const salePrice = parseFloat(document.getElementById('product-sale-price')?.value || 0);
-            const regularPrice = parseFloat(document.getElementById('product-regular-price')?.value || 0);
-            const stockStatus = document.getElementById('product-stock-status')?.value;
-            const visibility = document.getElementById('product-visibility')?.value;
-            
-            if (!name || !description || !category || !salePrice) {
-                showNotification('Please fill in all required fields.', 'error');
-                return;
-            }
-            
-            let images = window.existingImageUrls || [];
-            
-            const newImageFiles = document.getElementById('product-images')?.files;
-            if (newImageFiles && newImageFiles.length > 0) {
-                const productId = id || Date.now().toString();
-                for (let i = 0; i < newImageFiles.length; i++) {
-                    const url = await uploadImageToStorage(newImageFiles[i], productId, images.length + i);
-                    if (url) images.push(url);
-                }
-            }
-            
-            const data = {
-                name, description, category,
-                salePrice, regularPrice,
-                stockStatus, visibility,
-                images: images,
-                updatedAt: new Date().toISOString()
-            };
-            
-            try {
-                if (id) {
-                    await updateDoc(doc(db, 'products', id), data);
-                    showNotification('Product updated!');
-                } else {
-                    data.createdAt = new Date().toISOString();
-                    await addDoc(collection(db, 'products'), data);
-                    showNotification('Product added!');
-                }
-                window.closeProductModal();
-                await loadProducts();
-                await loadStats();
-            } catch (err) {
-                showNotification('Error: ' + err.message, 'error');
-            }
         };
         
         let allCategories = [];
@@ -442,13 +269,6 @@
             allCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderCategoryFilters();
             renderCategoriesTable();
-            const categorySelect = document.getElementById('product-category');
-            if (categorySelect) {
-                categorySelect.innerHTML = '<option value="">Select category</option>';
-                allCategories.forEach(c => {
-                    categorySelect.innerHTML += `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`;
-                });
-            }
         }
         
         function renderCategoryFilters() {
@@ -473,7 +293,7 @@
                     <td class="px-4 py-2">${escapeHtml(c.name)}</td>
                     <td class="px-4 py-2 text-sm opacity-70">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td>
                     <td class="px-4 py-2"><button onclick="deleteCategory('${c.id}')" class="text-red-500 text-sm hover:underline"><i class="fas fa-trash mr-1"></i>Delete</button></td>
-                 </tr>`;
+                </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
@@ -534,7 +354,7 @@
                         <td class="px-4 py-2">${badge}</td>
                         <td class="px-4 py-2 text-sm opacity-70">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}</td>
                         <td class="px-4 py-2">${btn}</td>
-                     </tr>`;
+                    </tr>`;
                 });
                 html += '</tbody></table>';
                 container.innerHTML = html;
@@ -571,7 +391,7 @@
                             ${ss === 'pending' ? `<button onclick="approveOrder('${d.id}',${o.totalAmount})" class="text-green-500 text-sm hover:underline mr-2">Approve</button>` : ''}
                             <button onclick="viewOrderDetails('${d.id}')" class="text-blue-500 text-sm hover:underline">View</button>
                         </td>
-                     </tr>`;
+                    </tr>`;
                 });
                 html += '</tbody></table>';
                 container.innerHTML = html;
@@ -782,95 +602,6 @@
         </div>
     </main>
 
-    <!-- Product Detail Modal -->
-    <div id="product-detail-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
-        <div class="card rounded-xl p-4 md:p-6 max-w-5xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 pb-4 border-b">
-                <div class="flex items-center gap-3">
-                    <button onclick="closeProductDetail()" class="text-purple-500 hover:text-purple-700 text-sm md:text-base">
-                        <i class="fas fa-arrow-left mr-1"></i> Back
-                    </button>
-                    <h2 class="text-lg md:text-2xl font-bold" id="detail-product-name">Product Details</h2>
-                </div>
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <button onclick="editCurrentProduct()" class="flex-1 sm:flex-none bg-blue-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm md:text-base hover:bg-blue-600 transition">
-                        <i class="fas fa-edit mr-1"></i> Edit
-                    </button>
-                    <button onclick="deleteCurrentProduct()" class="flex-1 sm:flex-none bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm md:text-base hover:bg-red-600 transition">
-                        <i class="fas fa-trash mr-1"></i> Delete
-                    </button>
-                </div>
-            </div>
-            
-            <div class="flex flex-col lg:flex-row gap-6">
-                <div class="lg:w-1/2">
-                    <div class="relative">
-                        <div id="detail-main-image" class="bg-gray-100 rounded-lg flex items-center justify-center min-h-[300px] md:min-h-[400px]">
-                            <div class="text-center"><i class="fas fa-box text-6xl text-gray-400"></i></div>
-                        </div>
-                    </div>
-                    <div id="detail-thumbnails" class="thumbnail-slider mt-4"></div>
-                </div>
-                
-                <div class="lg:w-1/2">
-                    <div class="mb-4">
-                        <div class="text-2xl md:text-3xl font-bold text-purple-500" id="detail-sale-price"></div>
-                        <div id="detail-regular-price"></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="text-sm"><strong>Stock Status:</strong><br><span id="detail-stock-status"></span></div>
-                        <div class="text-sm"><strong>Visibility:</strong><br><span id="detail-visibility"></span></div>
-                        <div class="text-sm" id="detail-product-category"><strong>Category</strong><br>-</div>
-                        <div class="text-sm"><strong>Product ID:</strong><br><span class="text-xs opacity-70">#<span id="detail-product-id"></span></span></div>
-                        <div class="text-sm" id="detail-product-brand"><strong>Brand</strong><br>-</div>
-                        <div class="text-sm" id="detail-product-color"><strong>Color</strong><br>-</div>
-                        <div class="text-sm" id="detail-product-material"><strong>Material</strong><br>-</div>
-                        <div class="text-sm" id="detail-product-size"><strong>Size</strong><br>-</div>
-                        <div class="text-sm" id="detail-product-warranty"><strong>Warranty</strong><br>-</div>
-                        <div class="text-sm" id="detail-product-weight"><strong>Weight</strong><br>-</div>
-                        <div class="text-sm" id="detail-product-condition"><strong>Condition</strong><br>-</div>
-                        <div class="text-sm" id="detail-product-warehouse"><strong>Warehouse</strong><br>-</div>
-                        <div class="text-sm" id="detail-product-shipping"><strong>Shipping</strong><br>-</div>
-                    </div>
-                    
-                    <div>
-                        <h4 class="font-semibold mb-2">Description</h4>
-                        <p class="text-sm opacity-80 whitespace-pre-wrap" id="detail-product-description"></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Image Zoom Modal -->
-    <div id="image-zoom-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 hidden" onclick="closeImageZoom()">
-        <div class="relative max-w-4xl w-full mx-4">
-            <img id="zoom-image" class="w-full h-auto rounded-lg" alt="Zoomed image">
-            <button onclick="closeImageZoom()" class="absolute -top-10 right-0 text-white text-3xl">&times;</button>
-        </div>
-    </div>
-
-    <!-- Product Edit/Add Modal (Legacy - kept for compatibility, but redirects to add-product.html) -->
-    <div id="product-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
-        <div class="card rounded-xl p-4 md:p-6 max-w-3xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold" id="modal-title">Add New Product</h3>
-                <button onclick="closeProductModal()" class="text-2xl">&times;</button>
-            </div>
-            <form id="product-form" class="space-y-4" onsubmit="event.preventDefault(); saveProduct();">
-                <input type="hidden" id="product-id">
-                <div><label class="block text-sm font-medium mb-1">Product Images</label><input type="file" id="product-images" accept="image/jpeg,image/png,image/webp" multiple class="w-full px-4 py-2 rounded-lg border"><div id="existing-images" class="mt-3"></div></div>
-                <div><label class="block text-sm font-medium mb-1">Product Name *</label><input type="text" id="product-name" required class="w-full px-4 py-2 rounded-lg border"></div>
-                <div><label class="block text-sm font-medium mb-1">Description *</label><textarea id="product-description" rows="4" required class="w-full px-4 py-2 rounded-lg border"></textarea></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Sale Price (AED) *</label><input type="number" id="product-sale-price" required min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border"></div><div><label class="block text-sm font-medium mb-1">Regular Price (AED)</label><input type="number" id="product-regular-price" min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border"></div></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Stock Status *</label><select id="product-stock-status" required class="w-full px-4 py-2 rounded-lg border"><option value="in-stock">In Stock</option><option value="out-of-stock">Out of Stock</option></select></div><div><label class="block text-sm font-medium mb-1">Category *</label><select id="product-category" required class="w-full px-4 py-2 rounded-lg border"><option value="">Select category</option></select></div></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Visibility *</label><select id="product-visibility" required class="w-full px-4 py-2 rounded-lg border"><option value="published">Published</option><option value="hidden">Hidden</option></select></div></div>
-                <div class="flex space-x-3 pt-4"><button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save Product</button><button type="button" onclick="closeProductModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div>
-            </form>
-        </div>
-    </div>
-
     <!-- Category Modal -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="card rounded-xl p-6 max-w-md w-full mx-4">
@@ -903,11 +634,6 @@
         @media(min-width:768px){ #mobile-sidebar,#sidebar-overlay{ display:none; } }
         @media(max-width:767px){ .desktop-sidebar{ display:none; } .main-content{ margin-left:0!important; } }
         @media(min-width:769px){ .main-content{ margin-left:16rem; } }
-        .thumbnail-slider { display: flex; gap: 10px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 0; }
-        .thumbnail-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
-        .thumbnail-img.active { border-color: #8b5cf6; transform: scale(1.05); }
-        .main-product-image { width: 100%; height: auto; max-height: 400px; object-fit: contain; background: #f3f4f6; border-radius: 12px; }
-        @media (max-width: 768px) { .thumbnail-img { width: 50px; height: 50px; } }
     </style>
 </body>
 </html>
