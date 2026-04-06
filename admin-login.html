@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        
+        // Your Firebase config - REPLACE WITH YOUR ACTUAL CONFIG
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Check if already logged in
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Check if admin
+                user.getIdTokenResult().then((tokenResult) => {
+                    if (tokenResult.claims.admin) {
+                        window.location.href = 'admin-dashboard.html';
+                    }
+                });
+            }
+        });
+        
+        // Login form handler
+        window.login = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error');
+            
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Check if user has admin claim
+                const tokenResult = await user.getIdTokenResult();
+                if (tokenResult.claims.admin) {
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    errorDiv.textContent = 'Access denied. Admin privileges required.';
+                    await auth.signOut();
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Login failed: ' + error.message;
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-96">
+            <h1 class="text-2xl font-bold mb-6 text-center">Admin Login</h1>
+            <div id="error" class="text-red-500 mb-4 text-sm"></div>
+            <input type="email" id="email" placeholder="Email" class="w-full mb-3 p-2 border rounded">
+            <input type="password" id="password" placeholder="Password" class="w-full mb-4 p-2 border rounded">
+            <button onclick="login()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
+        </div>
+    </div>
+</body>
+</html>
