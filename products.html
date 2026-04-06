@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Products - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .category-chip {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .category-chip.active {
+            background-color: #8b5cf6;
+            color: white;
+            border-color: #8b5cf6;
+        }
+        .product-card {
+            transition: all 0.2s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .view-toggle-btn.active {
+            background-color: #8b5cf6;
+            color: white;
+            border-color: #8b5cf6;
+        }
+        .list-view-item {
+            transition: all 0.2s ease;
+        }
+        .list-view-item:hover {
+            background-color: var(--hover-bg);
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div class="min-h-screen">
+        <!-- Top Bar with Profile Dropdown -->
+        <div class="border-b dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="admin-dashboard.html" class="text-purple-500 hover:text-purple-600">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                    </a>
+                    <h1 class="text-xl font-semibold dark:text-white">Products</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
+                        <i class="fas fa-moon dark:block hidden"></i>
+                        <i class="fas fa-sun dark:hidden block"></i>
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
+                        </button>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border dark:border-gray-700">
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-user-circle w-5 text-gray-500"></i>
+                                <span>My Profile</span>
+                            </a>
+                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-cog w-5 text-gray-500"></i>
+                                <span>Account Settings</span>
+                            </a>
+                            <div class="border-t dark:border-gray-700"></div>
+                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-sign-out-alt w-5"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <!-- Category Chips -->
+            <div class="mb-6">
+                <div class="flex flex-wrap gap-2 items-center">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 mr-2">Categories:</span>
+                    <div id="category-chips" class="flex flex-wrap gap-2">
+                        <button data-category="all" class="category-chip active px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">All</button>
+                    </div>
+                    <button onclick="openCategoryModal()" class="ml-2 px-3 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition">
+                        <i class="fas fa-cog mr-1"></i> Manage
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search and View Toggle Bar -->
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <div class="flex-1 max-w-md">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-products" placeholder="Search products..." class="w-full pl-10 pr-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="grid-view-btn" class="view-toggle-btn active px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button id="list-view-btn" class="view-toggle-btn px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <button class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">
+                        <i class="fas fa-filter mr-1"></i> Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Count -->
+            <div class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                Showing <span id="product-count-start">0</span> - <span id="product-count-end">0</span> of <span id="product-total">0</span> products
+            </div>
+
+            <!-- Products Grid/List Container -->
+            <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div class="text-center py-8 col-span-full">Loading products...</div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex justify-center gap-2 mt-8" id="pagination-container"></div>
+        </div>
+    </div>
+
+    <!-- Manage Categories Modal -->
+    <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold dark:text-white">Manage Categories</h2>
+                <button onclick="closeCategoryModal()" class="text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <!-- Add New Category -->
+                <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <h3 class="font-semibold mb-3 dark:text-white">Add New Category</h3>
+                    <div class="flex gap-3">
+                        <input type="text" id="new-category-name" placeholder="Enter category name" class="flex-1 px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                        <button onclick="addCategory()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">+ Add</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Category names must be between 2-50 characters</p>
+                </div>
+
+                <!-- Existing Categories -->
+                <h3 class="font-semibold mb-3 dark:text-white">Existing Categories</h3>
+                <div id="categories-list" class="space-y-2">
+                    <div class="text-center py-4 text-gray-500">Loading categories...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
+            authDomain: "imaginhype-app.firebaseapp.com",
+            projectId: "imaginhype-app",
+            storageBucket: "imaginhype-app.firebasestorage.app",
+            messagingSenderId: "200919529212",
+            appId: "1:200919529212:web:afa69db5cf256d35f90979"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allProducts = [];
+        let allCategories = [];
+        let currentCategory = 'all';
+        let currentSearch = '';
+        let currentView = 'grid';
+        let currentPage = 1;
+        const itemsPerPage = 12;
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // User Menu Functions
+        window.toggleUserMenu = function() {
+            const dropdown = document.getElementById('user-dropdown');
+            const chevron = document.getElementById('user-chevron');
+            if (dropdown) {
+                const isHidden = dropdown.classList.contains('hidden');
+                dropdown.classList.toggle('hidden');
+                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        };
+
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('user-dropdown');
+            const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
+            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+                const chevron = document.getElementById('user-chevron');
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        window.toggleTheme = () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        };
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.data()?.role !== 'admin') {
+                window.location.href = '/seller-dashboard.html';
+                return;
+            }
+            document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
+            await loadCategories();
+            await loadProducts();
+        });
+
+        async function loadCategories() {
+            const snap = await getDocs(collection(db, 'categories'));
+            allCategories = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
+            renderCategoryChips();
+            renderCategoriesList();
+        }
+
+        function renderCategoryChips() {
+            const container = document.getElementById('category-chips');
+            container.innerHTML = '<button data-category="all" class="category-chip active px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">All</button>';
+            allCategories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.textContent = cat.name;
+                btn.dataset.category = cat.name;
+                btn.className = 'category-chip px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition';
+                btn.onclick = () => filterByCategory(cat.name);
+                container.appendChild(btn);
+            });
+        }
+
+        function renderCategoriesList() {
+            const container = document.getElementById('categories-list');
+            if (!allCategories.length) {
+                container.innerHTML = '<div class="text-center py-4 text-gray-500">No categories yet. Add one above!</div>';
+                return;
+            }
+            container.innerHTML = allCategories.map(cat => `
+                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                    <div>
+                        <span class="font-medium dark:text-white">${escapeHtml(cat.name)}</span>
+                        <p class="text-xs text-gray-500">Created: ${new Date(cat.createdAt || Date.now()).toLocaleDateString()}</p>
+                    </div>
+                    <button onclick="deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.addCategory = async () => {
+            const name = document.getElementById('new-category-name').value.trim();
+            if (!name || name.length < 2 || name.length > 50) {
+                alert('Category name must be between 2-50 characters');
+                return;
+            }
+            await addDoc(collection(db, 'categories'), { name, createdAt: new Date().toISOString() });
+            document.getElementById('new-category-name').value = '';
+            await loadCategories();
+        };
+
+        window.deleteCategory = async (id) => {
+            if (!confirm('Delete this category? Products in this category will remain but show as uncategorized.')) return;
+            await deleteDoc(doc(db, 'categories', id));
+            await loadCategories();
+        };
+
+        window.openCategoryModal = () => {
+            document.getElementById('category-modal').classList.remove('hidden');
+        };
+
+        window.closeCategoryModal = () => {
+            document.getElementById('category-modal').classList.add('hidden');
+        };
+
+        async function loadProducts() {
+            const snap = await getDocs(collection(db, 'products'));
+            allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderProducts();
+        }
+
+        function filterByCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-chip').forEach(btn => {
+                if (btn.dataset.category === category || (category === 'all' && btn.dataset.category === 'all')) {
+                    btn.classList.add('active', 'bg-purple-500', 'text-white');
+                } else {
+                    btn.classList.remove('active', 'bg-purple-500', 'text-white');
+                }
+            });
+            currentPage = 1;
+            renderProducts();
+        }
+
+        function renderProducts() {
+            let filtered = allProducts;
+            if (currentCategory !== 'all') {
+                filtered = filtered.filter(p => p.category === currentCategory);
+            }
+            if (currentSearch) {
+                filtered = filtered.filter(p => p.name?.toLowerCase().includes(currentSearch.toLowerCase()));
+            }
+            
+            const total = filtered.length;
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = Math.min(start + itemsPerPage, total);
+            const paginated = filtered.slice(start, end);
+            
+            document.getElementById('product-total').textContent = total;
+            document.getElementById('product-count-start').textContent = total === 0 ? 0 : start + 1;
+            document.getElementById('product-count-end').textContent = end;
+            
+            const container = document.getElementById('products-container');
+            if (!paginated.length) {
+                container.innerHTML = '<div class="text-center py-8 col-span-full text-gray-500">No products found.</div>';
+                document.getElementById('pagination-container').innerHTML = '';
+                return;
+            }
+            
+            if (currentView === 'grid') {
+                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
+                container.innerHTML = paginated.map(p => `
+                    <div class="product-card bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg cursor-pointer border dark:border-gray-700" onclick="viewProduct('${p.id}')">
+                        <div class="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                            ${p.images && p.images[0] ? `<img src="${p.images[0]}" class="w-full h-full object-cover">` : '<i class="fas fa-box text-6xl text-gray-400"></i>'}
+                        </div>
+                        <div class="p-4">
+                            <div class="text-xs text-purple-500 mb-1">${escapeHtml(p.category || 'Uncategorized')}</div>
+                            <h4 class="font-semibold text-lg mb-1 line-clamp-1">${escapeHtml(p.name || 'Untitled')}</h4>
+                            <div class="flex justify-between items-center mt-3">
+                                <span class="text-xl font-bold text-purple-500">AED ${p.salePrice || p.price || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.className = 'space-y-3';
+                container.innerHTML = paginated.map(p => `
+                    <div class="list-view-item bg-white dark:bg-gray-800 rounded-xl p-4 flex flex-wrap md:flex-nowrap gap-4 items-center justify-between shadow-sm hover:shadow-md cursor-pointer border dark:border-gray-700" onclick="viewProduct('${p.id}')">
+                        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                            ${p.images && p.images[0] ? `<img src="${p.images[0]}" class="w-full h-full object-cover rounded-lg">` : '<i class="fas fa-box text-2xl text-gray-400"></i>'}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs text-purple-500">${escapeHtml(p.category || 'Uncategorized')}</div>
+                            <h4 class="font-semibold text-lg">${escapeHtml(p.name || 'Untitled')}</h4>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-bold text-purple-500">AED ${p.salePrice || p.price || 0}</div>
+                            <button class="mt-2 text-sm text-blue-500 hover:text-blue-700" onclick="event.stopPropagation(); viewProduct('${p.id}')">View Details →</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            renderPagination(total);
+        }
+
+        function renderPagination(total) {
+            const totalPages = Math.ceil(total / itemsPerPage);
+            const container = document.getElementById('pagination-container');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            let html = '';
+            if (currentPage > 1) {
+                html += `<button onclick="goToPage(${currentPage - 1})" class="px-4 py-2 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
+            }
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                html += `<button onclick="goToPage(${i})" class="px-4 py-2 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
+            }
+            if (currentPage < totalPages) {
+                html += `<button onclick="goToPage(${currentPage + 1})" class="px-4 py-2 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
+            }
+            container.innerHTML = html;
+        }
+
+        window.goToPage = (page) => {
+            currentPage = page;
+            renderProducts();
+        };
+
+        window.viewProduct = (id) => {
+            window.location.href = `product-view.html?id=${id}`;
+        };
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Search input
+        document.getElementById('search-products').addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            currentPage = 1;
+            renderProducts();
+        });
+
+        // View toggle
+        document.getElementById('grid-view-btn').addEventListener('click', () => {
+            currentView = 'grid';
+            document.getElementById('grid-view-btn').classList.add('active', 'bg-purple-500', 'text-white');
+            document.getElementById('list-view-btn').classList.remove('active', 'bg-purple-500', 'text-white');
+            renderProducts();
+        });
+        document.getElementById('list-view-btn').addEventListener('click', () => {
+            currentView = 'list';
+            document.getElementById('list-view-btn').classList.add('active', 'bg-purple-500', 'text-white');
+            document.getElementById('grid-view-btn').classList.remove('active', 'bg-purple-500', 'text-white');
+            renderProducts();
+        });
+    </script>
+</body>
+</html>
