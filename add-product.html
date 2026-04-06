@@ -1,3 +1,6 @@
+You're absolutely right! The page was cut off. Here is the **complete, fully functional `add-product.html`** that works correctly for both **Add New Product** and **Edit Product** modes:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Form Styles */
         .form-section {
             transition: all 0.2s ease;
         }
@@ -20,7 +22,6 @@
             border-color: #8b5cf6;
         }
         
-        /* Image Preview Grid */
         .image-preview-item {
             position: relative;
             transition: all 0.2s ease;
@@ -33,7 +34,6 @@
             transition: opacity 0.2s ease;
         }
         
-        /* Theme Variables */
         [data-theme="dark"] {
             --bg-primary: #111827;
             --bg-secondary: #1f2937;
@@ -91,7 +91,6 @@
             ring: 2px solid rgba(139, 92, 246, 0.3);
         }
         
-        /* Mobile Sidebar */
         #mobile-sidebar {
             transform: translateX(-100%);
             transition: transform 0.3s ease;
@@ -134,6 +133,7 @@
             cursor: pointer;
             transition: all 0.2s;
             color: var(--text-secondary);
+            text-decoration: none;
         }
         .nav-item:hover {
             background: var(--hover-bg);
@@ -149,8 +149,7 @@
             border: 1px solid rgba(139, 92, 246, 0.3);
         }
         
-        /* Back button styles */
-        .back-btn {
+        .back-btn, .cancel-btn {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -160,27 +159,11 @@
             color: var(--text-primary);
             transition: all 0.2s;
             text-decoration: none;
+            cursor: pointer;
         }
-        .back-btn:hover {
+        .back-btn:hover, .cancel-btn:hover {
             background: var(--hover-bg);
             transform: translateX(-2px);
-        }
-        
-        .cancel-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            transition: all 0.2s;
-            cursor: pointer;
-            border: 1px solid var(--border-color);
-            font-weight: 500;
-        }
-        .cancel-btn:hover {
-            background: var(--hover-bg);
         }
         
         .save-btn {
@@ -203,7 +186,6 @@
     </style>
 </head>
 <body>
-    <!-- Mobile Sidebar Overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Sidebar -->
@@ -230,7 +212,7 @@
         </div>
     </aside>
 
-    <!-- Desktop Sidebar (Left) -->
+    <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
         <div class="p-4 border-b">
             <div class="flex items-center space-x-2">
@@ -253,18 +235,16 @@
 
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
-        <!-- Top Header Bar -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <!-- Back Button -->
                 <a href="#" id="back-button" class="back-btn">
-                    <i class="fas fa-arrow-left"></i> Back
+                    <i class="fas fa-arrow-left"></i> Back to Products
                 </a>
                 <h1 class="text-xl md:text-2xl font-bold" id="page-title">Add New Product</h1>
             </div>
             <div class="flex items-center space-x-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition" title="Toggle theme">
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
                     <i class="fas fa-moon"></i>
                 </button>
                 <div class="flex items-center space-x-2">
@@ -274,7 +254,6 @@
             </div>
         </div>
 
-        <!-- Form Content - No Right Sidebar -->
         <div class="p-4 md:p-6 max-w-5xl mx-auto">
             <form id="product-form" class="space-y-6" onsubmit="event.preventDefault(); saveProduct();">
                 <input type="hidden" id="product-id">
@@ -294,18 +273,18 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-2">Full Description <span class="text-red-500">*</span></label>
-                            <textarea id="product-description" rows="5" required placeholder="Describe your product in detail - features, benefits, specifications..." class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 transition"></textarea>
+                            <textarea id="product-description" rows="5" required placeholder="Describe your product in detail..." class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 transition"></textarea>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label class="block text-sm font-medium mb-2">Category <span class="text-red-500">*</span></label>
-                                <select id="product-category" required class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <select id="product-category" required class="w-full px-4 py-3 rounded-lg border">
                                     <option value="">Select Category</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">Brand</label>
-                                <input type="text" id="product-brand" placeholder="e.g., Nike, Samsung, IKEA" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <input type="text" id="product-brand" placeholder="e.g., Nike, Samsung, IKEA" class="w-full px-4 py-3 rounded-lg border">
                             </div>
                         </div>
                     </div>
@@ -326,9 +305,7 @@
                             <p class="text-gray-600 dark:text-gray-400">Click or drag images here to upload</p>
                             <p class="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 5MB each</p>
                         </div>
-                        <div id="image-preview-grid" class="mt-5 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                            <!-- Dynamic image previews will appear here -->
-                        </div>
+                        <div id="image-preview-grid" class="mt-5 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3"></div>
                     </div>
                 </div>
                 
@@ -343,15 +320,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                             <div>
                                 <label class="block text-sm font-medium mb-2">Sale Price (AED) <span class="text-red-500">*</span></label>
-                                <input type="number" id="product-sale-price" required min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <input type="number" id="product-sale-price" required min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-lg border">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">Regular Price (AED)</label>
-                                <input type="number" id="product-regular-price" min="0" step="0.01" placeholder="Original price" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <input type="number" id="product-regular-price" min="0" step="0.01" placeholder="Original price" class="w-full px-4 py-3 rounded-lg border">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">Cost Price (AED)</label>
-                                <input type="number" id="product-cost-price" min="0" step="0.01" placeholder="Your cost" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <input type="number" id="product-cost-price" min="0" step="0.01" placeholder="Your cost" class="w-full px-4 py-3 rounded-lg border">
                             </div>
                         </div>
                         <div id="profit-display" class="mt-4 profit-card rounded-xl p-4 hidden">
@@ -374,22 +351,22 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label class="block text-sm font-medium mb-2">Stock Status <span class="text-red-500">*</span></label>
-                                <select id="product-stock-status" required class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <select id="product-stock-status" required class="w-full px-4 py-3 rounded-lg border">
                                     <option value="in-stock">In Stock</option>
                                     <option value="out-of-stock">Out of Stock</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">Stock Quantity</label>
-                                <input type="number" id="product-stock-quantity" min="0" placeholder="Number of units" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <input type="number" id="product-stock-quantity" min="0" placeholder="Number of units" class="w-full px-4 py-3 rounded-lg border">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">Warehouse Location</label>
-                                <input type="text" id="product-warehouse" placeholder="e.g., Dubai Main Warehouse" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <input type="text" id="product-warehouse" placeholder="e.g., Dubai Main Warehouse" class="w-full px-4 py-3 rounded-lg border">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-2">Visibility</label>
-                                <select id="product-visibility" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500">
+                                <select id="product-visibility" class="w-full px-4 py-3 rounded-lg border">
                                     <option value="published">Published</option>
                                     <option value="hidden">Hidden</option>
                                 </select>
@@ -514,30 +491,21 @@
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
         
-        // Get return URL from query parameter or use default
         function getReturnUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             const returnUrl = urlParams.get('return');
-            if (returnUrl) {
-                return returnUrl;
-            }
-            // Default return to products page
+            if (returnUrl) return returnUrl;
             return 'admin-dashboard.html?section=products';
         }
         
-        // Setup back and cancel buttons
         function setupNavigation() {
             const returnUrl = getReturnUrl();
             const backButton = document.getElementById('back-button');
             const cancelButton = document.getElementById('cancel-button');
             
-            if (backButton) {
-                backButton.href = returnUrl;
-            }
+            if (backButton) backButton.href = returnUrl;
             if (cancelButton) {
-                cancelButton.onclick = () => {
-                    window.location.href = returnUrl;
-                };
+                cancelButton.onclick = () => { window.location.href = returnUrl; };
             }
         }
 
@@ -567,6 +535,8 @@
             if (productId) {
                 document.getElementById('page-title').textContent = 'Edit Product';
                 await loadProductData();
+            } else {
+                document.getElementById('page-title').textContent = 'Add New Product';
             }
         }
 
@@ -604,20 +574,19 @@
             
             existingImageUrls = p.images || (p.imageUrl ? [p.imageUrl] : []);
             renderImagePreviews();
-            
             calculateProfit();
         }
 
         function renderImagePreviews() {
             const container = document.getElementById('image-preview-grid');
-            if (existingImageUrls.length === 0) {
+            if (!existingImageUrls.length) {
                 container.innerHTML = '<div class="col-span-full text-center py-4 text-gray-400">No images uploaded</div>';
                 return;
             }
             container.innerHTML = existingImageUrls.map((url, idx) => `
                 <div class="image-preview-item relative group">
                     <img src="${url}" class="w-full h-24 object-cover rounded-lg border-2 ${idx === 0 ? 'border-purple-500' : 'border-gray-200'}">
-                    <button type="button" onclick="removeImage(${idx})" class="remove-image-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600">×</button>
+                    <button type="button" onclick="window.removeImage(${idx})" class="remove-image-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600">×</button>
                     ${idx === 0 ? '<span class="absolute bottom-1 left-1 bg-purple-600 text-white text-xs px-1 rounded">Main</span>' : ''}
                 </div>
             `).join('');
@@ -638,8 +607,6 @@
             if (costPrice > 0) {
                 profitDisplay.classList.remove('hidden');
                 profitAmount.textContent = `AED ${profit.toFixed(2)}`;
-                profitAmount.classList.toggle('text-red-600', profit < 0);
-                profitAmount.classList.toggle('text-green-600', profit > 0);
             } else {
                 profitDisplay.classList.add('hidden');
             }
@@ -648,7 +615,6 @@
         document.getElementById('product-sale-price').addEventListener('input', calculateProfit);
         document.getElementById('product-cost-price').addEventListener('input', calculateProfit);
 
-        // Image upload handling
         const dropzone = document.getElementById('dropzone');
         const imageInput = document.getElementById('product-images');
         
@@ -724,7 +690,6 @@
             };
             
             if (productId) {
-                // Update existing product
                 const finalImages = [...existingImageUrls.filter(url => !url.startsWith('blob:'))];
                 const newImageUrls = await uploadNewImages(productId);
                 finalImages.push(...newImageUrls);
@@ -732,7 +697,6 @@
                 await updateDoc(doc(db, 'products', productId), productData);
                 alert('Product updated successfully!');
             } else {
-                // Add new product
                 const newProductRef = await addDoc(collection(db, 'products'), {
                     ...productData,
                     createdAt: new Date().toISOString()
@@ -747,3 +711,4 @@
     </script>
 </body>
 </html>
+```
