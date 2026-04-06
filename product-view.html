@@ -7,6 +7,97 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .thumbnail-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            scroll-behavior: smooth;
+            padding-bottom: 8px;
+            cursor: grab;
+        }
+        .thumbnail-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        .thumbnail-scroll::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        .thumbnail-scroll::-webkit-scrollbar-thumb {
+            background: #8b5cf6;
+            border-radius: 10px;
+        }
+        .thumbnail-item {
+            flex-shrink: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .thumbnail-item.active {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+        }
+        .thumbnail-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 10;
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: #8b5cf6;
+            color: white;
+        }
+        .scroll-left {
+            left: -16px;
+        }
+        .scroll-right {
+            right: -16px;
+        }
+        @media (max-width: 768px) {
+            .thumbnail-item {
+                width: 60px;
+                height: 60px;
+            }
+        }
+        .info-card {
+            transition: all 0.2s ease;
+        }
+        .info-card:hover {
+            transform: translateY(-2px);
+        }
+        .size-btn {
+            transition: all 0.2s ease;
+        }
+        .size-btn:hover {
+            border-color: #000;
+            background-color: #000;
+            color: white;
+        }
+        .size-btn.selected {
+            border-color: #000;
+            background-color: #000;
+            color: white;
+        }
+    </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -31,6 +122,23 @@
         let product = null;
         let productId = null;
 
+        // Set back button to return to products page
+        function setBackButton() {
+            const backButton = document.getElementById('back-button');
+            if (!backButton) return;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const from = urlParams.get('from');
+            const section = urlParams.get('section');
+            
+            // If coming from products page, go back to dashboard with products section
+            if (from === 'products') {
+                backButton.href = '/admin-dashboard.html?section=products';
+            } else {
+                backButton.href = '/admin-dashboard.html';
+            }
+        }
+
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -40,6 +148,7 @@
             }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
             applyThemeIcons();
+            setBackButton();
             loadProduct();
         });
 
@@ -135,7 +244,7 @@
                 document.getElementById('category-row').classList.add('hidden');
             }
             
-            // Condition - plain text, no badge
+            // Condition
             const conditionEl = document.getElementById('product-condition');
             if (product.condition && product.condition.trim() !== '') {
                 conditionEl.textContent = product.condition;
@@ -180,7 +289,7 @@
             // Description
             document.getElementById('product-description').innerHTML = product.description || 'No description available.';
             
-            // Images
+            // Images - Main and Thumbnails
             const images = product.images && product.images.length > 0 ? product.images : (product.imageUrl ? [product.imageUrl] : []);
             const mainImageContainer = document.getElementById('main-image');
             
@@ -188,6 +297,21 @@
                 mainImageContainer.innerHTML = `<img src="${images[0]}" class="w-full h-full object-cover" alt="${product.name}">`;
             } else {
                 mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg"><i class="fas fa-box text-6xl text-gray-400"></i></div>';
+            }
+            
+            // Thumbnail strip
+            const thumbnailStrip = document.getElementById('thumbnail-strip');
+            const thumbnailContainer = document.getElementById('thumbnail-strip-container');
+            
+            if (images.length > 1) {
+                thumbnailContainer.classList.remove('hidden');
+                thumbnailStrip.innerHTML = images.map((img, index) => `
+                    <div class="thumbnail-item ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img}', this)">
+                        <img src="${img}" alt="Thumbnail ${index + 1}">
+                    </div>
+                `).join('');
+            } else {
+                thumbnailContainer.classList.add('hidden');
             }
             
             // Sizes
@@ -207,6 +331,25 @@
             }
         }
 
+        window.changeMainImage = function(imgUrl, element) {
+            document.getElementById('main-image').innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover" alt="Product">`;
+            document.querySelectorAll('.thumbnail-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+        };
+
+        window.scrollThumbnails = function(direction) {
+            const container = document.getElementById('thumbnail-strip');
+            if (container) {
+                const scrollAmount = 120;
+                container.scrollBy({
+                    left: direction === 'left' ? -scrollAmount : scrollAmount,
+                    behavior: 'smooth'
+                });
+            }
+        };
+
         window.editProduct = function() {
             window.location.href = `/add-product.html?id=${productId}`;
         };
@@ -223,28 +366,17 @@
         };
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+        
+        // Size button selection
+        document.addEventListener('click', function(e) {
+            if (e.target.classList && e.target.classList.contains('size-btn')) {
+                document.querySelectorAll('.size-btn').forEach(btn => {
+                    btn.classList.remove('selected', 'bg-black', 'text-white');
+                });
+                e.target.classList.add('selected', 'bg-black', 'text-white');
+            }
+        });
     </script>
-    <style>
-        .size-btn {
-            transition: all 0.2s ease;
-        }
-        .size-btn:hover {
-            border-color: #000;
-            background-color: #000;
-            color: white;
-        }
-        .size-btn.selected {
-            border-color: #000;
-            background-color: #000;
-            color: white;
-        }
-        .info-card {
-            transition: all 0.2s ease;
-        }
-        .info-card:hover {
-            transform: translateY(-2px);
-        }
-    </style>
 </head>
 <body class="transition-colors duration-300 bg-white dark:bg-gray-900">
     <div class="min-h-screen">
@@ -252,7 +384,7 @@
         <div class="border-b dark:border-gray-800">
             <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-6">
-                    <a href="/admin-dashboard.html" class="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition">
+                    <a href="#" id="back-button" class="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition">
                         <i class="fas fa-arrow-left mr-2"></i> Back to Products
                     </a>
                     <h1 class="text-xl font-semibold">Product Details</h1>
@@ -297,10 +429,21 @@
         <!-- Product Content -->
         <div class="max-w-7xl mx-auto px-4 py-8">
             <div class="flex flex-col lg:flex-row gap-12">
-                <!-- Left Column - Product Image -->
+                <!-- Left Column - Product Image with Thumbnails -->
                 <div class="lg:w-1/2">
-                    <div id="main-image" class="aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden flex items-center justify-center">
+                    <div id="main-image" class="aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden flex items-center justify-center mb-4">
                         <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                    </div>
+                    
+                    <!-- Thumbnail Strip with Scroll Buttons -->
+                    <div id="thumbnail-strip-container" class="relative hidden">
+                        <button onclick="scrollThumbnails('left')" class="scroll-btn scroll-left bg-white dark:bg-gray-800 shadow-md hover:bg-purple-500 hover:text-white transition">
+                            <i class="fas fa-chevron-left text-sm"></i>
+                        </button>
+                        <div id="thumbnail-strip" class="thumbnail-scroll"></div>
+                        <button onclick="scrollThumbnails('right')" class="scroll-btn scroll-right bg-white dark:bg-gray-800 shadow-md hover:bg-purple-500 hover:text-white transition">
+                            <i class="fas fa-chevron-right text-sm"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -376,17 +519,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        // Size button selection (only if size section is visible)
-        document.addEventListener('click', function(e) {
-            if (e.target.classList && e.target.classList.contains('size-btn')) {
-                document.querySelectorAll('.size-btn').forEach(btn => {
-                    btn.classList.remove('selected', 'bg-black', 'text-white');
-                });
-                e.target.classList.add('selected', 'bg-black', 'text-white');
-            }
-        });
-    </script>
 </body>
 </html>
