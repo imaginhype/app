@@ -15,10 +15,6 @@
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs }
             from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ── Firebase config ──────────────────────────────────────────────────
-        // IMPORTANT: Replace these values with your own project's config.
-        // Go to Firebase Console > Project Settings > Your Apps > Web App > Config
-        // Then restrict this API key in Google Cloud Console > APIs & Services > Credentials
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
             authDomain: "imaginhype-app.firebaseapp.com",
@@ -32,7 +28,6 @@
         const auth = getAuth(app);
         const db   = getFirestore(app);
 
-        // Expose only what the inline scripts need
         window.auth = auth;
         window.db   = db;
         window.firebaseSignIn     = signInWithEmailAndPassword;
@@ -45,9 +40,6 @@
         window.getDocs    = getDocs;
         window.collection = collection;
 
-        // ── Theme ────────────────────────────────────────────────────────────
-        // FIX: Tailwind's dark: prefix needs the JIT compiler so it doesn't work
-        // from a CDN. We use data-theme + manual icon show/hide instead.
         function applyTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
             document.querySelectorAll('.icon-moon').forEach(el => el.style.display = theme === 'dark'  ? 'inline' : 'none');
@@ -62,7 +54,6 @@
             applyTheme(next);
         };
 
-        // ── First-user check (first registrant becomes admin) ────────────────
         window.checkFirstUser = async () => {
             const snapshot = await getDocs(collection(db, 'users'));
             return snapshot.empty;
@@ -70,7 +61,6 @@
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
-        // ── Already logged in? Redirect. ─────────────────────────────────────
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -83,7 +73,6 @@
 </head>
 <body class="transition-colors duration-300">
 
-    <!-- Navigation -->
     <nav class="nav-bar fixed w-full top-0 z-50 shadow-lg">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
@@ -93,20 +82,17 @@
             <div class="flex items-center space-x-4">
                 <button onclick="window.toggleTheme()" class="theme-toggle p-2 rounded-full transition" title="Toggle theme">
                     <i class="fas fa-moon icon-moon"></i>
-                    <i class="fas fa-sun  icon-sun" style="display:none"></i>
+                    <i class="fas fa-sun icon-sun" style="display:none"></i>
                 </button>
                 <div id="nav-buttons" class="space-x-3">
-                    <button onclick="showLogin()"  class="px-4 py-2 rounded-lg font-medium transition login-btn">Login</button>
+                    <button onclick="showLogin()" class="px-4 py-2 rounded-lg font-medium transition login-btn">Login</button>
                     <button onclick="showSignup()" class="px-4 py-2 rounded-lg font-medium transition signup-btn">Sign Up</button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="container mx-auto px-4 pt-24 pb-12">
-
-        <!-- Hero -->
         <div class="text-center mb-12">
             <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
                 Sell Smarter, Earn Faster
@@ -117,10 +103,7 @@
             </p>
         </div>
 
-        <!-- Auth Forms -->
         <div class="max-w-md mx-auto">
-
-            <!-- Login Form -->
             <div id="login-form" class="card p-8 rounded-2xl shadow-xl">
                 <h2 class="text-2xl font-bold mb-6 text-center">Welcome Back</h2>
                 <div id="login-error" class="error-message hidden mb-4 p-3 rounded-lg text-sm"></div>
@@ -144,10 +127,9 @@
                 </p>
             </div>
 
-            <!-- Sign-up Form -->
             <div id="signup-form" class="card p-8 rounded-2xl shadow-xl hidden">
                 <h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
-                <div id="signup-error"   class="error-message   hidden mb-4 p-3 rounded-lg text-sm"></div>
+                <div id="signup-error" class="error-message hidden mb-4 p-3 rounded-lg text-sm"></div>
                 <div id="signup-success" class="success-message hidden mb-4 p-3 rounded-lg text-sm"></div>
                 <div class="space-y-4">
                     <div>
@@ -174,10 +156,9 @@
                 </p>
             </div>
 
-            <!-- Forgot Password Form -->
             <div id="forgot-form" class="card p-8 rounded-2xl shadow-xl hidden">
                 <h2 class="text-2xl font-bold mb-6 text-center">Reset Password</h2>
-                <div id="forgot-error"   class="error-message   hidden mb-4 p-3 rounded-lg text-sm"></div>
+                <div id="forgot-error" class="error-message hidden mb-4 p-3 rounded-lg text-sm"></div>
                 <div id="forgot-success" class="success-message hidden mb-4 p-3 rounded-lg text-sm"></div>
                 <div class="space-y-4">
                     <div>
@@ -190,12 +171,10 @@
                     <button onclick="showLogin()" class="text-purple-500 hover:underline">Back to Login</button>
                 </p>
             </div>
-
         </div>
     </div>
 
     <script type="module">
-
         window.showLogin = () => {
             document.getElementById('login-form').classList.remove('hidden');
             document.getElementById('signup-form').classList.add('hidden');
@@ -212,25 +191,23 @@
             document.getElementById('forgot-form').classList.remove('hidden');
         };
 
-        // ── Human-readable Firebase error messages ───────────────────────────
         function friendlyAuthError(code) {
             const map = {
-                'auth/user-not-found':        'No account found with this email.',
-                'auth/wrong-password':         'Incorrect password.',
-                'auth/email-already-in-use':   'This email is already registered.',
-                'auth/invalid-email':          'Please enter a valid email address.',
-                'auth/weak-password':          'Password is too weak (min 6 characters).',
-                'auth/too-many-requests':      'Too many attempts. Please wait and try again.',
+                'auth/user-not-found': 'No account found with this email.',
+                'auth/wrong-password': 'Incorrect password.',
+                'auth/email-already-in-use': 'This email is already registered.',
+                'auth/invalid-email': 'Please enter a valid email address.',
+                'auth/weak-password': 'Password is too weak (min 6 characters).',
+                'auth/too-many-requests': 'Too many attempts. Please wait and try again.',
                 'auth/network-request-failed': 'Network error. Check your connection.',
             };
             return map[code] || 'Something went wrong. Please try again.';
         }
 
-        // ── Login ────────────────────────────────────────────────────────────
         window.handleLogin = async () => {
-            const email    = document.getElementById('login-email').value.trim();
+            const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
-            const errDiv   = document.getElementById('login-error');
+            const errDiv = document.getElementById('login-error');
             errDiv.classList.add('hidden');
 
             if (!email || !password) {
@@ -250,34 +227,37 @@
             }
         };
 
-        // ── Sign-up ──────────────────────────────────────────────────────────
         window.handleSignup = async () => {
-            const name     = document.getElementById('signup-name').value.trim();
-            const email    = document.getElementById('signup-email').value.trim();
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
-            const confirm  = document.getElementById('signup-confirm').value;
-            const errDiv  = document.getElementById('signup-error');
-            const okDiv   = document.getElementById('signup-success');
+            const confirm = document.getElementById('signup-confirm').value;
+            const errDiv = document.getElementById('signup-error');
+            const okDiv = document.getElementById('signup-success');
             errDiv.classList.add('hidden');
             okDiv.classList.add('hidden');
 
             if (!name || !email || !password || !confirm) {
-                errDiv.textContent = 'Please fill in all fields.'; errDiv.classList.remove('hidden'); return;
+                errDiv.textContent = 'Please fill in all fields.';
+                errDiv.classList.remove('hidden');
+                return;
             }
             if (password !== confirm) {
-                errDiv.textContent = 'Passwords do not match.'; errDiv.classList.remove('hidden'); return;
+                errDiv.textContent = 'Passwords do not match.';
+                errDiv.classList.remove('hidden');
+                return;
             }
             if (password.length < 6) {
-                errDiv.textContent = 'Password must be at least 6 characters.'; errDiv.classList.remove('hidden'); return;
+                errDiv.textContent = 'Password must be at least 6 characters.';
+                errDiv.classList.remove('hidden');
+                return;
             }
 
             try {
                 const isFirst = await window.checkFirstUser();
-                const role    = isFirst ? 'admin' : 'seller';
+                const role = isFirst ? 'admin' : 'seller';
 
                 const cred = await window.firebaseSignUp(window.auth, email, password);
-
-                // FIX: send email verification - prevents fake/typo emails
                 await window.firebaseSendVerify(cred.user);
 
                 await window.setDoc(window.doc(window.db, 'users', cred.user.uid), {
@@ -299,15 +279,17 @@
             }
         };
 
-        // ── Forgot password ──────────────────────────────────────────────────
         window.handleForgotPassword = async () => {
-            const email  = document.getElementById('forgot-email').value.trim();
+            const email = document.getElementById('forgot-email').value.trim();
             const errDiv = document.getElementById('forgot-error');
-            const okDiv  = document.getElementById('forgot-success');
-            errDiv.classList.add('hidden'); okDiv.classList.add('hidden');
+            const okDiv = document.getElementById('forgot-success');
+            errDiv.classList.add('hidden');
+            okDiv.classList.add('hidden');
 
             if (!email) {
-                errDiv.textContent = 'Please enter your email address.'; errDiv.classList.remove('hidden'); return;
+                errDiv.textContent = 'Please enter your email address.';
+                errDiv.classList.remove('hidden');
+                return;
             }
             try {
                 await window.firebaseResetPw(window.auth, email);
@@ -321,7 +303,5 @@
 
         window.initTheme();
     </script>
-
-    <script src="app.js"></script>
 </body>
 </html>
