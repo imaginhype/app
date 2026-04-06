@@ -464,16 +464,44 @@
             if (ov) ov.classList.remove('show');
             document.body.style.overflow = '';
         };
+        // Function to read URL parameters and switch sections
+function loadSectionFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const section = urlParams.get('section');
+    
+    if (section) {
+        // Find the navigation item that corresponds to this section
+        const navItems = document.querySelectorAll('.nav-item');
+        let targetNavItem = null;
         
-        document.addEventListener('DOMContentLoaded', () => {
-            const searchEl = document.getElementById('product-search');
-            if (searchEl) {
-                searchEl.addEventListener('input', e => {
-                    currentSearch = e.target.value;
-                    renderProducts();
-                });
+        // Loop through nav items to find the matching section
+        for (let item of navItems) {
+            const onclickAttr = item.getAttribute('onclick');
+            if (onclickAttr && onclickAttr.includes(`'${section}'`)) {
+                targetNavItem = item;
+                break;
             }
+        }
+        
+        if (targetNavItem && typeof showSection === 'function') {
+            // Call the showSection function with the section name and the nav item
+            showSection(section, targetNavItem);
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchEl = document.getElementById('product-search');
+    if (searchEl) {
+        searchEl.addEventListener('input', e => {
+            currentSearch = e.target.value;
+            renderProducts();
         });
+    }
+    
+    // Load the correct section from URL parameter
+    loadSectionFromUrl();
+});
     </script>
 </head>
 <body class="transition-colors duration-300">
