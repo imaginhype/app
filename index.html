@@ -134,9 +134,6 @@
                         <input type="password" id="login-password" class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition" placeholder="••••••••">
                     </div>
                     <button onclick="handleLogin()" class="w-full py-3 rounded-lg font-semibold transition auth-btn">Login</button>
-                    <button onclick="sendVerify()" class="w-full py-2 rounded-lg text-sm text-purple-500 border border-purple-500 mt-2">Send Verification Email to My Account</button>
-                </div>
-                <p class="text-center mt-3 text-sm">
                 </div>
                 <p class="text-center mt-3 text-sm">
                     <button onclick="showForgotPassword()" class="text-purple-500 hover:underline">Forgot password?</button>
@@ -303,20 +300,6 @@
         };
 
         // ── Forgot password ──────────────────────────────────────────────────
-        window.sendVerify = async () => {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-            try {
-                const cred = await window.firebaseSignIn(window.auth, email, password);
-                await window.firebaseSendVerify(cred.user);
-                await window.auth.signOut();
-                alert('Verification email sent! Check your inbox.');
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        };
-
-        window.handleForgotPassword = async () => {
         window.handleForgotPassword = async () => {
             const email  = document.getElementById('forgot-email').value.trim();
             const errDiv = document.getElementById('forgot-error');
