@@ -21,13 +21,11 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         
-        // Check if already logged in
+        const adminEmails = ["imaginhype@gmail.com", "baybo.uae@gmail.com"];
+        
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const tokenResult = await user.getIdTokenResult();
-                if (tokenResult.claims.admin) {
-                    window.location.href = 'admin-dashboard.html';
-                }
+            if (user && adminEmails.includes(user.email)) {
+                window.location.href = 'admin-dashboard.html';
             }
         });
         
@@ -38,9 +36,8 @@
             
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const tokenResult = await userCredential.user.getIdTokenResult();
                 
-                if (tokenResult.claims.admin) {
+                if (adminEmails.includes(userCredential.user.email)) {
                     window.location.href = 'admin-dashboard.html';
                 } else {
                     errorDiv.textContent = 'Access denied. Admin privileges required.';
@@ -65,6 +62,9 @@
             <button onclick="login()" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">
                 Login
             </button>
+            <div class="mt-4 text-center text-sm text-gray-500">
+                Admin emails: imaginhype@gmail.com
+            </div>
         </div>
     </div>
 </body>
