@@ -75,10 +75,6 @@
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
             applyThemeIcons();
             loadDashboard();
-            loadProducts();
-            loadCategories();
-            loadSellers();
-            loadOrders();
         });
 
         function applyThemeIcons() {
@@ -314,7 +310,7 @@
                 let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Email</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th></thead><tbody>';
                 sellers.forEach(doc => {
                     const s = doc.data();
-                    html += `<tr class="border-b"><td class="px-4 py-2">${s.name || 'N/A'}</td><td class="px-4 py-2">${s.email}</td><td class="px-4 py-2"><span class="text-green-500">Active</span></td><td class="px-4 py-2 text-sm">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}</td></tr>`;
+                    html += `<tr class="border-b"><td class="px-4 py-2">${s.name || 'N/A'}</td><td class="px-4 py-2">${s.email}</td><td class="px-4 py-2"><span class="text-green-500">Active</span></td><td class="px-4 py-2 text-sm">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}</td>`;
                 });
                 html += '</tbody></table></div>';
                 container.innerHTML = html;
@@ -337,9 +333,9 @@
                 let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th></thead><tbody>';
                 snap.docs.forEach(doc => {
                     const o = doc.data();
-                    html += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${doc.id.slice(0,8)}</td><td class="px-4 py-2">${o.customerName || 'N/A'}</td><td class="px-4 py-2">AED ${o.totalAmount}</td><td class="px-4 py-2"><span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-500">${o.status}</span></td><td class="px-4 py-2 text-sm">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td></tr>`;
+                    html += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${doc.id.slice(0,8)}</td><td class="px-4 py-2">${o.customerName || 'N/A'}</td><td class="px-4 py-2">AED ${o.totalAmount}</td><td class="px-4 py-2"><span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-500">${o.status}</span></td><td class="px-4 py-2 text-sm">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>`;
                 });
-                html += '</tbody></table></div>';
+                html += '</tbody><tr></div>';
                 container.innerHTML = html;
             } catch (error) {
                 container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading orders</div>';
@@ -347,8 +343,14 @@
         }
 
         // ========== NOTIFICATIONS & SETTINGS ==========
-        function loadNotifications() { const el = document.getElementById('notifications-list'); if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Notifications will appear here.</div>'; }
-        function loadSettings() { const el = document.getElementById('settings-content'); if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Settings panel coming soon.</div>'; }
+        function loadNotifications() { 
+            const el = document.getElementById('notifications-list'); 
+            if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Notifications will appear here.</div>'; 
+        }
+        function loadSettings() { 
+            const el = document.getElementById('settings-content'); 
+            if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Settings panel coming soon.</div>'; 
+        }
 
         function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
@@ -361,19 +363,35 @@
         window.viewOrderDetails = (id) => alert(`Order #${id.slice(0,8)} — Full details coming soon.`);
 
         // ========== MAIN NAVIGATION ==========
-        window.showSection = (section, clickedEl) => {
+        window.showSection = async (section, clickedEl) => {
+            // Hide all sections
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            
+            // Show selected section
             const targetSection = document.getElementById(`section-${section}`);
             if (targetSection) targetSection.classList.remove('hidden');
+            
+            // Update active nav item
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             if (clickedEl) clickedEl.classList.add('active');
-            if (section === 'dashboard') loadDashboard();
-            if (section === 'products') loadProducts();
-            if (section === 'categories') loadCategories();
-            if (section === 'orders') loadOrders();
-            if (section === 'sellers') loadSellers();
-            if (section === 'notifications') loadNotifications();
-            if (section === 'settings') loadSettings();
+            
+            // Load data based on section
+            if (section === 'dashboard') {
+                await loadDashboard();
+            } else if (section === 'products') {
+                await loadProducts();
+            } else if (section === 'categories') {
+                await loadCategories();
+            } else if (section === 'orders') {
+                await loadOrders();
+            } else if (section === 'sellers') {
+                await loadSellers();
+            } else if (section === 'notifications') {
+                loadNotifications();
+            } else if (section === 'settings') {
+                loadSettings();
+            }
+            
             closeMobileMenu();
         };
 
