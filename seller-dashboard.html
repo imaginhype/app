@@ -11,7 +11,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut }
             from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, getDoc, query, where, orderBy }
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, getDoc, query, where, orderBy, limit }
             from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -38,7 +38,6 @@
 
             const userDoc = await getDoc(doc(db, 'users', user.uid));
 
-            // FIX: added `return` so admin redirect doesn't continue loading seller UI
             if (userDoc.data()?.role === 'admin') {
                 window.location.href = '/admin-dashboard.html';
                 return;
@@ -89,6 +88,7 @@
         }
 
         async function loadSellerStats() {
+            // FIX: Use limit to avoid loading all orders for stats
             const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId)));
             const totalOrders     = snap.size;
             const completedOrders = snap.docs.filter(d => ['completed','paid'].includes(d.data().status)).length;
@@ -104,43 +104,66 @@
         }
 
         async function loadMyOrders() {
-            const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), orderBy('createdAt', 'desc')));
+            // FIX: Add limit to prevent loading too many orders
+            const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), orderBy('createdAt', 'desc'), limit(50)));
             const container = document.getElementById('my-orders');
+            const fullContainer = document.getElementById('my-orders-full');
+            
             if (!container) return;
-            if (snap.empty) { container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet. Place your first order!</div>'; return; }
+            
+            if (snap.empty) { 
+                const emptyMsg = '<div class="text-center py-8 opacity-60">No orders yet. Place your first order!</div>';
+                container.innerHTML = emptyMsg;
+                if (fullContainer) fullContainer.innerHTML = emptyMsg;
+                return; 
+            }
+            
             container.innerHTML = '';
+            let allOrdersHtml = '';
+            
             snap.docs.forEach(d => {
                 const o = d.data();
                 let sc = 'bg-yellow-500/20 text-yellow-500';
                 if (o.status === 'approved')  sc = 'bg-blue-500/20 text-blue-500';
                 if (o.status === 'completed') sc = 'bg-green-500/20 text-green-500';
                 if (o.status === 'paid')      sc = 'bg-purple-500/20 text-purple-500';
-                const div = document.createElement('div');
-                div.className = 'border rounded-lg p-4 mb-3';
-                div.innerHTML = `
-                    <div class="flex justify-between items-start flex-wrap gap-2">
-                        <div>
-                            <p class="font-semibold">Order #${d.id.slice(0,8)}</p>
-                            <p class="text-sm opacity-70">Customer: <span class="customer-name"></span></p>
-                            <p class="text-sm">Amount: AED ${o.totalAmount}</p>
-                            ${o.commissionAmount
-                                ? `<p class="text-sm text-green-500">Your Earnings: AED ${o.sellerEarnings}</p>`
-                                : '<p class="text-sm text-yellow-500">Commission pending approval</p>'}
+                
+                const orderHtml = `
+                    <div class="border rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start flex-wrap gap-2">
+                            <div>
+                                <p class="font-semibold">Order #${d.id.slice(0,8)}</p>
+                                <p class="text-sm opacity-70">Customer: <span class="customer-name"></span></p>
+                                <p class="text-sm">Amount: AED ${o.totalAmount}</p>
+                                ${o.commissionAmount
+                                    ? `<p class="text-sm text-green-500">Your Earnings: AED ${o.sellerEarnings}</p>`
+                                    : '<p class="text-sm text-yellow-500">Commission pending approval</p>'}
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${sc}">${(o.status||'').toUpperCase()}</span>
                         </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${sc}">${(o.status||'').toUpperCase()}</span>
-                    </div>
-                    ${o.status === 'approved'  ? `<button onclick="markCompleted('${d.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition">Mark as Completed</button>` : ''}
-                    ${o.status === 'completed' ? `<button onclick="requestPayout('${d.id}',${o.sellerEarnings||0})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Request Payout</button>` : ''}`;
-                // textContent to avoid XSS from customerName
+                        ${o.status === 'approved'  ? `<button onclick="markCompleted('${d.id}')" class="mt-3 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition">Mark as Completed</button>` : ''}
+                        ${o.status === 'completed' ? `<button onclick="requestPayout('${d.id}',${o.sellerEarnings||0})" class="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Request Payout</button>` : ''}
+                    </div>`;
+                
+                const div = document.createElement('div');
+                div.innerHTML = orderHtml;
                 div.querySelector('.customer-name').textContent = o.customerName || 'N/A';
                 container.appendChild(div);
+                allOrdersHtml += orderHtml;
             });
+            
+            // FIX: Populate the full orders view
+            if (fullContainer) {
+                fullContainer.innerHTML = allOrdersHtml || '<div class="text-center py-8 opacity-60">No orders yet.</div>';
+            }
         }
 
         window.markCompleted = async (orderId) => {
             await updateDoc(doc(db, 'orders', orderId), { status: 'completed', completedAt: new Date().toISOString() });
             showNotification('Order marked as completed!');
-            loadMyOrders(); loadSellerStats();
+            loadMyOrders(); 
+            loadSellerStats();
+            loadEarnings();
         };
 
         window.requestPayout = async (orderId, amount) => {
@@ -150,47 +173,86 @@
             await updateDoc(doc(db, 'users', currentSellerId), { pendingPayout: newPending });
             currentSellerData.pendingPayout = newPending;
             showNotification('Payout requested! Admin will process it soon.');
-            loadMyOrders(); loadSellerStats();
+            loadMyOrders(); 
+            loadSellerStats();
+            loadEarnings();
         };
 
         async function loadProducts() {
-            const snap = await getDocs(collection(db, 'products'));
-            const container = document.getElementById('products-list'); if (!container) return;
-            if (snap.empty) { container.innerHTML = '<div class="text-center py-8 opacity-60">No products available yet.</div>'; return; }
+            const snap = await getDocs(query(collection(db, 'products'), limit(50)));
+            const container = document.getElementById('products-list'); 
+            if (!container) return;
+            
+            if (snap.empty) { 
+                container.innerHTML = '<div class="text-center py-8 opacity-60">No products available yet.</div>'; 
+                return; 
+            }
+            
             container.innerHTML = '';
             snap.docs.forEach(d => {
                 const p = d.data();
                 const div = document.createElement('div');
                 div.className = 'border rounded-lg p-4';
+                const productName = escapeHtml(p.name || 'Untitled');
+                const productDesc = escapeHtml((p.description || '').substring(0,100));
+                const imageHtml = (p.imageUrl && p.imageUrl !== 'undefined') 
+                    ? `<img src="${escapeHtml(p.imageUrl)}" class="w-full h-40 object-cover rounded-lg mb-3" alt="${productName}" onerror="this.remove()">` 
+                    : '';
+                
                 div.innerHTML = `
-                    ${(p.imageUrl && p.imageUrl !== 'undefined') ? `<img src="${p.imageUrl}" class="w-full h-40 object-cover rounded-lg mb-3" alt="" onerror="this.remove()">` : ''}
+                    ${imageHtml}
                     <h4 class="font-semibold product-name"></h4>
                     <p class="text-sm opacity-70 mt-1 product-desc"></p>
                     <p class="text-lg font-bold mt-2">AED ${p.price}</p>
-                    <p class="text-xs opacity-60">Category: ${p.category || 'Uncategorized'}</p>
+                    <p class="text-xs opacity-60">Category: ${escapeHtml(p.category || 'Uncategorized')}</p>
                     <button class="order-btn mt-3 w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">Place Order</button>`;
-                div.querySelector('.product-name').textContent = p.name || 'Untitled';
-                div.querySelector('.product-desc').textContent = (p.description || '').substring(0,100);
-                div.querySelector('.order-btn').onclick = () => openOrderForm(d.id, p.name, p.price);
+                div.querySelector('.product-name').textContent = productName;
+                div.querySelector('.product-desc').textContent = productDesc;
+                div.querySelector('.order-btn').onclick = () => openOrderForm(d.id, productName, p.price);
                 container.appendChild(div);
             });
         }
 
+        // FIX: Fix order status filter - 'in' queries need an index
         async function loadEarnings() {
-            const snap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', 'in', ['approved','completed','paid'])));
+            // Get approved orders (status 'approved' or 'completed' or 'paid')
+            const [approvedSnap, completedSnap, paidSnap] = await Promise.all([
+                getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'approved'))),
+                getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'completed'))),
+                getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentSellerId), where('status', '==', 'paid')))
+            ]);
+            
             let total = 0;
-            snap.docs.forEach(d => { total += d.data().sellerEarnings || 0; });
+            [...approvedSnap.docs, ...completedSnap.docs, ...paidSnap.docs].forEach(d => { 
+                total += d.data().sellerEarnings || 0; 
+            });
+            
             const el = document.getElementById('total-earnings-display');
             if (el) el.innerHTML = `<div class="text-3xl font-bold">AED ${total}</div><div class="text-sm opacity-70 mt-1">Total earned from approved orders</div>`;
 
-            const profileEl = document.getElementById('section-profile');
-            if (profileEl) {
-                const el2 = document.getElementById('profile-name');   if(el2) el2.textContent = currentSellerData?.name    || '';
-                const el3 = document.getElementById('profile-email');  if(el3) el3.textContent = currentSellerData?.email   || '';
-                const el4 = document.getElementById('profile-joined'); if(el4) el4.textContent = currentSellerData?.createdAt ? new Date(currentSellerData.createdAt).toLocaleDateString() : 'N/A';
-                const el5 = document.getElementById('profile-earnings'); if(el5) el5.textContent = total;
-                const el6 = document.getElementById('profile-pending');  if(el6) el6.textContent = currentSellerData?.pendingPayout || 0;
-            }
+            // Update profile section
+            const profileName = document.getElementById('profile-name');
+            const profileEmail = document.getElementById('profile-email');
+            const profileJoined = document.getElementById('profile-joined');
+            const profileEarnings = document.getElementById('profile-earnings');
+            const profilePending = document.getElementById('profile-pending');
+            
+            if (profileName) profileName.textContent = currentSellerData?.name || '';
+            if (profileEmail) profileEmail.textContent = currentSellerData?.email || '';
+            if (profileJoined) profileJoined.textContent = currentSellerData?.createdAt ? new Date(currentSellerData.createdAt).toLocaleDateString() : 'N/A';
+            if (profileEarnings) profileEarnings.textContent = total;
+            if (profilePending) profilePending.textContent = currentSellerData?.pendingPayout || 0;
+        }
+
+        // Helper function to prevent XSS
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
         }
 
         // ── Order modal ──────────────────────────────────────────────────────
@@ -198,7 +260,7 @@
             document.getElementById('order-product-id').value = productId;
             document.getElementById('order-price').value      = price;
             const nameEl = document.getElementById('order-product-name');
-            nameEl.textContent = ''; // clear first
+            nameEl.textContent = '';
             const strong = document.createElement('strong');
             strong.textContent = productName;
             nameEl.appendChild(strong);
@@ -221,7 +283,8 @@
             const notes         = document.getElementById('order-notes').value;
 
             if (!customerName || !customerPhone || !customerAddr) {
-                showNotification('Please fill in all required fields.', 'error'); return;
+                showNotification('Please fill in all required fields.', 'error'); 
+                return;
             }
 
             await addDoc(collection(db, 'orders'), {
@@ -235,17 +298,18 @@
 
             showNotification('Order placed! Admin will review and approve commission.');
             window.closeOrderModal();
-            loadMyOrders(); loadSellerStats();
+            loadMyOrders(); 
+            loadSellerStats();
         };
 
         // ── Navigation ───────────────────────────────────────────────────────
-        // FIX: receive clickedEl explicitly — don't rely on global `event` variable
         window.showSection = (section, clickedEl) => {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
             document.getElementById(`section-${section}`)?.classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            clickedEl?.classList.add('active');
+            if (clickedEl) clickedEl.classList.add('active');
             if (section === 'earnings') loadEarnings();
+            if (section === 'orders') loadMyOrders();
             window.closeMobileMenu?.();
         };
 
@@ -355,7 +419,7 @@
                 <div id="section-orders" class="section hidden">
                     <div class="card p-6 rounded-xl">
                         <h3 class="text-lg font-semibold mb-4">All My Orders</h3>
-                        <div id="my-orders-full"></div>
+                        <div id="my-orders-full"><div class="text-center py-8 opacity-60">Loading...</div></div>
                     </div>
                 </div>
 
@@ -423,6 +487,6 @@
         @media(max-width:767px){ .desktop-sidebar{ display:none; } .main-content{ margin-left:0!important; } }
         @media(min-width:769px){ .main-content{ margin-left:16rem; } }
     </style>
-    <script src="app.js"></script>
+    <!-- Remove duplicate app.js - only keep one -->
 </body>
 </html>
