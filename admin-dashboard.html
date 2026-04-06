@@ -31,6 +31,7 @@
 
         let currentUser = null, currentUserId = null, currentUserData = null;
         let allProducts = [], currentFilter = 'all', currentSearch = '';
+        let ordersData = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -106,7 +107,11 @@
                     tbody.innerHTML = '';
                     recentSnap.docs.forEach(d => {
                         const o = d.data();
-                        tbody.innerHTML += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2 text-sm">${o.customerName || 'N/A'}</td><td class="px-4 py-2 text-sm">AED ${o.totalAmount}</td><td class="px-4 py-2"><span class="status-badge status-${o.status || 'pending'}">${o.status || 'pending'}</span></td><td class="px-4 py-2"><button onclick="viewOrderDetails('${d.id}')" class="text-blue-500"><i class="fas fa-eye"></i></button></td></tr>`;
+                        const tr = document.createElement('tr');
+                        tr.className = 'border-b';
+                        tr.innerHTML = `<td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2 text-sm"></td><td class="px-4 py-2 text-sm">AED ${o.totalAmount}</td><td class="px-4 py-2"><span class="status-badge status-${o.status || 'pending'}">${o.status || 'pending'}</span></td><td class="px-4 py-2"><button onclick="viewOrderDetails('${d.id}')" class="text-blue-500"><i class="fas fa-eye"></i></button></td>`;
+                        tr.querySelectorAll('td')[1].textContent = o.customerName || 'N/A';
+                        tbody.appendChild(tr);
                     });
                 }
             } catch (e) { console.error(e); }
@@ -282,6 +287,15 @@
             const container = document.getElementById('orders-table-container');
             if (!container) return;
             if (snap.empty) { container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet.</div>'; return; }
+            ordersData = snap.docs.map(d => ({
+                OrderID: d.id.slice(0,8),
+                Customer: d.data().customerName || 'N/A',
+                Phone: d.data().customerPhone || '',
+                Amount: d.data().totalAmount || 0,
+                Status: d.data().status || 'pending',
+                Seller: d.data().sellerName || '',
+                Date: d.data().createdAt ? new Date(d.data().createdAt).toLocaleDateString() : 'N/A'
+            }));
             let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th></thead><tbody>';
             snap.docs.forEach(d => {
                 const o = d.data();
@@ -435,7 +449,7 @@
                 </div>
             </div>
 
-            <div id="section-orders" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">All Orders</h3><div id="orders-table-container" class="overflow-x-auto">Loading...</div></div></div>
+            <div id="section-orders" class="section hidden"><div class="card p-6 rounded-xl"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">All Orders</h3><button onclick="exportToCSV(ordersData,'orders.csv')" class="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600 transition"><i class="fas fa-download mr-2"></i>Export CSV</button></div><div id="orders-table-container" class="overflow-x-auto">Loading...</div></div></div>
             <div id="section-sellers" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Seller Management</h3><div id="sellers-table-container" class="overflow-x-auto">Loading...</div></div></div>
             <div id="section-notifications" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Notifications</h3><div id="notifications-list">Loading...</div></div></div>
             <div id="section-settings" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div></div>
