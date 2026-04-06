@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make Admin - Imaginhype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        const firebaseConfig = {
+            apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
+            authDomain: "imaginhype-app.firebaseapp.com",
+            projectId: "imaginhype-app",
+            storageBucket: "imaginhype-app.firebasestorage.app",
+            messagingSenderId: "200919529212",
+            appId: "1:200919529212:web:afa69db5cf256d35f90979"
+        };
+        
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        window.makeAdmin = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!email || !password) {
+                resultDiv.innerHTML = 'Please enter email and password';
+                resultDiv.className = 'text-red-600 mt-4';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = 'Logging in and setting admin privileges...';
+                resultDiv.className = 'text-blue-600 mt-4';
+                
+                // Login as the user
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Create an admin document in Firestore
+                await setDoc(doc(db, 'admins', user.uid), {
+                    email: email,
+                    isAdmin: true,
+                    role: 'super_admin',
+                    createdAt: new Date(),
+                    uid: user.uid
+                });
+                
+                // Also update the users collection
+                await setDoc(doc(db, 'users', user.uid), {
+                    email: email,
+                    isAdmin: true,
+                    role: 'admin',
+                    lastLogin: new Date()
+                }, { merge: true });
+                
+                resultDiv.innerHTML = '✅ SUCCESS! ' + email + ' is now an admin. You can now login to the dashboard.';
+                resultDiv.className = 'text-green-600 mt-4 font-semibold';
+                
+                // Show redirect button
+                document.getElementById('redirectBtn').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = '❌ Error: ' + error.message;
+                resultDiv.className = 'text-red-600 mt-4';
+            }
+        };
+        
+        window.goToDashboard = function() {
+            window.location.href = 'admin-dashboard.html';
+        };
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-96">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Imaginhype</h1>
+            <p class="text-gray-600">Make a user an Admin</p>
+        </div>
+        
+        <p class="text-sm text-gray-500 mb-4 text-center">
+            Use one of your existing user accounts:
+            <br>
+            <span class="font-semibold">baybo.uae@gmail.com</span> or 
+            <span class="font-semibold">imaginhype@gmail.com</span>
+        </p>
+        
+        <input type="email" id="email" placeholder="Email" class="w-full mb-3 p-2 border rounded-lg">
+        <input type="password" id="password" placeholder="Password" class="w-full mb-4 p-2 border rounded-lg">
+        
+        <button onclick="makeAdmin()" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">
+            Make Admin
+        </button>
+        
+        <div id="result"></div>
+        
+        <button id="redirectBtn" onclick="goToDashboard()" class="hidden w-full mt-4 bg-green-500 text-white p-2 rounded-lg hover:bg-green-600">
+            Go to Admin Dashboard →
+        </button>
+        
+        <div class="mt-6 pt-4 border-t text-center">
+            <p class="text-xs text-gray-500">
+                This will create admin records in Firestore.<br>
+                Your security rules will check these records.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
