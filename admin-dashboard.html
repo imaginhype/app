@@ -38,11 +38,6 @@
         .filter-btn { transition: all 0.2s ease; cursor: pointer; }
         .filter-btn.active { background: var(--active-bg); color: white; }
         .filter-btn:hover:not(.active) { background: var(--hover-bg); }
-        .stat-card-user { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1rem; text-align: center; }
-        .notification-tab { cursor: pointer; transition: all 0.2s ease; }
-        .notification-tab.active { border-bottom: 2px solid var(--active-bg); color: var(--active-bg); }
-        .announcement-card { transition: all 0.2s ease; }
-        .announcement-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -70,18 +65,6 @@
         let currentUserData = null;
         let revenueChart = null;
         let ordersStatusChart = null;
-        let allProducts = [];
-        let currentFilter = 'all';
-        let currentSearch = '';
-        let allOrders = [];
-        let ordersSearch = '';
-        let allUsers = [];
-        let userFilter = 'all';
-        let userSearch = '';
-        let allNotifications = [];
-        let notificationFilter = 'all';
-        let allAnnouncements = [];
-        let announcementSearch = '';
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -96,12 +79,6 @@
             document.getElementById('admin-name').textContent = currentUserData.name || 'Admin';
             applyThemeIcons();
             loadDashboard();
-            loadProducts();
-            loadCategories();
-            loadSellers();
-            loadOrders();
-            loadNotifications();
-            loadAnnouncements();
         });
 
         function applyThemeIcons() {
@@ -157,22 +134,34 @@
             await loadOrdersByStatusChart();
             await loadTopProducts();
             await loadTopSellers();
+            await loadProducts();
+            await loadCategories();
+            await loadSellers();
+            await loadOrders();
         }
 
         async function loadStats() {
             try {
                 const usersSnap = await getDocs(collection(db, 'users'));
                 const sellers = usersSnap.docs.filter(d => d.data().role === 'seller').length;
+                
                 const ordersSnap = await getDocs(collection(db, 'orders'));
                 const totalOrders = ordersSnap.size;
                 const pendingOrders = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
+                
                 const productsSnap = await getDocs(collection(db, 'products'));
                 
                 document.getElementById('stat-sellers').innerHTML = `<div class="text-2xl font-bold">${sellers}</div><div class="text-sm opacity-70">Sellers</div>`;
                 document.getElementById('stat-orders').innerHTML = `<div class="text-2xl font-bold">${totalOrders}</div><div class="text-sm opacity-70">Total Orders</div>`;
                 document.getElementById('stat-pending').innerHTML = `<div class="text-2xl font-bold">${pendingOrders}</div><div class="text-sm opacity-70">Pending Approval</div>`;
                 document.getElementById('stat-products').innerHTML = `<div class="text-2xl font-bold">${productsSnap.size}</div><div class="text-sm opacity-70">Products</div>`;
-            } catch (error) { console.error(error); }
+            } catch (error) {
+                console.error("Error loading stats:", error);
+                document.getElementById('stat-sellers').innerHTML = `<div class="text-2xl font-bold">0</div><div class="text-sm opacity-70">Sellers</div>`;
+                document.getElementById('stat-orders').innerHTML = `<div class="text-2xl font-bold">0</div><div class="text-sm opacity-70">Total Orders</div>`;
+                document.getElementById('stat-pending').innerHTML = `<div class="text-2xl font-bold">0</div><div class="text-sm opacity-70">Pending Approval</div>`;
+                document.getElementById('stat-products').innerHTML = `<div class="text-2xl font-bold">0</div><div class="text-sm opacity-70">Products</div>`;
+            }
         }
 
         async function loadRecentOrders() {
@@ -180,11 +169,22 @@
                 const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
                 const tbody = document.getElementById('recent-orders-table');
                 if (!tbody) return;
-                if (ordersSnap.empty) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 opacity-60">No orders yet.您们</td></tr>'; return; }
+                if (ordersSnap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 opacity-60">No orders yet.您们</td></tr>';
+                    return;
+                }
                 tbody.innerHTML = '';
                 ordersSnap.docs.forEach(doc => {
                     const order = doc.data();
-                    tbody.innerHTML += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${doc.id.slice(0,8)}</td><td class="px-4 py-2 text-sm">${order.customerName || 'N/A'}</td><td class="px-4 py-2 text-sm">AED ${order.totalAmount}</td><td class="px-4 py-2"><span class="status-badge status-${order.status}">${order.status}</span></td><td class="px-4 py-2"><button onclick="viewOrderDetails('${doc.id}')" class="text-blue-500"><i class="fas fa-eye"></i></button></td></tr>`;
+                    tbody.innerHTML += `
+                        <tr class="border-b">
+                            <td class="px-4 py-2 text-sm">#${doc.id.slice(0,8)}</td>
+                            <td class="px-4 py-2 text-sm">${order.customerName || 'N/A'}</td>
+                            <td class="px-4 py-2 text-sm">AED ${order.totalAmount}</td>
+                            <td class="px-4 py-2"><span class="status-badge status-${order.status}">${order.status}</span></td>
+                            <td class="px-4 py-2"><button onclick="viewOrderDetails('${doc.id}')" class="text-blue-500"><i class="fas fa-eye"></i></button></td>
+                        </tr>
+                    `;
                 });
             } catch (error) { console.error(error); }
         }
@@ -233,7 +233,12 @@
             try {
                 const ordersSnap = await getDocs(collection(db, 'orders'));
                 const productSales = {};
-                ordersSnap.docs.forEach(doc => { const order = doc.data(); if (order.productName) { productSales[order.productName] = (productSales[order.productName] || 0) + (order.totalAmount || 0); } });
+                ordersSnap.docs.forEach(doc => {
+                    const order = doc.data();
+                    if (order.productName) {
+                        productSales[order.productName] = (productSales[order.productName] || 0) + (order.totalAmount || 0);
+                    }
+                });
                 const sorted = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 5);
                 const container = document.getElementById('top-products-list');
                 if (!container) return;
@@ -246,7 +251,12 @@
             try {
                 const ordersSnap = await getDocs(collection(db, 'orders'));
                 const sellerSales = {};
-                ordersSnap.docs.forEach(doc => { const order = doc.data(); if (order.sellerName) { sellerSales[order.sellerName] = (sellerSales[order.sellerName] || 0) + (order.totalAmount || 0); } });
+                ordersSnap.docs.forEach(doc => {
+                    const order = doc.data();
+                    if (order.sellerName) {
+                        sellerSales[order.sellerName] = (sellerSales[order.sellerName] || 0) + (order.totalAmount || 0);
+                    }
+                });
                 const sorted = Object.entries(sellerSales).sort((a, b) => b[1] - a[1]).slice(0, 5);
                 const container = document.getElementById('top-sellers-list');
                 if (!container) return;
@@ -256,6 +266,10 @@
         }
 
         // ========== PRODUCT FUNCTIONS ==========
+        let allProducts = [];
+        let currentFilter = 'all';
+        let currentSearch = '';
+
         async function loadProducts() {
             const container = document.getElementById('products-grid-container');
             if (!container) return;
@@ -272,8 +286,14 @@
             if (!container) return;
             let list = allProducts;
             if (currentFilter !== 'all') list = list.filter(p => p.category === currentFilter);
-            if (currentSearch) { const q = currentSearch.toLowerCase(); list = list.filter(p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)); }
-            if (!list.length) { container.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">No products found.</div>'; return; }
+            if (currentSearch) {
+                const q = currentSearch.toLowerCase();
+                list = list.filter(p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
+            }
+            if (!list.length) {
+                container.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">No products found.</div>';
+                return;
+            }
             container.innerHTML = list.map(p => {
                 const isOnSale = p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
                 const shortDesc = (p.description || 'No description').replace(/<[^>]*>/g, '').substring(0, 80);
@@ -290,21 +310,23 @@
 
         // ========== CATEGORY FUNCTIONS ==========
         async function loadCategories() {
-            const snap = await getDocs(collection(db, 'categories'));
-            const allCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            const filterContainer = document.getElementById('category-filter-buttons');
-            if (filterContainer) {
-                filterContainer.innerHTML = `<button onclick="filterProducts('all')" data-category="all" class="category-filter active px-4 py-2 rounded-lg text-sm font-medium transition">All</button>`;
-                allCategories.forEach(c => filterContainer.innerHTML += `<button onclick="filterProducts('${c.name}')" data-category="${c.name}" class="category-filter px-4 py-2 rounded-lg text-sm font-medium transition">${c.name}</button>`);
-            }
             const container = document.getElementById('categories-list');
-            if (container) {
-                if (!allCategories.length) { container.innerHTML = '<div class="text-center py-8 opacity-60">No categories yet.</div>'; return; }
-                let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Created</th><th class="px-4 py-2 text-left">Action</th></thead><tbody>';
-                allCategories.forEach(c => { html += `<tr class="border-b"><td class="px-4 py-2">${c.name}</td><td class="px-4 py-2 text-sm opacity-70">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td><td class="px-4 py-2"><button onclick="deleteCategory('${c.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`; });
-                html += '</tbody></table><div class="mt-4"><button onclick="showAddCategoryModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg">+ Add Category</button></div>';
+            if (!container) return;
+            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading categories...</div>';
+            try {
+                const snap = await getDocs(collection(db, 'categories'));
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No categories yet. <button onclick="showAddCategoryModal()" class="text-purple-500">Add your first category</button></div>';
+                    return;
+                }
+                let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Created</th><th class="px-4 py-2 text-left">Actions</th></thead><tbody>';
+                snap.docs.forEach(doc => {
+                    const c = doc.data();
+                    html += `<tr class="border-b"><td class="px-4 py-2">${c.name}</td><td class="px-4 py-2 text-sm opacity-70">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td><td class="px-4 py-2"><button onclick="deleteCategory('${doc.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`;
+                });
+                html += '</tbody></table></div><div class="mt-4"><button onclick="showAddCategoryModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg">+ Add Category</button></div>';
                 container.innerHTML = html;
-            }
+            } catch (error) { container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading categories</div>'; }
         }
 
         window.showAddCategoryModal = () => { document.getElementById('category-name').value = ''; document.getElementById('category-modal').classList.remove('hidden'); };
@@ -312,472 +334,53 @@
         window.addCategory = async () => { const name = document.getElementById('category-name').value.trim(); if (!name) return; await addDoc(collection(db, 'categories'), { name, createdAt: new Date().toISOString() }); showNotification('Category added!', 'success'); closeCategoryModal(); loadCategories(); };
         window.deleteCategory = async (id) => { if (!confirm('Delete this category?')) return; await deleteDoc(doc(db, 'categories', id)); showNotification('Category deleted', 'success'); loadCategories(); };
 
-        // ========== SELLERS / USER MANAGEMENT SECTION ==========
+        // ========== SELLERS FUNCTIONS ==========
         async function loadSellers() {
-            const container = document.getElementById('sellers-table-body');
+            const container = document.getElementById('sellers-table-container');
             if (!container) return;
-            container.innerHTML = '<tr><td colspan="9" class="text-center py-8 opacity-60">Loading users...</td></tr>';
+            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading sellers...</div>';
             try {
                 const snap = await getDocs(collection(db, 'users'));
-                allUsers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderUsersTable();
-                updateUserStats();
-            } catch (error) {
-                container.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-red-500">Error loading users</td></tr>';
-            }
+                const sellers = snap.docs.filter(d => d.data().role === 'seller');
+                if (sellers.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No sellers yet.</div>';
+                    return;
+                }
+                let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Email</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th></thead><tbody>';
+                sellers.forEach(doc => {
+                    const s = doc.data();
+                    html += `<tr class="border-b"><td class="px-4 py-2">${s.name || 'N/A'}</td><td class="px-4 py-2">${s.email}</td><td class="px-4 py-2"><span class="text-green-500">Active</span></td><td class="px-4 py-2 text-sm opacity-70">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}</td></tr>`;
+                });
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading sellers</div>'; }
         }
 
-        function updateUserStats() {
-            const totalUsers = allUsers.length;
-            const sellers = allUsers.filter(u => u.role === 'seller').length;
-            const admins = allUsers.filter(u => u.role === 'admin').length;
-            const pending = allUsers.filter(u => u.status === 'pending').length;
-            document.getElementById('user-stats').innerHTML = `
-                <div class="grid grid-cols-4 gap-3 mb-6">
-                    <div class="stat-card-user"><div class="text-2xl font-bold">${totalUsers}</div><div class="text-xs opacity-60">Users</div></div>
-                    <div class="stat-card-user"><div class="text-2xl font-bold">${sellers}</div><div class="text-xs opacity-60">Sellers</div></div>
-                    <div class="stat-card-user"><div class="text-2xl font-bold">${admins}</div><div class="text-xs opacity-60">Admins</div></div>
-                    <div class="stat-card-user"><div class="text-2xl font-bold">${pending}</div><div class="text-xs opacity-60">Pending</div></div>
-                </div>
-                <div class="flex flex-wrap gap-2 mb-4">
-                    <button onclick="filterUsers('all')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium ${userFilter === 'all' ? 'active' : ''} bg-gray-100 dark:bg-gray-800">All Users</button>
-                    <button onclick="filterUsers('seller')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium ${userFilter === 'seller' ? 'active' : ''} bg-gray-100 dark:bg-gray-800">Sellers</button>
-                    <button onclick="filterUsers('admin')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium ${userFilter === 'admin' ? 'active' : ''} bg-gray-100 dark:bg-gray-800">Admins</button>
-                    <button onclick="filterUsers('pending')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium ${userFilter === 'pending' ? 'active' : ''} bg-gray-100 dark:bg-gray-800">Pending</button>
-                </div>
-            `;
-        }
-
-        window.filterUsers = (filter) => {
-            userFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            if (event && event.target) event.target.classList.add('active');
-            renderUsersTable();
-        };
-
-        function renderUsersTable() {
-            const container = document.getElementById('sellers-table-body');
-            if (!container) return;
-            
-            let filtered = allUsers;
-            if (userFilter !== 'all') {
-                if (userFilter === 'seller') filtered = filtered.filter(u => u.role === 'seller');
-                else if (userFilter === 'admin') filtered = filtered.filter(u => u.role === 'admin');
-                else if (userFilter === 'pending') filtered = filtered.filter(u => u.status === 'pending');
-            }
-            if (userSearch) {
-                const search = userSearch.toLowerCase();
-                filtered = filtered.filter(u => (u.name && u.name.toLowerCase().includes(search)) || (u.email && u.email.toLowerCase().includes(search)));
-            }
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '<tr><td colspan="9" class="text-center py-8 opacity-60">No users found.</td></tr>';
-                return;
-            }
-            
-            container.innerHTML = filtered.map(user => `
-                <tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                    <td class="px-4 py-3 text-sm">#${user.id.slice(0,6)}</td>
-                    <td class="px-4 py-3"><div class="font-medium">${user.name || 'N/A'}</div><div class="text-xs opacity-60">${user.email || ''}</div></td>
-                    <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-purple-500/20 text-purple-500' : 'bg-blue-500/20 text-blue-500'}">${user.role || 'USER'}</span></td>
-                    <td class="px-4 py-3"><span class="text-green-500"><i class="fas fa-check-circle"></i> Verified</span></td>
-                    <td class="px-4 py-3">${user.totalOrders || 0}</td>
-                    <td class="px-4 py-3">AED ${user.totalEarnings || 0}</td>
-                    <td class="px-4 py-3 text-sm">${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</td>
-                    <td class="px-4 py-3 text-sm">${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
-                    <td class="px-4 py-3"><button onclick="viewUserDetails('${user.id}')" class="text-purple-500"><i class="fas fa-ellipsis-v"></i></button></td>
-                </tr>
-            `).join('');
-        }
-
-        const userSearchInput = document.getElementById('user-search');
-        if (userSearchInput) {
-            userSearchInput.addEventListener('input', (e) => {
-                userSearch = e.target.value;
-                renderUsersTable();
-            });
-        }
-
-        window.viewUserDetails = (userId) => { alert(`View user ${userId} - Full details coming soon`); };
-
-        // ========== ORDERS SECTION ==========
+        // ========== ORDERS FUNCTIONS ==========
         async function loadOrders() {
-            const container = document.getElementById('orders-table-body');
+            const container = document.getElementById('orders-table-container');
             if (!container) return;
-            container.innerHTML = '<tr><td colspan="10" class="text-center py-8 opacity-60">Loading orders...</td></tr>';
+            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading orders...</div>';
             try {
                 const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
-                allOrders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderOrdersTable();
-            } catch (error) {
-                container.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-red-500">Error loading orders</td></tr>';
-            }
-        }
-
-        function renderOrdersTable() {
-            const container = document.getElementById('orders-table-body');
-            if (!container) return;
-            
-            let filtered = allOrders;
-            if (ordersSearch) {
-                const search = ordersSearch.toLowerCase();
-                filtered = filtered.filter(o => o.id.toLowerCase().includes(search) || (o.customerName && o.customerName.toLowerCase().includes(search)) || (o.sellerName && o.sellerName.toLowerCase().includes(search)));
-            }
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '<tr><td colspan="10" class="text-center py-8 opacity-60">No orders found.</td></tr>';
-                return;
-            }
-            
-            const statusMap = { pending: 'PENDING', approved: 'APPROVED', completed: 'COMPLETED', paid: 'PAID' };
-            
-            container.innerHTML = filtered.map(order => {
-                const status = statusMap[order.status] || order.status.toUpperCase();
-                let statusClass = 'bg-yellow-500/20 text-yellow-500';
-                if (order.status === 'approved') statusClass = 'bg-blue-500/20 text-blue-500';
-                if (order.status === 'completed') statusClass = 'bg-green-500/20 text-green-500';
-                if (order.status === 'paid') statusClass = 'bg-purple-500/20 text-purple-500';
-                
-                return `
-                    <tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                        <td class="px-4 py-3 text-sm font-medium">#${order.id.slice(0,8)}</td>
-                        <td class="px-4 py-3 text-sm">${order.sellerName || 'N/A'}</td>
-                        <td class="px-4 py-3 text-sm">${order.customerName || 'N/A'}</td>
-                        <td class="px-4 py-3 text-sm">${order.productType || 'Product'}</td>
-                        <td class="px-4 py-3 text-sm font-medium">AED ${order.totalAmount}</td>
-                        <td class="px-4 py-3 text-sm">${order.advancePay || 'No Advance'}</td>
-                        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${status}</span></td>
-                        <td class="px-4 py-3 text-sm">${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</td>
-                        <td class="px-4 py-3 text-sm">${order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : '-'}</td>
-                        <td class="px-4 py-3"><button onclick="viewOrderDetails('${order.id}')" class="text-purple-500"><i class="fas fa-eye"></i></button></td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        const ordersSearchInput = document.getElementById('orders-search');
-        if (ordersSearchInput) {
-            ordersSearchInput.addEventListener('input', (e) => {
-                ordersSearch = e.target.value;
-                renderOrdersTable();
-            });
-        }
-
-        window.exportOrdersToCSV = () => {
-            let csv = 'Order ID,Seller,Customer,Product Type,Amount,Advance Pay,Status,Created Date,Delivery Date\n';
-            let filtered = allOrders;
-            if (ordersSearch) {
-                const search = ordersSearch.toLowerCase();
-                filtered = filtered.filter(o => o.id.toLowerCase().includes(search) || (o.customerName && o.customerName.toLowerCase().includes(search)));
-            }
-            filtered.forEach(order => {
-                csv += `#${order.id.slice(0,8)},${order.sellerName || 'N/A'},${order.customerName || 'N/A'},${order.productType || 'Product'},${order.totalAmount},${order.advancePay || 'No Advance'},${order.status},${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'},${order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : '-'}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `orders_export_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showNotification('Export complete!', 'success');
-        };
-
-        window.showCreateOrderModal = async () => {
-            await loadProductsForOrderSelect();
-            document.getElementById('create-order-modal').classList.remove('hidden');
-        };
-
-        window.closeCreateOrderModal = () => {
-            document.getElementById('create-order-modal').classList.add('hidden');
-            document.getElementById('create-order-form').reset();
-        };
-
-        async function loadProductsForOrderSelect() {
-            const snap = await getDocs(collection(db, 'products'));
-            const select = document.getElementById('create-order-product');
-            if (!select) return;
-            select.innerHTML = '<option value="">Select product</option>';
-            snap.docs.forEach(doc => {
-                const p = doc.data();
-                select.innerHTML += `<option value="${doc.id}" data-price="${p.price}">${p.name} - AED ${p.price}</option>`;
-            });
-        }
-
-        window.updateCreateOrderPrice = () => {
-            const select = document.getElementById('create-order-product');
-            const selected = select.options[select.selectedIndex];
-            if (selected && selected.dataset.price) {
-                document.getElementById('create-order-price').value = selected.dataset.price;
-            }
-        };
-
-        document.getElementById('create-order-product')?.addEventListener('change', updateCreateOrderPrice);
-
-        window.submitCreateOrder = async () => {
-            const productId = document.getElementById('create-order-product').value;
-            const customerName = document.getElementById('create-order-customer').value.trim();
-            const customerPhone = document.getElementById('create-order-phone').value;
-            const customerAddress = document.getElementById('create-order-address').value;
-            const quantity = parseInt(document.getElementById('create-order-qty').value);
-            const unitPrice = parseFloat(document.getElementById('create-order-price').value);
-            const notes = document.getElementById('create-order-notes').value;
-            
-            if (!productId || !customerName) {
-                showNotification('Please select a product and enter customer name', 'error');
-                return;
-            }
-            
-            const totalAmount = unitPrice * quantity;
-            
-            try {
-                await addDoc(collection(db, 'orders'), {
-                    productId: productId,
-                    sellerId: currentUserId,
-                    sellerName: currentUserData?.name || 'Admin',
-                    customerName: customerName,
-                    customerPhone: customerPhone,
-                    customerAddress: customerAddress,
-                    quantity: quantity,
-                    unitPrice: unitPrice,
-                    totalAmount: totalAmount,
-                    notes: notes,
-                    status: 'pending',
-                    createdAt: new Date().toISOString()
-                });
-                showNotification('Order created successfully!', 'success');
-                closeCreateOrderModal();
-                loadOrders();
-                loadDashboard();
-            } catch (error) {
-                showNotification('Error: ' + error.message, 'error');
-            }
-        };
-
-        window.viewOrderDetails = (orderId) => {
-            const order = allOrders.find(o => o.id === orderId);
-            if (order) {
-                alert(`Order #${orderId.slice(0,8)}\n\nCustomer: ${order.customerName}\nAmount: AED ${order.totalAmount}\nStatus: ${order.status}\nCommission: ${order.commissionAmount || 'Pending'}\nYour Earnings: ${order.sellerEarnings || 'Pending'}\n\nNotes: ${order.notes || 'No notes'}`);
-            }
-        };
-
-        // ========== NOTIFICATIONS SECTION ==========
-        async function loadNotifications() {
-            const container = document.getElementById('notifications-list');
-            if (!container) return;
-            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading notifications...</div>';
-            try {
-                // Sample notifications - replace with actual data from Firebase
-                allNotifications = [
-                    { id: '1', type: 'order', title: 'New Order Request', message: 'New custom product order request #150 from Zack Furniture for "King Size 180x200 Bed". Amount: AED 1850', time: 'about 15 hours ago', read: false, priority: 'high' },
-                    { id: '2', type: 'user', title: 'New User Registration', message: 'New user Roma Ali has registered using referral code from Adnan Khan.', time: '2 days ago', read: true, priority: 'normal' },
-                    { id: '3', type: 'payout', title: 'Payout Request Reminder', message: 'If you have pending payouts, please submit your payout request during active payout windows.', time: '3 days ago', read: true, priority: 'high' }
-                ];
-                renderNotifications();
-                updateNotificationStats();
-            } catch (error) {
-                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading notifications</div>';
-            }
-        }
-
-        function updateNotificationStats() {
-            const total = allNotifications.length;
-            const unread = allNotifications.filter(n => !n.read).length;
-            const read = allNotifications.filter(n => n.read).length;
-            document.getElementById('notif-total').innerHTML = `<div class="text-2xl font-bold">${total}</div><div class="text-xs opacity-60">Total</div>`;
-            document.getElementById('notif-unread').innerHTML = `<div class="text-2xl font-bold">${unread}</div><div class="text-xs opacity-60">Unread</div>`;
-            document.getElementById('notif-read').innerHTML = `<div class="text-2xl font-bold">${read}</div><div class="text-xs opacity-60">Read</div>`;
-        }
-
-        window.filterNotifications = (filter) => {
-            notificationFilter = filter;
-            document.querySelectorAll('.notification-tab').forEach(tab => tab.classList.remove('active'));
-            if (event && event.target) event.target.classList.add('active');
-            renderNotifications();
-        };
-
-        function renderNotifications() {
-            const container = document.getElementById('notifications-list');
-            if (!container) return;
-            
-            let filtered = allNotifications;
-            if (notificationFilter !== 'all') {
-                filtered = filtered.filter(n => n.type === notificationFilter);
-            }
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 opacity-60">No notifications found.</div>';
-                return;
-            }
-            
-            container.innerHTML = filtered.map(notif => `
-                <div class="border rounded-lg p-4 mb-3 ${!notif.read ? 'bg-purple-50 dark:bg-purple-900/10' : ''}">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded ${notif.priority === 'high' ? 'bg-red-500/20 text-red-500' : 'bg-blue-500/20 text-blue-500'}">${notif.priority === 'high' ? 'HIGH PRIORITY' : 'ORDER UPDATE'}</span>
-                                <span class="text-xs opacity-60">${notif.time}</span>
-                            </div>
-                            <h4 class="font-semibold">${notif.title}</h4>
-                            <p class="text-sm opacity-70 mt-1">${notif.message}</p>
-                            <button class="text-purple-500 text-sm mt-2 hover:underline">View Details</button>
-                        </div>
-                        ${!notif.read ? '<div class="w-2 h-2 bg-purple-500 rounded-full"></div>' : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.markAllRead = () => {
-            allNotifications.forEach(n => n.read = true);
-            renderNotifications();
-            updateNotificationStats();
-            showNotification('All notifications marked as read', 'success');
-        };
-
-        // ========== ANNOUNCEMENTS SECTION ==========
-        async function loadAnnouncements() {
-            const container = document.getElementById('announcements-list');
-            if (!container) return;
-            container.innerHTML = '<div class="text-center py-8 opacity-60">Loading announcements...</div>';
-            try {
-                const snap = await getDocs(query(collection(db, 'announcements'), orderBy('createdAt', 'desc')));
-                allAnnouncements = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderAnnouncements();
-                updateAnnouncementStats();
-            } catch (error) {
-                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading announcements</div>';
-            }
-        }
-
-        function updateAnnouncementStats() {
-            const total = allAnnouncements.length;
-            const active = allAnnouncements.filter(a => a.status === 'active').length;
-            const expired = allAnnouncements.filter(a => a.status === 'expired').length;
-            document.getElementById('announcement-stats').innerHTML = `
-                <div class="grid grid-cols-4 gap-3 mb-6">
-                    <div class="stat-card-user"><div class="text-2xl font-bold">${total}</div><div class="text-xs opacity-60">Total</div></div>
-                    <div class="stat-card-user"><div class="text-2xl font-bold">${active}</div><div class="text-xs opacity-60">Active</div></div>
-                    <div class="stat-card-user"><div class="text-2xl font-bold">${expired}</div><div class="text-xs opacity-60">Expired</div></div>
-                    <div class="stat-card-user"><div class="text-2xl font-bold">0</div><div class="text-xs opacity-60">Notifications Sent</div></div>
-                </div>
-            `;
-        }
-
-        function renderAnnouncements() {
-            const container = document.getElementById('announcements-list');
-            if (!container) return;
-            
-            let filtered = allAnnouncements;
-            if (announcementSearch) {
-                const search = announcementSearch.toLowerCase();
-                filtered = filtered.filter(a => a.title?.toLowerCase().includes(search));
-            }
-            
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 opacity-60">No announcements found. Create your first announcement.</div>';
-                return;
-            }
-            
-            container.innerHTML = filtered.map(announcement => `
-                <div class="announcement-card border rounded-lg p-4 mb-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="font-semibold">${announcement.title}</h4>
-                            <p class="text-sm opacity-70 mt-1 line-clamp-2">${announcement.content || ''}</p>
-                            <div class="flex flex-wrap gap-3 mt-2 text-xs opacity-60">
-                                <span class="px-2 py-0.5 rounded ${announcement.priority === 'urgent' ? 'bg-red-500/20 text-red-500' : 'bg-gray-500/20 text-gray-500'}">${announcement.priority || 'Normal'}</span>
-                                <span>Target: ${announcement.target || 'All Users'}</span>
-                                <span>Status: ${announcement.status || 'Active'}</span>
-                                <span>Sent To: ${announcement.sentTo || 0} users</span>
-                                <span>Created: ${announcement.createdAt ? new Date(announcement.createdAt).toLocaleString() : 'N/A'}</span>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="editAnnouncement('${announcement.id}')" class="text-blue-500"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteAnnouncement('${announcement.id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        const announcementSearchInput = document.getElementById('announcement-search');
-        if (announcementSearchInput) {
-            announcementSearchInput.addEventListener('input', (e) => {
-                announcementSearch = e.target.value;
-                renderAnnouncements();
-            });
-        }
-
-        window.showCreateAnnouncementModal = () => {
-            document.getElementById('announcement-id').value = '';
-            document.getElementById('announcement-title').value = '';
-            document.getElementById('announcement-content').value = '';
-            document.getElementById('announcement-priority').value = 'normal';
-            document.getElementById('announcement-target').value = 'all';
-            document.getElementById('create-announcement-modal').classList.remove('hidden');
-        };
-
-        window.closeAnnouncementModal = () => {
-            document.getElementById('create-announcement-modal').classList.add('hidden');
-        };
-
-        window.editAnnouncement = async (id) => {
-            const doc = await getDoc(doc(db, 'announcements', id));
-            const a = doc.data();
-            document.getElementById('announcement-id').value = id;
-            document.getElementById('announcement-title').value = a.title || '';
-            document.getElementById('announcement-content').value = a.content || '';
-            document.getElementById('announcement-priority').value = a.priority || 'normal';
-            document.getElementById('announcement-target').value = a.target || 'all';
-            document.getElementById('create-announcement-modal').classList.remove('hidden');
-        };
-
-        window.deleteAnnouncement = async (id) => {
-            if (!confirm('Delete this announcement?')) return;
-            await deleteDoc(doc(db, 'announcements', id));
-            showNotification('Announcement deleted', 'success');
-            loadAnnouncements();
-        };
-
-        window.submitAnnouncement = async () => {
-            const id = document.getElementById('announcement-id').value;
-            const data = {
-                title: document.getElementById('announcement-title').value,
-                content: document.getElementById('announcement-content').value,
-                priority: document.getElementById('announcement-priority').value,
-                target: document.getElementById('announcement-target').value,
-                status: 'active',
-                updatedAt: new Date().toISOString()
-            };
-            
-            if (!data.title || !data.content) {
-                showNotification('Please fill in title and content', 'error');
-                return;
-            }
-            
-            try {
-                if (id) {
-                    await updateDoc(doc(db, 'announcements', id), data);
-                    showNotification('Announcement updated!', 'success');
-                } else {
-                    data.createdAt = new Date().toISOString();
-                    data.createdBy = currentUserId;
-                    await addDoc(collection(db, 'announcements'), data);
-                    showNotification('Announcement created!', 'success');
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet.</div>';
+                    return;
                 }
-                closeAnnouncementModal();
-                loadAnnouncements();
-            } catch (error) {
-                showNotification('Error: ' + error.message, 'error');
-            }
-        };
-
-        function loadSettings() {
-            const el = document.getElementById('settings-content');
-            if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Settings panel coming soon.</div>';
+                let html = '<div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th></thead><tbody>';
+                snap.docs.forEach(doc => {
+                    const o = doc.data();
+                    html += `<tr class="border-b"><td class="px-4 py-2 text-sm">#${doc.id.slice(0,8)}</td><td class="px-4 py-2">${o.customerName || 'N/A'}</td><td class="px-4 py-2">AED ${o.totalAmount}</td><td class="px-4 py-2"><span class="status-badge status-${o.status}">${o.status}</span></td><td class="px-4 py-2 text-sm opacity-70">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td></tr>`;
+                });
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading orders</div>'; }
         }
+
+        function loadNotifications() { const el = document.getElementById('notifications-list'); if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Notifications will appear here.</div>'; }
+        function loadSettings() { const el = document.getElementById('settings-content'); if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Settings panel coming soon.</div>'; }
+
+        window.viewOrderDetails = (id) => alert(`Order #${id.slice(0,8)} — Full details coming soon.`);
 
         // ========== NAVIGATION ==========
         window.showSection = (section, clickedEl) => {
@@ -792,7 +395,6 @@
             if (section === 'orders') loadOrders();
             if (section === 'categories') loadCategories();
             if (section === 'notifications') loadNotifications();
-            if (section === 'announcements') loadAnnouncements();
             if (section === 'settings') loadSettings();
             closeMobileMenu();
         };
@@ -820,7 +422,6 @@
                 <div class="nav-item" onclick="showSection('orders',this)"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></div>
                 <div class="nav-item" onclick="showSection('sellers',this)"><i class="fas fa-users w-5"></i><span>Sellers</span></div>
                 <div class="nav-item" onclick="showSection('notifications',this)"><i class="fas fa-bell w-5"></i><span>Notifications</span></div>
-                <div class="nav-item" onclick="showSection('announcements',this)"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></div>
                 <div class="nav-item" onclick="showSection('settings',this)"><i class="fas fa-cog w-5"></i><span>Settings</span></div>
             </nav>
         </div>
@@ -837,7 +438,6 @@
             <div class="nav-item" onclick="showSection('orders',this)"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></div>
             <div class="nav-item" onclick="showSection('sellers',this)"><i class="fas fa-users w-5"></i><span>Sellers</span></div>
             <div class="nav-item" onclick="showSection('notifications',this)"><i class="fas fa-bell w-5"></i><span>Notifications</span></div>
-            <div class="nav-item" onclick="showSection('announcements',this)"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></div>
             <div class="nav-item" onclick="showSection('settings',this)"><i class="fas fa-cog w-5"></i><span>Settings</span></div>
         </nav>
         <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
@@ -907,98 +507,16 @@
             </div>
 
             <!-- Orders Section -->
-            <div id="section-orders" class="section hidden">
-                <div class="card p-6 rounded-xl">
-                    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                        <h3 class="text-lg font-semibold">Order Management</h3>
-                        <div class="flex gap-3">
-                            <div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="orders-search" placeholder="Search by order ID, customer, or seller..." class="pl-10 pr-4 py-2 rounded-lg border w-64"></div>
-                            <button onclick="exportOrdersToCSV()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition text-sm"><i class="fas fa-download mr-1"></i> Export</button>
-                            <button onclick="showCreateOrderModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm"><i class="fas fa-plus mr-1"></i> Create Order</button>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-800 border-b">
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Order ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Seller</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Customer</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Product Type</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Decided Price</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Advance Pay</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Created Date</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Delivery Date</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
-                            </thead>
-                            <tbody id="orders-table-body" class="divide-y"><tr><td colspan="10" class="text-center py-8 opacity-60">Loading orders...</td></table></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <div id="section-orders" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">All Orders</h3><div id="orders-table-container" class="overflow-x-auto">Loading...</div></div></div>
 
-            <!-- Sellers Section (User Management Style) -->
-            <div id="section-sellers" class="section hidden">
-                <div class="card p-6 rounded-xl">
-                    <h3 class="text-lg font-semibold mb-4">User Management</h3>
-                    <p class="text-sm opacity-60 mb-4">Manage users, roles, and permissions</p>
-                    <div class="relative mb-4"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="user-search" placeholder="Search by name, email, or phone..." class="pl-10 pr-4 py-2 rounded-lg border w-64"></div>
-                    <div id="user-stats"></div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 dark:bg-gray-800 border-b">
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Role</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Verified</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Orders</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Revenue</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Registered</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Login</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
-                            </thead>
-                            <tbody id="sellers-table-body"><tr><td colspan="9" class="text-center py-8 opacity-60">Loading users...</tr</tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <!-- Sellers Section -->
+            <div id="section-sellers" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Seller Management</h3><div id="sellers-table-container" class="overflow-x-auto">Loading...</div></div></div>
 
             <!-- Notifications Section -->
-            <div id="section-notifications" class="section hidden">
-                <div class="card p-6 rounded-xl">
-                    <h3 class="text-lg font-semibold mb-4">Notification Center</h3>
-                    <p class="text-sm opacity-60 mb-4">Monitor all system notifications, user activities, and important events</p>
-                    <div class="flex flex-wrap gap-4 mb-6">
-                        <div class="stat-card-user flex-1 text-center" id="notif-total"><div class="text-2xl font-bold">0</div><div class="text-xs opacity-60">Total</div></div>
-                        <div class="stat-card-user flex-1 text-center" id="notif-unread"><div class="text-2xl font-bold">0</div><div class="text-xs opacity-60">Unread</div></div>
-                        <div class="stat-card-user flex-1 text-center" id="notif-read"><div class="text-2xl font-bold">0</div><div class="text-xs opacity-60">Read</div></div>
-                    </div>
-                    <div class="flex flex-wrap gap-4 border-b mb-4">
-                        <button onclick="filterNotifications('all')" class="notification-tab active pb-2 px-2">All</button>
-                        <button onclick="filterNotifications('order')" class="notification-tab pb-2 px-2">Orders</button>
-                        <button onclick="filterNotifications('user')" class="notification-tab pb-2 px-2">Users</button>
-                        <button onclick="filterNotifications('payout')" class="notification-tab pb-2 px-2">Payouts</button>
-                        <button onclick="filterNotifications('system')" class="notification-tab pb-2 px-2">System</button>
-                    </div>
-                    <div id="notifications-list" class="max-h-96 overflow-y-auto"><div class="text-center py-8 opacity-60">Loading notifications...</div></div>
-                    <div class="mt-4 text-right"><button onclick="markAllRead()" class="text-purple-500 text-sm hover:underline">Mark all as read</button></div>
-                </div>
-            </div>
-
-            <!-- Announcements Section -->
-            <div id="section-announcements" class="section hidden">
-                <div class="card p-6 rounded-xl">
-                    <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold">Announcements</h3><button onclick="showCreateAnnouncementModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">+ Create Announcement</button></div>
-                    <div id="announcement-stats"></div>
-                    <div class="relative mb-4"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="announcement-search" placeholder="Search announcements..." class="pl-10 pr-4 py-2 rounded-lg border w-64"></div>
-                    <div id="announcements-list" class="max-h-96 overflow-y-auto"><div class="text-center py-8 opacity-60">Loading announcements...</div></div>
-                </div>
-            </div>
+            <div id="section-notifications" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Notifications</h3><div id="notifications-list">Loading...</div></div></div>
 
             <!-- Settings Section -->
-            <div id="section-settings" class="section hidden">
-                <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div>
-            </div>
+            <div id="section-settings" class="section hidden"><div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div></div>
         </div>
     </main>
 
@@ -1008,36 +526,6 @@
             <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Add Category</h3><button onclick="closeCategoryModal()" class="text-2xl">&times;</button></div>
             <div><label class="block text-sm font-medium mb-1">Category Name *</label><input type="text" id="category-name" required class="w-full px-4 py-2 rounded-lg border"></div>
             <div class="flex space-x-3 pt-4"><button onclick="addCategory()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg">Save</button><button onclick="closeCategoryModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div>
-        </div>
-    </div>
-
-    <!-- Create Order Modal -->
-    <div id="create-order-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="card rounded-xl p-6 max-w-md w-full mx-4">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Create Order</h3><button onclick="closeCreateOrderModal()" class="text-2xl">&times;</button></div>
-            <form id="create-order-form" class="space-y-4">
-                <div><label class="block text-sm font-medium mb-1">Product *</label><select id="create-order-product" class="w-full px-4 py-2 rounded-lg border"><option value="">Select product</option></select></div>
-                <div><label class="block text-sm font-medium mb-1">Customer Name *</label><input type="text" id="create-order-customer" class="w-full px-4 py-2 rounded-lg border"></div>
-                <div><label class="block text-sm font-medium mb-1">Customer Phone</label><input type="tel" id="create-order-phone" class="w-full px-4 py-2 rounded-lg border"></div>
-                <div><label class="block text-sm font-medium mb-1">Customer Address</label><textarea id="create-order-address" rows="2" class="w-full px-4 py-2 rounded-lg border"></textarea></div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Quantity</label><input type="number" id="create-order-qty" value="1" min="1" class="w-full px-4 py-2 rounded-lg border"></div><div><label class="block text-sm font-medium mb-1">Price (AED)</label><input type="number" id="create-order-price" class="w-full px-4 py-2 rounded-lg border"></div></div>
-                <div><label class="block text-sm font-medium mb-1">Notes</label><textarea id="create-order-notes" rows="2" class="w-full px-4 py-2 rounded-lg border"></textarea></div>
-                <div class="flex space-x-3 pt-4"><button type="button" onclick="submitCreateOrder()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg">Create Order</button><button type="button" onclick="closeCreateOrderModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Create Announcement Modal -->
-    <div id="create-announcement-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="card rounded-xl p-6 max-w-md w-full mx-4">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Create Announcement</h3><button onclick="closeAnnouncementModal()" class="text-2xl">&times;</button></div>
-            <form id="create-announcement-form" class="space-y-4" onsubmit="event.preventDefault(); submitAnnouncement();">
-                <input type="hidden" id="announcement-id">
-                <div><label class="block text-sm font-medium mb-1">Title *</label><input type="text" id="announcement-title" class="w-full px-4 py-2 rounded-lg border"></div>
-                <div><label class="block text-sm font-medium mb-1">Content *</label><textarea id="announcement-content" rows="3" class="w-full px-4 py-2 rounded-lg border"></textarea></div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Priority</label><select id="announcement-priority" class="w-full px-4 py-2 rounded-lg border"><option value="normal">Normal</option><option value="urgent">Urgent</option></select></div><div><label class="block text-sm font-medium mb-1">Target</label><select id="announcement-target" class="w-full px-4 py-2 rounded-lg border"><option value="all">All Users</option><option value="sellers">Sellers Only</option><option value="admins">Admins Only</option></select></div></div>
-                <div class="flex space-x-3 pt-4"><button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg">Create</button><button type="button" onclick="closeAnnouncementModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div>
-            </form>
         </div>
     </div>
 
