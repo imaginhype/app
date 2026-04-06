@@ -6,7 +6,6 @@
     <title>Admin Dashboard - Imaginhype</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script type="module">
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -19,16 +18,14 @@
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, query, orderBy, limit, getCountFromServer, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         
         const adminEmails = ["imaginhype@gmail.com", "baybo.uae@gmail.com"];
-        let currentView = 'dashboard';
         
-        // Check admin access
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = 'admin-login.html';
@@ -43,7 +40,7 @@
             }
             
             document.getElementById('adminEmail').textContent = user.email;
-            loadDashboardData();
+            loadAllData();
         });
         
         window.logout = async function() {
@@ -51,236 +48,47 @@
             window.location.href = 'admin-login.html';
         };
         
-        // Navigation
-        window.showDashboard = function() {
-            currentView = 'dashboard';
-            document.getElementById('dashboardContent').classList.remove('hidden');
-            document.getElementById('productsContent').classList.add('hidden');
-            document.getElementById('categoriesContent').classList.add('hidden');
-            document.getElementById('usersContent').classList.add('hidden');
-            document.getElementById('ordersContent').classList.add('hidden');
-            
-            // Update active menu
-            updateActiveMenu('dashboard');
-            loadDashboardData();
-        };
-        
-        window.showProducts = function() {
-            currentView = 'products';
-            document.getElementById('dashboardContent').classList.add('hidden');
-            document.getElementById('productsContent').classList.remove('hidden');
-            document.getElementById('categoriesContent').classList.add('hidden');
-            document.getElementById('usersContent').classList.add('hidden');
-            document.getElementById('ordersContent').classList.add('hidden');
-            
-            updateActiveMenu('products');
-            loadProducts();
-        };
-        
-        window.showCategories = function() {
-            currentView = 'categories';
-            document.getElementById('dashboardContent').classList.add('hidden');
-            document.getElementById('productsContent').classList.add('hidden');
-            document.getElementById('categoriesContent').classList.remove('hidden');
-            document.getElementById('usersContent').classList.add('hidden');
-            document.getElementById('ordersContent').classList.add('hidden');
-            
-            updateActiveMenu('categories');
-            loadCategories();
-        };
-        
-        window.showUsers = function() {
-            currentView = 'users';
-            document.getElementById('dashboardContent').classList.add('hidden');
-            document.getElementById('productsContent').classList.add('hidden');
-            document.getElementById('categoriesContent').classList.add('hidden');
-            document.getElementById('usersContent').classList.remove('hidden');
-            document.getElementById('ordersContent').classList.add('hidden');
-            
-            updateActiveMenu('users');
-            loadUsers();
-        };
-        
-        window.showOrders = function() {
-            currentView = 'orders';
-            document.getElementById('dashboardContent').classList.add('hidden');
-            document.getElementById('productsContent').classList.add('hidden');
-            document.getElementById('categoriesContent').classList.add('hidden');
-            document.getElementById('usersContent').classList.add('hidden');
-            document.getElementById('ordersContent').classList.remove('hidden');
-            
-            updateActiveMenu('orders');
-            loadAllOrders();
-        };
-        
-        function updateActiveMenu(active) {
-            const menus = ['dashboard', 'products', 'categories', 'users', 'orders'];
-            menus.forEach(menu => {
-                const element = document.getElementById(`menu-${menu}`);
-                if (element) {
-                    if (menu === active) {
-                        element.classList.add('bg-blue-600', 'text-white');
-                        element.classList.remove('text-gray-700', 'hover:bg-gray-100');
-                    } else {
-                        element.classList.remove('bg-blue-600', 'text-white');
-                        element.classList.add('text-gray-700', 'hover:bg-gray-100');
-                    }
-                }
-            });
-        }
-        
-        // Dashboard Functions
-        async function loadDashboardData() {
-            try {
-                await Promise.all([
-                    loadStats(),
-                    loadRecentOrders(),
-                    loadNewSellers(),
-                    loadLowStockProducts(),
-                    loadRevenueChart()
-                ]);
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-            }
+        async function loadAllData() {
+            await loadStats();
+            await loadProducts();
+            await loadCategories();
+            await loadUsers();
         }
         
         async function loadStats() {
             try {
-                const usersSnapshot = await getCountFromServer(collection(db, 'users')).catch(() => ({ data: () => ({ count: 0 }) }));
+                const usersSnapshot = await getCountFromServer(collection(db, 'users'));
                 document.getElementById('totalUsers').textContent = usersSnapshot.data().count || 0;
                 
-                const productsSnapshot = await getCountFromServer(collection(db, 'products')).catch(() => ({ data: () => ({ count: 0 }) }));
+                const productsSnapshot = await getCountFromServer(collection(db, 'products'));
                 document.getElementById('totalProducts').textContent = productsSnapshot.data().count || 0;
                 
-                const ordersSnapshot = await getCountFromServer(collection(db, 'orders')).catch(() => ({ data: () => ({ count: 0 }) }));
-                document.getElementById('totalOrders').textContent = ordersSnapshot.data().count || 0;
+                const categoriesSnapshot = await getCountFromServer(collection(db, 'categories'));
+                document.getElementById('totalCategories').textContent = categoriesSnapshot.data().count || 0;
                 
-                const ordersQuery = await getDocs(collection(db, 'orders')).catch(() => ({ docs: [] }));
-                let totalRevenue = 0;
-                ordersQuery.docs.forEach(doc => {
-                    const order = doc.data();
-                    if (order.total) totalRevenue += order.total;
-                });
-                document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString();
             } catch (error) {
                 console.error('Stats error:', error);
             }
         }
         
-        async function loadRecentOrders() {
-            try {
-                const ordersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(5));
-                const querySnapshot = await getDocs(ordersQuery).catch(() => ({ empty: true, forEach: () => {} }));
-                const tbody = document.getElementById('recentOrdersTable');
-                
-                if (querySnapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No orders yet</td></tr>';
-                    return;
-                }
-                
-                tbody.innerHTML = '';
-                querySnapshot.forEach(doc => {
-                    const order = doc.data();
-                    const row = `<tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">${order.orderId || doc.id.slice(0, 8)}</td>
-                        <td class="px-4 py-2">${order.customerName || 'N/A'}</td>
-                        <td class="px-4 py-2">$${order.total || 0}</td>
-                        <td class="px-4 py-2"><span class="px-2 py-1 rounded text-xs ${getStatusColor(order.status)}">${order.status || 'Pending'}</span></td>
-                        <td class="px-4 py-2">${order.createdAt ? new Date(order.createdAt.toDate()).toLocaleDateString() : 'N/A'}</td>
-                    </tr>`;
-                    tbody.innerHTML += row;
-                });
-            } catch (error) {
-                console.error('Orders error:', error);
-            }
-        }
-        
-        async function loadNewSellers() {
-            try {
-                const sellersQuery = query(collection(db, 'sellers'), orderBy('createdAt', 'desc'), limit(5));
-                const querySnapshot = await getDocs(sellersQuery).catch(() => ({ empty: true, forEach: () => {} }));
-                const container = document.getElementById('newSellersList');
-                
-                if (querySnapshot.empty) {
-                    container.innerHTML = '<div class="text-gray-500 text-center py-4">No sellers yet</div>';
-                    return;
-                }
-                
-                container.innerHTML = '';
-                querySnapshot.forEach(doc => {
-                    const seller = doc.data();
-                    container.innerHTML += `<div class="flex items-center justify-between p-3 border-b">
-                        <div><p class="font-semibold">${seller.businessName || seller.name || 'N/A'}</p><p class="text-sm text-gray-500">${seller.email || ''}</p></div>
-                        <span class="text-xs text-green-600">New</span>
-                    </div>`;
-                });
-            } catch (error) {
-                console.error('Sellers error:', error);
-            }
-        }
-        
-        async function loadLowStockProducts() {
-            try {
-                const productsQuery = query(collection(db, 'products'), limit(5));
-                const querySnapshot = await getDocs(productsQuery).catch(() => ({ empty: true, forEach: () => {} }));
-                const container = document.getElementById('lowStockList');
-                
-                if (querySnapshot.empty) {
-                    container.innerHTML = '<div class="text-gray-500 text-center py-4">No products yet</div>';
-                    return;
-                }
-                
-                container.innerHTML = '';
-                querySnapshot.forEach(doc => {
-                    const product = doc.data();
-                    const stock = product.stock || 0;
-                    const stockColor = stock <= 0 ? 'text-red-600' : stock <= 5 ? 'text-orange-600' : 'text-green-600';
-                    container.innerHTML += `<div class="flex items-center justify-between p-3 border-b">
-                        <div><p class="font-semibold">${product.name || 'N/A'}</p><p class="text-sm text-gray-500">${product.category || 'Uncategorized'}</p></div>
-                        <span class="${stockColor} font-semibold">Stock: ${stock}</span>
-                    </div>`;
-                });
-            } catch (error) {
-                console.error('Products error:', error);
-            }
-        }
-        
-        async function loadRevenueChart() {
-            try {
-                const ctx = document.getElementById('revenueChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Today'],
-                        datasets: [{
-                            label: 'Revenue ($)',
-                            data: [0, 0, 0, 0, 0, 0, 0],
-                            borderColor: 'rgb(59, 130, 246)',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            tension: 0.4
-                        }]
-                    },
-                    options: { responsive: true, plugins: { legend: { position: 'top' } } }
-                });
-            } catch (error) {
-                console.error('Chart error:', error);
-            }
-        }
-        
-        // Products Management
         async function loadProducts() {
             const container = document.getElementById('productsList');
-            container.innerHTML = '<div class="text-center py-8">Loading products...</div>';
+            container.innerHTML = '<div class="text-center py-4">Loading products...</div>';
             
             try {
                 const querySnapshot = await getDocs(collection(db, 'products'));
+                
                 if (querySnapshot.empty) {
-                    container.innerHTML = '<div class="text-center py-8 text-gray-500">No products found</div>';
+                    container.innerHTML = '<div class="text-center py-4 text-gray-500">No products found</div>';
                     return;
                 }
                 
-                let html = '<div class="overflow-x-auto"><table class="w-full bg-white rounded-lg"><thead class="bg-gray-200"><tr>';
-                html += '<th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Category</th><th class="px-4 py-2 text-left">Price</th><th class="px-4 py-2 text-left">Stock</th><th class="px-4 py-2 text-left">Actions</th>';
+                let html = '<div class="overflow-x-auto"><table class="min-w-full bg-white rounded-lg">';
+                html += '<thead class="bg-gray-200"><tr>';
+                html += '<th class="px-4 py-2 text-left">Product Name</th>';
+                html += '<th class="px-4 py-2 text-left">Category</th>';
+                html += '<th class="px-4 py-2 text-left">Price</th>';
+                html += '<th class="px-4 py-2 text-left">Stock</th>';
                 html += '</tr></thead><tbody>';
                 
                 querySnapshot.forEach(doc => {
@@ -290,31 +98,32 @@
                         <td class="px-4 py-2">${product.category || 'N/A'}</td>
                         <td class="px-4 py-2">$${product.price || 0}</td>
                         <td class="px-4 py-2">${product.stock || 0}</td>
-                        <td class="px-4 py-2"><button onclick="deleteProduct('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Delete</button></td>
                     </tr>`;
                 });
                 
                 html += '</tbody></table></div>';
                 container.innerHTML = html;
             } catch (error) {
-                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading products</div>';
+                container.innerHTML = '<div class="text-center py-4 text-red-500">Error loading products</div>';
             }
         }
         
-        // Categories Management
         async function loadCategories() {
             const container = document.getElementById('categoriesList');
-            container.innerHTML = '<div class="text-center py-8">Loading categories...</div>';
+            container.innerHTML = '<div class="text-center py-4">Loading categories...</div>';
             
             try {
                 const querySnapshot = await getDocs(collection(db, 'categories'));
+                
                 if (querySnapshot.empty) {
-                    container.innerHTML = '<div class="text-center py-8 text-gray-500">No categories found</div>';
+                    container.innerHTML = '<div class="text-center py-4 text-gray-500">No categories found</div>';
                     return;
                 }
                 
-                let html = '<div class="overflow-x-auto"><table class="w-full bg-white rounded-lg"><thead class="bg-gray-200"><tr>';
-                html += '<th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Description</th><th class="px-4 py-2 text-left">Actions</th>';
+                let html = '<div class="overflow-x-auto"><table class="min-w-full bg-white rounded-lg">';
+                html += '<thead class="bg-gray-200"><tr>';
+                html += '<th class="px-4 py-2 text-left">Category Name</th>';
+                html += '<th class="px-4 py-2 text-left">Description</th>';
                 html += '</tr></thead><tbody>';
                 
                 querySnapshot.forEach(doc => {
@@ -322,31 +131,33 @@
                     html += `<tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-2">${category.name || 'N/A'}</td>
                         <td class="px-4 py-2">${category.description || '-'}</td>
-                        <td class="px-4 py-2"><button onclick="deleteCategory('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Delete</button></td>
                     </tr>`;
                 });
                 
                 html += '</tbody></table></div>';
                 container.innerHTML = html;
             } catch (error) {
-                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading categories</div>';
+                container.innerHTML = '<div class="text-center py-4 text-red-500">Error loading categories</div>';
             }
         }
         
-        // Users Management
         async function loadUsers() {
             const container = document.getElementById('usersList');
-            container.innerHTML = '<div class="text-center py-8">Loading users...</div>';
+            container.innerHTML = '<div class="text-center py-4">Loading users...</div>';
             
             try {
                 const querySnapshot = await getDocs(collection(db, 'users'));
+                
                 if (querySnapshot.empty) {
-                    container.innerHTML = '<div class="text-center py-8 text-gray-500">No users found</div>';
+                    container.innerHTML = '<div class="text-center py-4 text-gray-500">No users found</div>';
                     return;
                 }
                 
-                let html = '<div class="overflow-x-auto"><table class="w-full bg-white rounded-lg"><thead class="bg-gray-200"><tr>';
-                html += '<th class="px-4 py-2 text-left">Email</th><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Role</th><th class="px-4 py-2 text-left">Actions</th>';
+                let html = '<div class="overflow-x-auto"><table class="min-w-full bg-white rounded-lg">';
+                html += '<thead class="bg-gray-200"><tr>';
+                html += '<th class="px-4 py-2 text-left">Email</th>';
+                html += '<th class="px-4 py-2 text-left">Name</th>';
+                html += '<th class="px-4 py-2 text-left">Role</th>';
                 html += '</tr></thead><tbody>';
                 
                 querySnapshot.forEach(doc => {
@@ -355,241 +166,71 @@
                         <td class="px-4 py-2">${user.email || 'N/A'}</td>
                         <td class="px-4 py-2">${user.name || '-'}</td>
                         <td class="px-4 py-2">${user.isAdmin ? 'Admin' : 'User'}</td>
-                        <td class="px-4 py-2"><button onclick="deleteUser('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Delete</button></td>
                     </tr>`;
                 });
                 
                 html += '</tbody></table></div>';
                 container.innerHTML = html;
             } catch (error) {
-                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading users</div>';
+                container.innerHTML = '<div class="text-center py-4 text-red-500">Error loading users</div>';
             }
         }
         
-        async function loadAllOrders() {
-            const container = document.getElementById('ordersList');
-            container.innerHTML = '<div class="text-center py-8">Loading orders...</div>';
-            
-            try {
-                const querySnapshot = await getDocs(collection(db, 'orders'));
-                if (querySnapshot.empty) {
-                    container.innerHTML = '<div class="text-center py-8 text-gray-500">No orders found</div>';
-                    return;
-                }
-                
-                let html = '<div class="overflow-x-auto"><table class="w-full bg-white rounded-lg"><thead class="bg-gray-200"><tr>';
-                html += '<th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Total</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Actions</th>';
-                html += '</tr></thead><tbody>';
-                
-                querySnapshot.forEach(doc => {
-                    const order = doc.data();
-                    html += `<tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">${order.orderId || doc.id.slice(0, 8)}</td>
-                        <td class="px-4 py-2">${order.customerName || 'N/A'}</td>
-                        <td class="px-4 py-2">$${order.total || 0}</td>
-                        <td class="px-4 py-2"><span class="px-2 py-1 rounded text-xs ${getStatusColor(order.status)}">${order.status || 'Pending'}</span></td>
-                        <td class="px-4 py-2">${order.createdAt ? new Date(order.createdAt.toDate()).toLocaleDateString() : 'N/A'}</td>
-                        <td class="px-4 py-2"><button onclick="deleteOrder('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Delete</button></td>
-                    </tr>`;
-                });
-                
-                html += '</tbody></table></div>';
-                container.innerHTML = html;
-            } catch (error) {
-                container.innerHTML = '<div class="text-center py-8 text-red-500">Error loading orders</div>';
-            }
-        }
-        
-        // Delete functions
-        window.deleteProduct = async function(id) {
-            if (confirm('Delete this product?')) {
-                await deleteDoc(doc(db, 'products', id));
-                loadProducts();
-            }
-        };
-        
-        window.deleteCategory = async function(id) {
-            if (confirm('Delete this category?')) {
-                await deleteDoc(doc(db, 'categories', id));
-                loadCategories();
-            }
-        };
-        
-        window.deleteUser = async function(id) {
-            if (confirm('Delete this user?')) {
-                await deleteDoc(doc(db, 'users', id));
-                loadUsers();
-            }
-        };
-        
-        window.deleteOrder = async function(id) {
-            if (confirm('Delete this order?')) {
-                await deleteDoc(doc(db, 'orders', id));
-                loadAllOrders();
-            }
-        };
-        
-        function getStatusColor(status) {
-            const colors = {
-                'Pending': 'bg-yellow-100 text-yellow-800',
-                'Processing': 'bg-blue-100 text-blue-800',
-                'Shipped': 'bg-purple-100 text-purple-800',
-                'Delivered': 'bg-green-100 text-green-800',
-                'Cancelled': 'bg-red-100 text-red-800'
-            };
-            return colors[status] || 'bg-gray-100 text-gray-800';
-        }
-        
-        window.refreshDashboard = function() {
-            if (currentView === 'dashboard') loadDashboardData();
-            else if (currentView === 'products') loadProducts();
-            else if (currentView === 'categories') loadCategories();
-            else if (currentView === 'users') loadUsers();
-            else if (currentView === 'orders') loadAllOrders();
+        window.refreshData = function() {
+            loadAllData();
         };
     </script>
-    <style>
-        .sidebar-item {
-            transition: all 0.3s ease;
-        }
-    </style>
 </head>
 <body class="bg-gray-100">
-    <!-- Top Header -->
-    <nav class="bg-white shadow-md p-4 sticky top-0 z-40">
-        <div class="flex justify-between items-center">
+    <!-- Header -->
+    <nav class="bg-white shadow-md p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-800">Imaginhype Admin Dashboard</h1>
             <div class="flex items-center space-x-4">
-                <h1 class="text-xl font-bold text-gray-800">Imaginhype Admin Dashboard</h1>
-                <button onclick="refreshDashboard()" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm">
-                    <i class="fas fa-sync-alt"></i> Refresh
+                <button onclick="refreshData()" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm">
+                    Refresh
                 </button>
-            </div>
-            <div class="flex items-center space-x-4">
                 <span id="adminEmail" class="text-gray-600"></span>
                 <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    Logout
                 </button>
             </div>
         </div>
     </nav>
     
-    <div class="flex">
-        <!-- Sidebar -->
-        <div class="w-64 bg-white shadow-md min-h-screen">
-            <div class="p-4">
-                <div class="space-y-2">
-                    <button id="menu-dashboard" onclick="showDashboard()" class="sidebar-item w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 bg-blue-600 text-white">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </button>
-                    <button id="menu-products" onclick="showProducts()" class="sidebar-item w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-box"></i>
-                        <span>Products</span>
-                    </button>
-                    <button id="menu-categories" onclick="showCategories()" class="sidebar-item w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-tags"></i>
-                        <span>Categories</span>
-                    </button>
-                    <button id="menu-users" onclick="showUsers()" class="sidebar-item w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-users"></i>
-                        <span>Users</span>
-                    </button>
-                    <button id="menu-orders" onclick="showOrders()" class="sidebar-item w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>Orders</span>
-                    </button>
-                </div>
+    <div class="container mx-auto p-4">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <p class="text-gray-500 text-sm">Total Users</p>
+                <p id="totalUsers" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <p class="text-gray-500 text-sm">Total Products</p>
+                <p id="totalProducts" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <p class="text-gray-500 text-sm">Total Categories</p>
+                <p id="totalCategories" class="text-2xl font-bold">0</p>
             </div>
         </div>
         
-        <!-- Main Content -->
-        <div class="flex-1 p-6">
-            <!-- Dashboard Content -->
-            <div id="dashboardContent">
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm">Total Users</p><p id="totalUsers" class="text-2xl font-bold">0</p></div>
-                            <div class="bg-blue-100 p-3 rounded-full"><i class="fas fa-users text-blue-600 text-xl"></i></div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm">Total Products</p><p id="totalProducts" class="text-2xl font-bold">0</p></div>
-                            <div class="bg-green-100 p-3 rounded-full"><i class="fas fa-box text-green-600 text-xl"></i></div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm">Total Orders</p><p id="totalOrders" class="text-2xl font-bold">0</p></div>
-                            <div class="bg-purple-100 p-3 rounded-full"><i class="fas fa-shopping-cart text-purple-600 text-xl"></i></div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="flex items-center justify-between">
-                            <div><p class="text-gray-500 text-sm">Total Revenue</p><p id="totalRevenue" class="text-2xl font-bold">$0</p></div>
-                            <div class="bg-yellow-100 p-3 rounded-full"><i class="fas fa-dollar-sign text-yellow-600 text-xl"></i></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Revenue Chart -->
-                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-chart-line"></i> Revenue Overview</h2>
-                    <canvas id="revenueChart" height="100"></canvas>
-                </div>
-                
-                <!-- Recent Orders & New Sellers -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-bold mb-4"><i class="fas fa-clock"></i> Recent Orders</h2>
-                        <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-sm">Order ID</th><th class="px-4 py-2 text-left text-sm">Customer</th><th class="px-4 py-2 text-left text-sm">Total</th><th class="px-4 py-2 text-left text-sm">Status</th><th class="px-4 py-2 text-left text-sm">Date</th></tr></thead><tbody id="recentOrdersTable"><tr><td colspan="5" class="text-center py-4">Loading...</td></tr></tbody></table></div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-bold mb-4"><i class="fas fa-store"></i> New Sellers</h2>
-                        <div id="newSellersList"><div class="text-center py-4">Loading...</div></div>
-                    </div>
-                </div>
-                
-                <!-- Products List -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-exclamation-triangle"></i> Products</h2>
-                    <div id="lowStockList"><div class="text-center py-4">Loading...</div></div>
-                </div>
-            </div>
-            
-            <!-- Products Content -->
-            <div id="productsContent" class="hidden">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-box"></i> Products Management</h2>
-                    <div id="productsList">Loading...</div>
-                </div>
-            </div>
-            
-            <!-- Categories Content -->
-            <div id="categoriesContent" class="hidden">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-tags"></i> Categories Management</h2>
-                    <div id="categoriesList">Loading...</div>
-                </div>
-            </div>
-            
-            <!-- Users Content -->
-            <div id="usersContent" class="hidden">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-users"></i> Users Management</h2>
-                    <div id="usersList">Loading...</div>
-                </div>
-            </div>
-            
-            <!-- Orders Content -->
-            <div id="ordersContent" class="hidden">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-shopping-cart"></i> Orders Management</h2>
-                    <div id="ordersList">Loading...</div>
-                </div>
-            </div>
+        <!-- Products Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4">📦 Products</h2>
+            <div id="productsList">Loading...</div>
+        </div>
+        
+        <!-- Categories Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4">🏷️ Categories</h2>
+            <div id="categoriesList">Loading...</div>
+        </div>
+        
+        <!-- Users Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4">👥 Users</h2>
+            <div id="usersList">Loading...</div>
         </div>
     </div>
 </body>
