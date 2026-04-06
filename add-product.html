@@ -14,84 +14,124 @@
         .image-preview-item { position: relative; transition: all 0.2s ease; }
         .image-preview-item:hover .remove-image-btn { opacity: 1; }
         .remove-image-btn { opacity: 0; transition: opacity 0.2s ease; }
-        
         .profit-card { background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); border: 1px solid rgba(139, 92, 246, 0.3); }
         .back-btn, .cancel-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; background: var(--bg-tertiary); color: var(--text-primary); transition: all 0.2s; text-decoration: none; cursor: pointer; }
         .back-btn:hover, .cancel-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
         .save-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 0.75rem; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; transition: all 0.2s; cursor: pointer; border: none; font-weight: 500; }
         .save-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
         
-        .thumbnail-scroll { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
-        .thumbnail-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
-        .thumbnail-img.active { border-color: #8b5cf6; }
+        /* Sidebar navigation styles matching admin dashboard */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+        .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
+        .nav-item.active { background: var(--active-bg); color: white; }
+        
+        #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
+        #mobile-sidebar.show { transform: translateX(0); }
+        #sidebar-overlay:not(.show) { display: none; }
+        #sidebar-overlay.show { display: block; }
+        
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
+        @media (min-width: 768px) { #mobile-sidebar, #sidebar-overlay { display: none; } .main-content { margin-left: 16rem; } }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
-    <div class="min-h-screen">
-        <!-- Top Bar -->
-        <div class="border-b dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
-            <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
-                <div class="flex items-center space-x-4">
-                    <a href="admin-dashboard.html?section=products" class="text-gray-600 dark:text-gray-400 hover:text-purple-600 transition">
-                        <i class="fas fa-arrow-left mr-2"></i> Back to Products
-                    </a>
-                    <h1 class="text-xl font-semibold dark:text-white" id="page-title">Add New Product</h1>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
-                        <i class="fas fa-moon dark:block hidden"></i>
-                        <i class="fas fa-sun dark:hidden block"></i>
-                    </button>
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-user-circle text-2xl"></i>
-                        <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
-                    </div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <!-- Mobile Sidebar -->
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <div class="text-xs opacity-60 mb-4">Admin Panel</div>
+            <nav>
+                <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
+                <a href="admin-dashboard.html?section=products" class="nav-item"><i class="fas fa-box w-5"></i><span>Products</span></a>
+                <a href="admin-dashboard.html?section=categories" class="nav-item"><i class="fas fa-tags w-5"></i><span>Categories</span></a>
+                <a href="admin-dashboard.html?section=orders" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
+                <a href="admin-dashboard.html?section=sellers" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
+            </nav>
+        </div>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+        </div>
+    </aside>
+
+    <!-- Desktop Sidebar -->
+    <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
+        <div class="p-4 border-b">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <p class="text-xs opacity-60 mt-2">Admin Panel</p>
+        </div>
+        <nav class="p-4">
+            <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
+            <a href="admin-dashboard.html?section=products" class="nav-item"><i class="fas fa-box w-5"></i><span>Products</span></a>
+            <a href="admin-dashboard.html?section=categories" class="nav-item"><i class="fas fa-tags w-5"></i><span>Categories</span></a>
+            <a href="admin-dashboard.html?section=orders" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
+            <a href="admin-dashboard.html?section=sellers" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
+        </nav>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content flex-1 md:ml-64">
+        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                <a href="admin-dashboard.html?section=products" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Products
+                </a>
+                <h1 class="text-xl md:text-2xl font-bold" id="page-title">Add New Product</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
+                    <i class="fas fa-moon dark:block hidden"></i>
+                    <i class="fas fa-sun dark:hidden block"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-user-circle text-2xl"></i>
+                    <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
                 </div>
             </div>
         </div>
 
-        <!-- Form Content -->
-        <div class="max-w-5xl mx-auto px-4 py-8">
+        <div class="p-4 md:p-6 max-w-5xl mx-auto">
             <form id="product-form" class="space-y-6" onsubmit="event.preventDefault(); saveProduct();">
                 <input type="hidden" id="product-id">
                 
                 <!-- Basic Information -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                        <h2 class="text-lg font-semibold dark:text-white flex items-center gap-2">
-                            <i class="fas fa-info-circle text-purple-500"></i> Basic Information
-                        </h2>
+                <div class="card rounded-xl overflow-hidden form-section">
+                    <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-info-circle text-purple-500"></i> Basic Information</h2>
                     </div>
                     <div class="p-6 space-y-5">
-                        <div>
-                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">Product Name <span class="text-red-500">*</span></label>
-                            <input type="text" id="product-name" required placeholder="e.g., Ergonomic Mesh Office Chair" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">Description <span class="text-red-500">*</span></label>
-                            <textarea id="product-description" rows="5" required placeholder="Describe your product in detail..." class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500"></textarea>
-                        </div>
+                        <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Product Name <span class="text-red-500">*</span></label><input type="text" id="product-name" required class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                        <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Description <span class="text-red-500">*</span></label><textarea id="product-description" rows="5" required class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea></div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Category <span class="text-red-500">*</span></label>
-                                <select id="product-category" required class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                                    <option value="">Select Category</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Brand</label>
-                                <input type="text" id="product-brand" placeholder="e.g., Nike, Samsung" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Category <span class="text-red-500">*</span></label><select id="product-category" required class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="">Select Category</option></select></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Brand</label><input type="text" id="product-brand" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Media Gallery -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                        <h2 class="text-lg font-semibold dark:text-white flex items-center gap-2">
-                            <i class="fas fa-images text-purple-500"></i> Media Gallery
-                        </h2>
+                <div class="card rounded-xl overflow-hidden form-section">
+                    <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-images text-purple-500"></i> Media Gallery</h2>
                     </div>
                     <div class="p-6">
                         <div id="dropzone" class="border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-xl p-8 text-center cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">
@@ -105,135 +145,81 @@
                 </div>
                 
                 <!-- Pricing -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                        <h2 class="text-lg font-semibold dark:text-white flex items-center gap-2">
-                            <i class="fas fa-tag text-purple-500"></i> Pricing
-                        </h2>
+                <div class="card rounded-xl overflow-hidden form-section">
+                    <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-tag text-purple-500"></i> Pricing</h2>
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Sale Price (AED) <span class="text-red-500">*</span></label>
-                                <input type="number" id="product-sale-price" required min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Regular Price (AED)</label>
-                                <input type="number" id="product-regular-price" min="0" step="0.01" placeholder="Original price" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Cost Price (AED)</label>
-                                <input type="number" id="product-cost-price" min="0" step="0.01" placeholder="Your cost" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Sale Price (AED) <span class="text-red-500">*</span></label><input type="number" id="product-sale-price" required min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Regular Price (AED)</label><input type="number" id="product-regular-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Cost Price (AED)</label><input type="number" id="product-cost-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
                         </div>
-                        <div id="profit-display" class="mt-4 profit-card rounded-xl p-4 hidden">
-                            <div class="flex justify-between items-center">
-                                <span class="font-semibold dark:text-white"><i class="fas fa-chart-line text-purple-500 mr-2"></i>Your Profit:</span>
-                                <span id="profit-amount" class="text-2xl font-bold text-purple-600">AED 0.00</span>
-                            </div>
-                        </div>
+                        <div id="profit-display" class="mt-4 profit-card rounded-xl p-4 hidden"><div class="flex justify-between items-center"><span class="font-semibold dark:text-white">Your Profit:</span><span id="profit-amount" class="text-2xl font-bold text-purple-600">AED 0.00</span></div></div>
                     </div>
                 </div>
                 
                 <!-- Inventory -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                        <h2 class="text-lg font-semibold dark:text-white flex items-center gap-2">
-                            <i class="fas fa-warehouse text-purple-500"></i> Inventory
-                        </h2>
+                <div class="card rounded-xl overflow-hidden form-section">
+                    <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-warehouse text-purple-500"></i> Inventory</h2>
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Stock Status</label>
-                                <select id="product-stock-status" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                                    <option value="in-stock">In Stock</option>
-                                    <option value="out-of-stock">Out of Stock</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Stock Quantity</label>
-                                <input type="number" id="product-stock-quantity" min="0" placeholder="Number of units" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Warehouse Location</label>
-                                <input type="text" id="product-warehouse" placeholder="e.g., Dubai Main" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Visibility</label>
-                                <select id="product-visibility" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                                    <option value="published">Published</option>
-                                    <option value="hidden">Hidden</option>
-                                </select>
-                            </div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Stock Status</label><select id="product-stock-status" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="in-stock">In Stock</option><option value="out-of-stock">Out of Stock</option></select></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Stock Quantity</label><input type="number" id="product-stock-quantity" min="0" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Warehouse</label><input type="text" id="product-warehouse" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Visibility</label><select id="product-visibility" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="published">Published</option><option value="hidden">Hidden</option></select></div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Specifications -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                        <h2 class="text-lg font-semibold dark:text-white flex items-center gap-2">
-                            <i class="fas fa-sliders-h text-purple-500"></i> Specifications
-                        </h2>
+                <div class="card rounded-xl overflow-hidden form-section">
+                    <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-sliders-h text-purple-500"></i> Specifications</h2>
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Color</label><input type="text" id="product-color" placeholder="e.g., Black, White" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Material</label><input type="text" id="product-material" placeholder="e.g., Cotton, Steel" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Size</label><input type="text" id="product-size" placeholder="e.g., L, XL, 40x30cm" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Warranty</label><input type="text" id="product-warranty" placeholder="e.g., 1 Year" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Weight</label><input type="text" id="product-weight" placeholder="e.g., 2.5 kg" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">SKU</label><input type="text" id="product-sku" placeholder="Product code" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Color</label><input type="text" id="product-color" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Material</label><input type="text" id="product-material" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Size</label><input type="text" id="product-size" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Warranty</label><input type="text" id="product-warranty" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Weight</label><input type="text" id="product-weight" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">SKU</label><input type="text" id="product-sku" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
                         </div>
                         <div class="mt-5">
                             <label class="block text-sm font-medium mb-2 dark:text-gray-300">Condition</label>
                             <div class="flex flex-wrap gap-4">
-                                <label class="flex items-center gap-2 p-3 border dark:border-gray-600 rounded-xl cursor-pointer"><input type="radio" name="condition" value="assembled" class="w-4 h-4 text-purple-600"> Assembled</label>
-                                <label class="flex items-center gap-2 p-3 border dark:border-gray-600 rounded-xl cursor-pointer"><input type="radio" name="condition" value="packed" class="w-4 h-4 text-purple-600"> Packed in Box</label>
-                                <label class="flex items-center gap-2 p-3 border dark:border-gray-600 rounded-xl cursor-pointer"><input type="radio" name="condition" value="both" class="w-4 h-4 text-purple-600"> Both Options</label>
+                                <label class="flex items-center gap-2 p-3 border dark:border-gray-600 rounded-xl cursor-pointer"><input type="radio" name="condition" value="assembled"> Assembled</label>
+                                <label class="flex items-center gap-2 p-3 border dark:border-gray-600 rounded-xl cursor-pointer"><input type="radio" name="condition" value="packed"> Packed in Box</label>
+                                <label class="flex items-center gap-2 p-3 border dark:border-gray-600 rounded-xl cursor-pointer"><input type="radio" name="condition" value="both"> Both Options</label>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Shipping -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                        <h2 class="text-lg font-semibold dark:text-white flex items-center gap-2">
-                            <i class="fas fa-truck text-purple-500"></i> Shipping
-                        </h2>
+                <div class="card rounded-xl overflow-hidden form-section">
+                    <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-truck text-purple-500"></i> Shipping</h2>
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Shipping Cost (AED)</label>
-                                <input type="number" id="product-shipping-cost" min="0" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Delivery Method</label>
-                                <select id="product-delivery-method" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                                    <option value="cod">Cash on Delivery (COD)</option>
-                                    <option value="pickup">Local Pickup</option>
-                                    <option value="courier">Courier Delivery</option>
-                                </select>
-                            </div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Shipping Cost (AED)</label><input type="number" id="product-shipping-cost" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Delivery Method</label><select id="product-delivery-method" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="cod">Cash on Delivery</option><option value="pickup">Local Pickup</option><option value="courier">Courier</option></select></div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Form Actions -->
+                <!-- Actions -->
                 <div class="flex gap-4 justify-end sticky bottom-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border dark:border-gray-700">
-                    <a href="admin-dashboard.html?section=products" class="cancel-btn px-6 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium">
-                        <i class="fas fa-times mr-2"></i> Cancel
-                    </a>
-                    <button type="submit" class="save-btn px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-lg transition">
-                        <i class="fas fa-save mr-2"></i> Save Product
-                    </button>
+                    <a href="admin-dashboard.html?section=products" class="cancel-btn px-6 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium"><i class="fas fa-times mr-2"></i> Cancel</a>
+                    <button type="submit" class="save-btn px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-lg transition"><i class="fas fa-save mr-2"></i> Save Product</button>
                 </div>
             </form>
         </div>
-    </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -266,7 +252,16 @@
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
-            location.reload();
+        };
+
+        window.toggleMobileMenu = () => {
+            document.getElementById('mobile-sidebar').classList.toggle('show');
+            document.getElementById('sidebar-overlay').classList.toggle('show');
+        };
+        
+        window.closeMobileMenu = () => {
+            document.getElementById('mobile-sidebar').classList.remove('show');
+            document.getElementById('sidebar-overlay').classList.remove('show');
         };
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
@@ -294,14 +289,15 @@
 
         async function checkForEdit() {
             const urlParams = new URLSearchParams(window.location.search);
-            productId = urlParams.get('id');
+            const idFromUrl = urlParams.get('id');
             
-            if (productId && productId !== 'null' && productId !== 'undefined' && productId.length > 0) {
+            if (idFromUrl && idFromUrl !== 'null' && idFromUrl !== 'undefined' && idFromUrl.length > 0) {
+                productId = idFromUrl;
                 document.getElementById('page-title').innerHTML = '<i class="fas fa-edit mr-2"></i> Edit Product';
                 await loadProductData();
             } else {
-                document.getElementById('page-title').innerHTML = '<i class="fas fa-plus mr-2"></i> Add New Product';
                 productId = null;
+                document.getElementById('page-title').innerHTML = '<i class="fas fa-plus mr-2"></i> Add New Product';
             }
         }
 
@@ -352,7 +348,7 @@
             container.innerHTML = existingImageUrls.map((url, idx) => `
                 <div class="image-preview-item relative group">
                     <img src="${url}" class="w-full h-24 object-cover rounded-lg border-2 ${idx === 0 ? 'border-purple-500' : 'border-gray-200 dark:border-gray-600'}">
-                    <button type="button" onclick="removeImage(${idx})" class="remove-image-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600">×</button>
+                    <button type="button" onclick="window.removeImage(${idx})" class="remove-image-btn absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600">×</button>
                     ${idx === 0 ? '<span class="absolute bottom-1 left-1 bg-purple-600 text-white text-xs px-1 rounded">Main</span>' : ''}
                 </div>
             `).join('');
@@ -428,7 +424,7 @@
             const salePrice = parseFloat(document.getElementById('product-sale-price').value);
             
             if (!name || !description || !category || !salePrice) {
-                alert('Please fill all required fields');
+                alert('Please fill all required fields (Name, Description, Category, Sale Price)');
                 return;
             }
             
