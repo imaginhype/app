@@ -8,13 +8,78 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Product detail page styles */
+        .product-detail-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .thumbnail-slider {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            cursor: grab;
+            padding: 10px 0;
+        }
+        .thumbnail-slider:active {
+            cursor: grabbing;
+        }
+        .thumbnail-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .thumbnail-img.active {
+            border-color: #8b5cf6;
+            transform: scale(1.05);
+        }
+        .thumbnail-img:hover {
+            transform: scale(1.05);
+        }
+        .main-product-image {
+            width: 100%;
+            height: 400px;
+            object-fit: contain;
+            background: #f3f4f6;
+            border-radius: 12px;
+        }
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .scroll-btn:hover {
+            background: rgba(0,0,0,0.8);
+        }
+        @media (max-width: 768px) {
+            .main-product-image {
+                height: 250px;
+            }
+            .thumbnail-img {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut }
-            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc,
-                 doc, getDoc, query, orderBy, limit }
-            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+                 doc, getDoc, query, orderBy, limit, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -25,43 +90,50 @@
             appId: "1:200919529212:web:afa69db5cf256d35f90979"
         };
 
-        const app  = initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db   = getFirestore(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
 
-        // Apply saved theme immediately
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         let currentUser = null, currentUserId = null, currentUserData = null;
+        let allProducts = [], currentFilter = 'all', currentSearch = '';
+        let currentProductImages = [];
 
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = '/'; return; }
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
 
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-
-            // FIX: added `return` so non-admin code doesn't execute after redirect
-            if (userDoc.data()?.role !== 'admin') {
-                window.location.href = '/seller-dashboard.html';
-                return;
+        function showNotification(message, type = 'success') {
+            let box = document.getElementById('toast-container');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'toast-container';
+                box.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
+                document.body.appendChild(box);
             }
+            const t = document.createElement('div');
+            t.style.cssText = `background:${type === 'success' ? '#10b981' : '#ef4444'};color:white;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:500;box-shadow:0 4px 6px rgba(0,0,0,.15);cursor:pointer;max-width:320px;`;
+            t.textContent = message;
+            t.onclick = () => t.remove();
+            box.appendChild(t);
+            setTimeout(() => { if (t.parentNode) t.remove(); }, 3000);
+        }
 
-            currentUser     = user;
-            currentUserId   = user.uid;
-            currentUserData = userDoc.data();
-
-            document.getElementById('admin-name').textContent = currentUserData.name || 'Admin';
-            applyThemeIcons();
-            loadDashboard();
-            loadCategories();
-        });
-
-        // ── Theme ────────────────────────────────────────────────────────────
         function applyThemeIcons() {
             const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-            document.querySelectorAll('.icon-moon').forEach(el => el.style.display = theme === 'dark'  ? 'inline' : 'none');
-            document.querySelectorAll('.icon-sun' ).forEach(el => el.style.display = theme === 'light' ? 'inline' : 'none');
+            document.querySelectorAll('.icon-moon').forEach(el => el.style.display = theme === 'dark' ? 'inline' : 'none');
+            document.querySelectorAll('.icon-sun').forEach(el => el.style.display = theme === 'light' ? 'inline' : 'none');
         }
+
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
@@ -69,7 +141,40 @@
             applyThemeIcons();
         };
 
-        // ── Dashboard ────────────────────────────────────────────────────────
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.data()?.role !== 'admin') {
+                window.location.href = '/seller-dashboard.html';
+                return;
+            }
+            currentUser = user;
+            currentUserId = user.uid;
+            currentUserData = userDoc.data();
+            const adminNameEl = document.getElementById('admin-name');
+            if (adminNameEl) adminNameEl.textContent = currentUserData.name || 'Admin';
+            applyThemeIcons();
+            loadDashboard();
+            loadCategories();
+        });
+
+        async function uploadImageToStorage(file, productId, index) {
+            if (!file) return null;
+            const storageRef = ref(storage, `products/${productId}/image_${index}_${Date.now()}.jpg`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            return url;
+        }
+
+        async function uploadMultipleImages(files, productId) {
+            const urls = [];
+            for (let i = 0; i < files.length; i++) {
+                const url = await uploadImageToStorage(files[i], productId, i);
+                if (url) urls.push(url);
+            }
+            return urls;
+        }
+
         async function loadDashboard() {
             await loadStats();
             await loadRecentOrders();
@@ -83,19 +188,24 @@
                     getDocs(collection(db, 'orders')),
                     getDocs(collection(db, 'products'))
                 ]);
-                const sellers  = usersSnap.docs.filter(d => d.data().role === 'seller').length;
-                const pending  = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
-                document.getElementById('stat-sellers' ).innerHTML = `<div class="text-2xl font-bold">${sellers}</div><div class="text-sm opacity-70">Sellers</div>`;
-                document.getElementById('stat-orders'  ).innerHTML = `<div class="text-2xl font-bold">${ordersSnap.size}</div><div class="text-sm opacity-70">Total Orders</div>`;
-                document.getElementById('stat-pending' ).innerHTML = `<div class="text-2xl font-bold">${pending}</div><div class="text-sm opacity-70">Pending</div>`;
-                document.getElementById('stat-products').innerHTML = `<div class="text-2xl font-bold">${productsSnap.size}</div><div class="text-sm opacity-70">Products</div>`;
+                const sellers = usersSnap.docs.filter(d => d.data().role === 'seller').length;
+                const pending = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
+                
+                const statSellers = document.getElementById('stat-sellers');
+                const statOrders = document.getElementById('stat-orders');
+                const statPending = document.getElementById('stat-pending');
+                const statProducts = document.getElementById('stat-products');
+                
+                if (statSellers) statSellers.innerHTML = `<div class="text-2xl font-bold">${sellers}</div><div class="text-sm opacity-70">Sellers</div>`;
+                if (statOrders) statOrders.innerHTML = `<div class="text-2xl font-bold">${ordersSnap.size}</div><div class="text-sm opacity-70">Total Orders</div>`;
+                if (statPending) statPending.innerHTML = `<div class="text-2xl font-bold">${pending}</div><div class="text-sm opacity-70">Pending</div>`;
+                if (statProducts) statProducts.innerHTML = `<div class="text-2xl font-bold">${productsSnap.size}</div><div class="text-sm opacity-70">Products</div>`;
             } catch (e) { console.error('loadStats', e); }
         }
 
         async function loadRecentOrders() {
             try {
-                // FIX: limit(10) in the query - don't fetch ALL orders just to show 10
-                const snap  = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
+                const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
                 const tbody = document.getElementById('recent-orders-table');
                 if (!tbody) return;
                 if (snap.empty) {
@@ -103,28 +213,31 @@
                     return;
                 }
                 tbody.innerHTML = '';
-                snap.docs.forEach(d => {
+                for (const d of snap.docs) {
                     const o = d.data();
-                    const safeStatus = ['pending','approved','completed','paid'].includes(o.status) ? o.status : 'pending';
+                    const safeStatus = ['pending', 'approved', 'completed', 'paid'].includes(o.status) ? o.status : 'pending';
                     const tr = document.createElement('tr');
                     tr.className = 'border-b';
                     tr.innerHTML = `
-                        <td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td>
-                        <td class="px-4 py-2 text-sm"></td>
+                        <td class="px-4 py-2 text-sm">#${d.id.slice(0, 8)}</td>
+                        <td class="px-4 py-2 text-sm customer-name"></td>
                         <td class="px-4 py-2 text-sm">AED ${o.totalAmount}</td>
                         <td class="px-4 py-2"><span class="status-badge status-${safeStatus}">${safeStatus}</span></td>
                         <td class="px-4 py-2"><button onclick="viewOrderDetails('${d.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button></td>`;
-                    // textContent to prevent XSS from customerName
-                    tr.querySelectorAll('td')[1].textContent = o.customerName || 'N/A';
+                    const customerNameTd = tr.querySelector('.customer-name');
+                    if (customerNameTd) customerNameTd.textContent = o.customerName || 'N/A';
                     tbody.appendChild(tr);
-                });
+                }
             } catch (e) { console.error('loadRecentOrders', e); }
         }
 
         async function loadChart() {
             try {
-                const snap = await getDocs(collection(db, 'orders'));
+                const snap = await getDocs(query(collection(db, 'orders'), limit(100)));
                 const monthly = {};
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                monthNames.forEach(m => monthly[m] = 0);
+                
                 snap.docs.forEach(d => {
                     const o = d.data();
                     if (o.createdAt) {
@@ -132,9 +245,11 @@
                         monthly[m] = (monthly[m] || 0) + (o.totalAmount || 0);
                     }
                 });
+                
                 const ctx = document.getElementById('revenueChart');
                 if (!ctx) return;
-                new Chart(ctx, {
+                if (window.revenueChartInstance) window.revenueChartInstance.destroy();
+                window.revenueChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: Object.keys(monthly),
@@ -145,44 +260,12 @@
             } catch (e) { console.error('loadChart', e); }
         }
 
-        // ── Toast ────────────────────────────────────────────────────────────
-        function showNotification(message, type = 'success') {
-            let box = document.getElementById('toast-container');
-            if (!box) {
-                box = document.createElement('div');
-                box.id = 'toast-container';
-                box.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
-                document.body.appendChild(box);
-            }
-            const t = document.createElement('div');
-            t.style.cssText = `background:${type==='success'?'#10b981':'#ef4444'};color:white;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:500;box-shadow:0 4px 6px rgba(0,0,0,.15);cursor:pointer;max-width:320px;`;
-            t.textContent = message; // textContent - no XSS
-            t.onclick = () => t.remove();
-            box.appendChild(t);
-            setTimeout(() => { if (t.parentNode) t.remove(); }, 3000);
-        }
-
-        // ── Image upload ─────────────────────────────────────────────────────
-        async function uploadImage(file) {
-            if (file.size > 5 * 1024 * 1024) { showNotification('Image too large. Max 5MB.', 'error'); return null; }
-            const fd = new FormData(); fd.append('image', file);
-            try {
-                const res  = await fetch('https://api.imgbb.com/1/upload?key=2e32852f127a58951950b565e1975d4b', { method: 'POST', body: fd });
-                const data = await res.json();
-                if (data?.data?.url) return data.data.url;
-                throw new Error('Upload failed');
-            } catch (e) { showNotification('Upload failed: ' + e.message, 'error'); return null; }
-        }
-
-        // ── Products ─────────────────────────────────────────────────────────
-        let allProducts = [], currentFilter = 'all', currentSearch = '';
-
         async function loadProducts() {
             const c = document.getElementById('products-grid-container');
             if (!c) return;
             c.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">Loading...</div>';
             try {
-                const snap = await getDocs(collection(db, 'products'));
+                const snap = await getDocs(query(collection(db, 'products'), limit(100)));
                 allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderProducts();
             } catch (e) {
@@ -191,203 +274,346 @@
         }
 
         function renderProducts() {
-            const c = document.getElementById('products-grid-container'); if (!c) return;
+            const c = document.getElementById('products-grid-container');
+            if (!c) return;
             let list = allProducts;
             if (currentFilter !== 'all') list = list.filter(p => p.category === currentFilter);
-            if (currentSearch) { const q = currentSearch.toLowerCase(); list = list.filter(p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)); }
-            if (!list.length) { c.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">No products found.</div>'; return; }
+            if (currentSearch) {
+                const q = currentSearch.toLowerCase();
+                list = list.filter(p => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
+            }
+            if (!list.length) {
+                c.innerHTML = '<div class="text-center py-8 col-span-full opacity-60">No products found.</div>';
+                return;
+            }
             c.innerHTML = list.map(p => {
-                const n = (p.name || 'Untitled').replace(/</g,'&lt;');
-                const imgTag = (p.imageUrl && p.imageUrl !== 'undefined')
-                    ? `<img src="${p.imageUrl}" class="w-full h-full object-cover" alt="${n}" onerror="this.src='https://placehold.co/400x400?text=No+Image'">`
+                const n = escapeHtml(p.name || 'Untitled');
+                const mainImage = (p.images && p.images[0]) ? p.images[0] : (p.imageUrl && p.imageUrl !== 'undefined' ? p.imageUrl : null);
+                const imgTag = mainImage
+                    ? `<img src="${escapeHtml(mainImage)}" class="w-full h-full object-cover" alt="${n}" onerror="this.src='https://placehold.co/400x400?text=No+Image'">`
                     : `<i class="fas fa-box text-6xl text-gray-400"></i>`;
                 return `<div class="product-card card rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer" onclick="viewProductDetail('${p.id}')">
                     <div class="aspect-square bg-gray-100 flex items-center justify-center">${imgTag}</div>
                     <div class="p-4">
-                        <div class="text-xs text-purple-500 mb-1">${p.category||'Uncategorized'}</div>
+                        <div class="text-xs text-purple-500 mb-1">${escapeHtml(p.category || 'Uncategorized')}</div>
                         <h4 class="font-semibold text-lg mb-1 line-clamp-1">${n}</h4>
-                        <p class="text-sm opacity-70 mb-2 line-clamp-2">${(p.description||'No description').substring(0,100).replace(/</g,'&lt;')}</p>
                         <div class="flex justify-between items-center mt-3">
-                            <span class="text-xl font-bold text-purple-500">AED ${p.price}</span>
-                            <span class="text-xs opacity-60">Qty: ${p.quantity||1}</span>
-                        </div>
-                        <div class="flex gap-2 mt-4" onclick="event.stopPropagation()">
-                            <button onclick="editProduct('${p.id}')" class="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition"><i class="fas fa-edit mr-1"></i>Edit</button>
-                            <button onclick="deleteProduct('${p.id}')" class="flex-1 px-3 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition"><i class="fas fa-trash mr-1"></i>Delete</button>
+                            <span class="text-xl font-bold text-purple-500">AED ${p.salePrice || p.price || 0}</span>
+                            ${p.regularPrice ? `<span class="text-sm opacity-60 line-through">AED ${p.regularPrice}</span>` : ''}
                         </div>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        window.viewProductDetail = (id) => {
-            const p = allProducts.find(x => x.id === id); if (!p) return;
-            document.getElementById('detail-product-id'         ).textContent = p.id.slice(0,8);
-            document.getElementById('detail-product-name'       ).textContent = p.name || '';
-            document.getElementById('detail-product-price'      ).textContent = `AED ${p.price}`;
-            document.getElementById('detail-product-condition'  ).textContent = p.condition || 'New';
-            document.getElementById('detail-product-category'   ).innerHTML   = `<strong>Category</strong><br>${p.category||'Uncategorized'}`;
-            document.getElementById('detail-product-quantity'   ).innerHTML   = `<strong>Quantity</strong><br>${p.quantity||1}`;
-            document.getElementById('detail-product-brand'      ).innerHTML   = `<strong>Brand</strong><br>${p.brand||'Not specified'}`;
-            document.getElementById('detail-product-description').textContent = p.description || 'No description.';
-            const img = document.getElementById('detail-product-image'), noImg = document.getElementById('detail-no-image');
-            if (p.imageUrl && p.imageUrl !== 'undefined') { img.src = p.imageUrl; img.classList.remove('hidden'); noImg.classList.add('hidden'); }
-            else { img.classList.add('hidden'); noImg.classList.remove('hidden'); }
+        window.viewProductDetail = async (id) => {
+            const product = allProducts.find(x => x.id === id);
+            if (!product) return;
+            
+            // Show loading
             document.getElementById('product-detail-modal').classList.remove('hidden');
+            document.getElementById('detail-product-name').textContent = 'Loading...';
+            
+            // Set current product images
+            currentProductImages = product.images || (product.imageUrl ? [product.imageUrl] : []);
+            
+            // Update detail view
+            document.getElementById('detail-product-id').textContent = product.id.slice(0, 8);
+            document.getElementById('detail-product-name').textContent = product.name || '';
+            document.getElementById('detail-product-description').textContent = product.description || 'No description.';
+            document.getElementById('detail-sale-price').textContent = `AED ${product.salePrice || product.price || 0}`;
+            document.getElementById('detail-regular-price').innerHTML = product.regularPrice ? `<span class="line-through opacity-60 ml-2">AED ${product.regularPrice}</span>` : '';
+            document.getElementById('detail-stock-status').innerHTML = product.stockStatus === 'in-stock' 
+                ? '<span class="text-green-500"><i class="fas fa-check-circle"></i> In Stock</span>'
+                : '<span class="text-red-500"><i class="fas fa-times-circle"></i> Out of Stock</span>';
+            document.getElementById('detail-visibility').innerHTML = product.visibility === 'published' 
+                ? '<span class="text-green-500"><i class="fas fa-globe"></i> Published</span>'
+                : '<span class="text-yellow-500"><i class="fas fa-eye-slash"></i> Hidden</span>';
+            
+            // Render main image and thumbnails
+            renderProductImages(currentProductImages);
+            
+            // Store product ID for edit/delete
+            window.currentViewingProductId = id;
         };
-        window.closeProductDetail = () => document.getElementById('product-detail-modal').classList.add('hidden');
-
+        
+        function renderProductImages(images) {
+            const mainImageContainer = document.getElementById('detail-main-image');
+            const thumbnailContainer = document.getElementById('detail-thumbnails');
+            
+            if (!images || images.length === 0) {
+                mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100"><i class="fas fa-box text-6xl text-gray-400"></i></div>';
+                thumbnailContainer.innerHTML = '';
+                return;
+            }
+            
+            // Set main image
+            mainImageContainer.innerHTML = `<img src="${escapeHtml(images[0])}" class="main-product-image" alt="Main product image" onclick="openImageZoom('${escapeHtml(images[0])}')">`;
+            
+            // Set thumbnails
+            thumbnailContainer.innerHTML = images.map((img, idx) => `
+                <img src="${escapeHtml(img)}" 
+                     class="thumbnail-img ${idx === 0 ? 'active' : ''}" 
+                     onclick="changeMainImage(${idx})"
+                     alt="Thumbnail ${idx + 1}">
+            `).join('');
+        }
+        
+        window.changeMainImage = (index) => {
+            const images = currentProductImages;
+            if (!images || !images[index]) return;
+            
+            const mainImageContainer = document.getElementById('detail-main-image');
+            mainImageContainer.innerHTML = `<img src="${escapeHtml(images[index])}" class="main-product-image" alt="Product image" onclick="openImageZoom('${escapeHtml(images[index])}')">`;
+            
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail-img').forEach((thumb, i) => {
+                if (i === index) thumb.classList.add('active');
+                else thumb.classList.remove('active');
+            });
+        };
+        
+        window.openImageZoom = (imageUrl) => {
+            const modal = document.getElementById('image-zoom-modal');
+            const img = document.getElementById('zoom-image');
+            img.src = imageUrl;
+            modal.classList.remove('hidden');
+        };
+        
+        window.closeImageZoom = () => {
+            document.getElementById('image-zoom-modal').classList.add('hidden');
+        };
+        
+        window.closeProductDetail = () => {
+            document.getElementById('product-detail-modal').classList.add('hidden');
+            window.currentViewingProductId = null;
+        };
+        
+        window.editCurrentProduct = async () => {
+            if (!window.currentViewingProductId) return;
+            const product = allProducts.find(x => x.id === window.currentViewingProductId);
+            if (!product) return;
+            
+            // Close detail modal and open edit modal
+            window.closeProductDetail();
+            
+            // Populate edit form
+            document.getElementById('modal-title').textContent = 'Edit Product';
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('product-name').value = product.name || '';
+            document.getElementById('product-description').value = product.description || '';
+            document.getElementById('product-category').value = product.category || '';
+            document.getElementById('product-sale-price').value = product.salePrice || product.price || '';
+            document.getElementById('product-regular-price').value = product.regularPrice || '';
+            document.getElementById('product-stock-status').value = product.stockStatus || 'in-stock';
+            document.getElementById('product-visibility').value = product.visibility || 'published';
+            
+            // Show existing images
+            const existingImages = product.images || (product.imageUrl ? [product.imageUrl] : []);
+            const existingImagesContainer = document.getElementById('existing-images');
+            if (existingImagesContainer) {
+                existingImagesContainer.innerHTML = existingImages.map((img, idx) => `
+                    <div class="relative inline-block mr-2 mb-2">
+                        <img src="${escapeHtml(img)}" class="w-20 h-20 object-cover rounded-lg">
+                        <button type="button" onclick="removeExistingImage(${idx})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs">&times;</button>
+                    </div>
+                `).join('');
+                window.existingImageUrls = existingImages;
+            }
+            
+            document.getElementById('product-modal').classList.remove('hidden');
+        };
+        
+        window.removeExistingImage = (index) => {
+            if (window.existingImageUrls) {
+                window.existingImageUrls.splice(index, 1);
+                const container = document.getElementById('existing-images');
+                if (container) {
+                    container.innerHTML = window.existingImageUrls.map((img, idx) => `
+                        <div class="relative inline-block mr-2 mb-2">
+                            <img src="${escapeHtml(img)}" class="w-20 h-20 object-cover rounded-lg">
+                            <button type="button" onclick="removeExistingImage(${idx})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs">&times;</button>
+                        </div>
+                    `).join('');
+                }
+            }
+        };
+        
+        window.deleteCurrentProduct = async () => {
+            if (!window.currentViewingProductId) return;
+            if (!confirm('Delete this product? This cannot be undone.')) return;
+            await deleteDoc(doc(db, 'products', window.currentViewingProductId));
+            showNotification('Product deleted', 'success');
+            window.closeProductDetail();
+            await loadProducts();
+            await loadStats();
+        };
+        
         window.filterProducts = (cat) => {
             currentFilter = cat;
-            document.querySelectorAll('.category-filter').forEach(b => b.classList.toggle('active', b.getAttribute('data-category') === cat));
+            document.querySelectorAll('.category-filter').forEach(b => {
+                if (b.getAttribute('data-category') === cat) b.classList.add('active');
+                else b.classList.remove('active');
+            });
             renderProducts();
         };
-
+        
         window.showAddProductModal = () => {
             document.getElementById('modal-title').textContent = 'Add New Product';
             document.getElementById('product-form').reset();
             document.getElementById('product-id').value = '';
-            document.getElementById('product-image-url').value = '';
-            document.getElementById('image-preview').classList.add('hidden');
-            document.getElementById('upload-status').classList.add('hidden');
+            document.getElementById('product-sale-price').value = '';
+            document.getElementById('product-regular-price').value = '';
+            document.getElementById('product-stock-status').value = 'in-stock';
+            document.getElementById('product-visibility').value = 'published';
+            const existingImagesContainer = document.getElementById('existing-images');
+            if (existingImagesContainer) existingImagesContainer.innerHTML = '';
+            window.existingImageUrls = [];
             document.getElementById('product-modal').classList.remove('hidden');
         };
-        window.closeProductModal = () => document.getElementById('product-modal').classList.add('hidden');
-
-        window.editProduct = async (id) => {
-            const snap = await getDoc(doc(db, 'products', id)); const p = snap.data();
-            document.getElementById('modal-title').textContent        = 'Edit Product';
-            document.getElementById('product-id').value               = id;
-            document.getElementById('product-name').value             = p.name        || '';
-            document.getElementById('product-description').value      = p.description || '';
-            document.getElementById('product-category').value         = p.category    || '';
-            document.getElementById('product-price').value            = p.price       || '';
-            document.getElementById('product-brand').value            = p.brand       || '';
-            document.getElementById('product-condition').value        = p.condition   || 'New';
-            document.getElementById('product-quantity').value         = p.quantity    || 1;
-            document.getElementById('product-material').value         = p.material    || '';
-            document.getElementById('product-sku').value              = p.sku         || '';
-            document.getElementById('product-image-url').value        = p.imageUrl    || '';
-            if (p.imageUrl && p.imageUrl !== 'undefined') { document.getElementById('preview-img').src = p.imageUrl; document.getElementById('image-preview').classList.remove('hidden'); }
-            else document.getElementById('image-preview').classList.add('hidden');
-            document.getElementById('product-modal').classList.remove('hidden');
+        
+        window.closeProductModal = () => {
+            document.getElementById('product-modal').classList.add('hidden');
         };
-
-        window.deleteProduct = async (id) => {
-            if (!confirm('Delete this product? This cannot be undone.')) return;
-            await deleteDoc(doc(db, 'products', id));
-            showNotification('Product deleted', 'success');
-            loadProducts(); loadStats();
+        
+        window.saveProduct = async () => {
+            const id = document.getElementById('product-id')?.value;
+            const name = document.getElementById('product-name')?.value;
+            const description = document.getElementById('product-description')?.value;
+            const category = document.getElementById('product-category')?.value;
+            const salePrice = parseFloat(document.getElementById('product-sale-price')?.value || 0);
+            const regularPrice = parseFloat(document.getElementById('product-regular-price')?.value || 0);
+            const stockStatus = document.getElementById('product-stock-status')?.value;
+            const visibility = document.getElementById('product-visibility')?.value;
+            
+            if (!name || !description || !category || !salePrice) {
+                showNotification('Please fill in all required fields.', 'error');
+                return;
+            }
+            
+            // Get existing images
+            let images = window.existingImageUrls || [];
+            
+            // Upload new images
+            const newImageFiles = document.getElementById('product-images')?.files;
+            if (newImageFiles && newImageFiles.length > 0) {
+                const productId = id || Date.now().toString();
+                for (let i = 0; i < newImageFiles.length; i++) {
+                    const url = await uploadImageToStorage(newImageFiles[i], productId, images.length + i);
+                    if (url) images.push(url);
+                }
+            }
+            
+            const data = {
+                name, description, category,
+                salePrice, regularPrice,
+                stockStatus, visibility,
+                images: images,
+                updatedAt: new Date().toISOString()
+            };
+            
+            try {
+                if (id) {
+                    await updateDoc(doc(db, 'products', id), data);
+                    showNotification('Product updated!');
+                } else {
+                    data.createdAt = new Date().toISOString();
+                    await addDoc(collection(db, 'products'), data);
+                    showNotification('Product added!');
+                }
+                window.closeProductModal();
+                await loadProducts();
+                await loadStats();
+            } catch (err) {
+                showNotification('Error: ' + err.message, 'error');
+            }
         };
-
-        window.removeImage = () => {
-            document.getElementById('product-image-url').value = '';
-            document.getElementById('image-preview').classList.add('hidden');
-            document.getElementById('preview-img').src = '';
-            const fi = document.getElementById('product-image-file'); if (fi) fi.value = '';
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const searchEl = document.getElementById('product-search');
-            if (searchEl) searchEl.addEventListener('input', e => { currentSearch = e.target.value; renderProducts(); });
-
-            const imgEl = document.getElementById('product-image-file');
-            if (imgEl) imgEl.addEventListener('change', async e => {
-                const file = e.target.files[0]; if (!file) return;
-                const s = document.getElementById('upload-status');
-                s.classList.remove('hidden'); s.textContent = 'Uploading...'; s.style.color = '#f59e0b';
-                const url = await uploadImage(file);
-                if (url) {
-                    document.getElementById('product-image-url').value = url;
-                    document.getElementById('preview-img').src = url;
-                    document.getElementById('image-preview').classList.remove('hidden');
-                    s.textContent = 'Upload complete!'; s.style.color = '#10b981';
-                    setTimeout(() => s.classList.add('hidden'), 2000);
-                } else { s.textContent = 'Upload failed.'; s.style.color = '#ef4444'; }
-            });
-
-            const form = document.getElementById('product-form');
-            if (form) form.addEventListener('submit', async e => {
-                e.preventDefault();
-                const id  = document.getElementById('product-id').value;
-                let imgUrl = document.getElementById('product-image-url').value;
-                if (imgUrl === 'undefined') imgUrl = '';
-                const data = {
-                    name:        document.getElementById('product-name').value,
-                    description: document.getElementById('product-description').value,
-                    category:    document.getElementById('product-category').value,
-                    price:       parseFloat(document.getElementById('product-price').value),
-                    brand:       document.getElementById('product-brand').value,
-                    condition:   document.getElementById('product-condition').value,
-                    quantity:    parseInt(document.getElementById('product-quantity').value),
-                    material:    document.getElementById('product-material').value,
-                    sku:         document.getElementById('product-sku').value,
-                    imageUrl:    imgUrl,
-                    updatedAt:   new Date().toISOString()
-                };
-                try {
-                    if (id) { await updateDoc(doc(db, 'products', id), data); showNotification('Product updated!'); }
-                    else    { data.createdAt = new Date().toISOString(); await addDoc(collection(db, 'products'), data); showNotification('Product added!'); }
-                    window.closeProductModal(); loadProducts(); loadStats();
-                } catch (err) { showNotification('Error: ' + err.message, 'error'); }
-            });
-        });
-
-        // ── Categories ───────────────────────────────────────────────────────
+        
         let allCategories = [];
+        
         async function loadCategories() {
             const snap = await getDocs(collection(db, 'categories'));
             allCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderCategoryFilters();
             renderCategoriesTable();
-            const sel = document.getElementById('product-category');
-            if (sel) { sel.innerHTML = '<option value="">Select category</option>'; allCategories.forEach(c => sel.innerHTML += `<option value="${c.name}">${c.name}</option>`); }
+            const categorySelect = document.getElementById('product-category');
+            if (categorySelect) {
+                categorySelect.innerHTML = '<option value="">Select category</option>';
+                allCategories.forEach(c => {
+                    categorySelect.innerHTML += `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`;
+                });
+            }
         }
-
+        
         function renderCategoryFilters() {
-            const fc = document.getElementById('category-filter-buttons'); if (!fc) return;
+            const fc = document.getElementById('category-filter-buttons');
+            if (!fc) return;
             fc.innerHTML = `<button onclick="filterProducts('all')" data-category="all" class="category-filter active px-4 py-2 rounded-lg text-sm font-medium transition">All</button>`;
-            allCategories.forEach(c => fc.innerHTML += `<button onclick="filterProducts('${c.name}')" data-category="${c.name}" class="category-filter px-4 py-2 rounded-lg text-sm font-medium transition">${c.name}</button>`);
+            allCategories.forEach(c => {
+                fc.innerHTML += `<button onclick="filterProducts('${c.name}')" data-category="${c.name}" class="category-filter px-4 py-2 rounded-lg text-sm font-medium transition">${escapeHtml(c.name)}</button>`;
+            });
         }
-
+        
         function renderCategoriesTable() {
-            const container = document.getElementById('categories-list'); if (!container) return;
-            if (!allCategories.length) { container.innerHTML = '<div class="text-center py-8 opacity-60">No categories yet.</div>'; return; }
-            let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Created</th><th class="px-4 py-2 text-left">Action</th></thead><tbody>';
-            allCategories.forEach(c => html += `<tr class="border-b"><td class="px-4 py-2">${c.name}</td><td class="px-4 py-2 text-sm opacity-70">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td><td class="px-4 py-2"><button onclick="deleteCategory('${c.id}')" class="text-red-500 text-sm hover:underline"><i class="fas fa-trash mr-1"></i>Delete</button></td></tr>`);
+            const container = document.getElementById('categories-list');
+            if (!container) return;
+            if (!allCategories.length) {
+                container.innerHTML = '<div class="text-center py-8 opacity-60">No categories yet.</div>';
+                return;
+            }
+            let html = '<table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Created</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody>';
+            allCategories.forEach(c => {
+                html += `<tr class="border-b">
+                    <td class="px-4 py-2">${escapeHtml(c.name)}</td>
+                    <td class="px-4 py-2 text-sm opacity-70">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}</td>
+                    <td class="px-4 py-2"><button onclick="deleteCategory('${c.id}')" class="text-red-500 text-sm hover:underline"><i class="fas fa-trash mr-1"></i>Delete</button></td>
+                </tr>`;
+            });
             html += '</tbody></table>';
             container.innerHTML = html;
         }
-
+        
         window.showAddCategoryModal = () => {
             document.getElementById('category-id').value = '';
             document.getElementById('category-name').value = '';
             document.getElementById('category-modal').classList.remove('hidden');
         };
-        window.closeCategoryModal = () => document.getElementById('category-modal').classList.add('hidden');
-
+        
+        window.closeCategoryModal = () => {
+            document.getElementById('category-modal').classList.add('hidden');
+        };
+        
         window.addCategory = async () => {
-            const name = document.getElementById('category-name').value.trim(); if (!name) return;
+            const name = document.getElementById('category-name')?.value.trim();
+            if (!name) return;
             try {
                 await addDoc(collection(db, 'categories'), { name, createdAt: new Date().toISOString() });
-                showNotification('Category added!'); window.closeCategoryModal(); loadCategories();
-            } catch (e) { showNotification('Error: ' + e.message, 'error'); }
+                showNotification('Category added!');
+                window.closeCategoryModal();
+                await loadCategories();
+            } catch (e) {
+                showNotification('Error: ' + e.message, 'error');
+            }
         };
-
+        
         window.deleteCategory = async (id) => {
             if (!confirm('Delete this category?')) return;
             await deleteDoc(doc(db, 'categories', id));
-            showNotification('Category deleted'); loadCategories();
+            showNotification('Category deleted');
+            await loadCategories();
         };
-
-        // ── Sellers ──────────────────────────────────────────────────────────
+        
         async function loadSellers() {
             try {
-                const snap    = await getDocs(collection(db, 'users'));
+                const snap = await getDocs(collection(db, 'users'));
                 const sellers = snap.docs.filter(d => d.data().role === 'seller');
-                const container = document.getElementById('sellers-table-container'); if (!container) return;
-                if (!sellers.length) { container.innerHTML = '<div class="text-center py-8 opacity-60">No sellers yet.</div>'; return; }
-                let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Email</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th><th class="px-4 py-2 text-left">Actions</th></thead><tbody>';
+                const container = document.getElementById('sellers-table-container');
+                if (!container) return;
+                if (!sellers.length) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No sellers yet.</div>';
+                    return;
+                }
+                let html = '<table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Name</th><th class="px-4 py-2 text-left">Email</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th><th class="px-4 py-2 text-left">Actions</th></tr></thead><tbody>';
                 sellers.forEach(d => {
                     const s = d.data();
                     const badge = s.status === 'suspended'
@@ -396,97 +622,137 @@
                     const btn = s.status === 'suspended'
                         ? `<button onclick="toggleSellerStatus('${d.id}','active')" class="text-green-500 text-sm hover:underline">Reactivate</button>`
                         : `<button onclick="toggleSellerStatus('${d.id}','suspended')" class="text-red-500 text-sm hover:underline">Suspend</button>`;
-                    html += `<tr class="border-b"><td class="px-4 py-2">${s.name||'N/A'}</td><td class="px-4 py-2">${s.email}</td><td class="px-4 py-2">${badge}</td><td class="px-4 py-2 text-sm opacity-70">${s.createdAt?new Date(s.createdAt).toLocaleDateString():'N/A'}</td><td class="px-4 py-2">${btn}</td></tr>`;
+                    html += `<tr class="border-b">
+                        <td class="px-4 py-2">${escapeHtml(s.name || 'N/A')}</td>
+                        <td class="px-4 py-2">${escapeHtml(s.email)}</td>
+                        <td class="px-4 py-2">${badge}</td>
+                        <td class="px-4 py-2 text-sm opacity-70">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A'}</td>
+                        <td class="px-4 py-2">${btn}</td>
+                    </tr>`;
                 });
-                html += '</tbody></table>'; container.innerHTML = html;
+                html += '</tbody></table>';
+                container.innerHTML = html;
             } catch (e) { console.error('loadSellers', e); }
         }
-
+        
         window.toggleSellerStatus = async (uid, status) => {
-            if (!confirm(`${status==='suspended'?'Suspend':'Reactivate'} this seller?`)) return;
+            if (!confirm(`${status === 'suspended' ? 'Suspend' : 'Reactivate'} this seller?`)) return;
             await updateDoc(doc(db, 'users', uid), { status });
-            showNotification(`Seller ${status}.`); loadSellers();
+            showNotification(`Seller ${status}.`);
+            await loadSellers();
         };
-
-        // ── Orders ───────────────────────────────────────────────────────────
+        
         async function loadOrders() {
             try {
-                const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
-                const container = document.getElementById('orders-table-container'); if (!container) return;
-                if (snap.empty) { container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet.</div>'; return; }
-                let html = '<table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Actions</th></thead><tbody>';
+                const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(100)));
+                const container = document.getElementById('orders-table-container');
+                if (!container) return;
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-center py-8 opacity-60">No orders yet.</div>';
+                    return;
+                }
+                let html = '<table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Actions</th></tr></thead><tbody>';
                 snap.docs.forEach(d => {
                     const o = d.data();
-                    const ss = ['pending','approved','completed','paid'].includes(o.status) ? o.status : 'pending';
+                    const ss = ['pending', 'approved', 'completed', 'paid'].includes(o.status) ? o.status : 'pending';
                     html += `<tr class="border-b">
-                        <td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td>
-                        <td class="px-4 py-2">${(o.customerName||'N/A').replace(/</g,'&lt;')}</td>
+                        <td class="px-4 py-2 text-sm">#${d.id.slice(0, 8)}</td>
+                        <td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td>
                         <td class="px-4 py-2">AED ${o.totalAmount}</td>
                         <td class="px-4 py-2"><span class="status-badge status-${ss}">${ss}</span></td>
-                        <td class="px-4 py-2 text-sm opacity-70">${o.createdAt?new Date(o.createdAt).toLocaleDateString():'N/A'}</td>
+                        <td class="px-4 py-2 text-sm opacity-70">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
                         <td class="px-4 py-2">
-                            ${ss==='pending'?`<button onclick="approveOrder('${d.id}',${o.totalAmount})" class="text-green-500 text-sm hover:underline mr-2">Approve</button>`:''}
+                            ${ss === 'pending' ? `<button onclick="approveOrder('${d.id}',${o.totalAmount})" class="text-green-500 text-sm hover:underline mr-2">Approve</button>` : ''}
                             <button onclick="viewOrderDetails('${d.id}')" class="text-blue-500 text-sm hover:underline">View</button>
                         </td>
                     </tr>`;
                 });
-                html += '</tbody></table>'; container.innerHTML = html;
+                html += '</tbody></table>';
+                container.innerHTML = html;
             } catch (e) { console.error('loadOrders', e); }
         }
-
+        
         window.approveOrder = async (id, total) => {
-            const commissionPct = 10; // default 10% — make configurable in Settings later
-            const commission    = (total * commissionPct) / 100;
+            const commissionPct = 10;
+            const commission = (total * commissionPct) / 100;
             await updateDoc(doc(db, 'orders', id), {
                 status: 'approved', approvedAt: new Date().toISOString(),
                 commissionAmount: commission, sellerEarnings: Math.max(0, total - commission)
             });
-            showNotification('Order approved!'); loadOrders(); loadStats();
+            showNotification('Order approved!');
+            await loadOrders();
+            await loadStats();
         };
-
-        window.viewOrderDetails = (id) => alert(`Order #${id.slice(0,8)} — Full detail view coming soon.`);
-
+        
+        window.viewOrderDetails = (id) => {
+            showNotification(`Order #${id.slice(0, 8)} - Full details coming soon.`, 'info');
+        };
+        
         function loadNotifications() {
             const el = document.getElementById('notifications-list');
             if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Notifications will appear here.</div>';
         }
+        
         function loadSettings() {
             const el = document.getElementById('settings-content');
             if (el) el.innerHTML = '<div class="text-center py-8 opacity-60">Settings panel coming soon.</div>';
         }
-
-        // ── Navigation ───────────────────────────────────────────────────────
-        // FIX: receive clicked element explicitly — don't rely on global `event` variable
+        
         window.showSection = (section, clickedEl) => {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(`section-${section}`)?.classList.remove('hidden');
+            const sectionEl = document.getElementById(`section-${section}`);
+            if (sectionEl) sectionEl.classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            clickedEl?.classList.add('active');
-            ({ dashboard:loadDashboard, products:loadProducts, sellers:loadSellers,
-               orders:loadOrders, categories:loadCategories,
-               notifications:loadNotifications, settings:loadSettings })[section]?.();
+            if (clickedEl) clickedEl.classList.add('active');
+            const sectionActions = {
+                dashboard: loadDashboard,
+                products: loadProducts,
+                sellers: loadSellers,
+                orders: loadOrders,
+                categories: loadCategories,
+                notifications: loadNotifications,
+                settings: loadSettings
+            };
+            const action = sectionActions[section];
+            if (action) action();
             window.closeMobileMenu?.();
         };
-
-        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
-
+        
+        window.logout = async () => {
+            await signOut(auth);
+            window.location.href = '/';
+        };
+        
         window.toggleMobileMenu = () => {
-            const sb = document.getElementById('mobile-sidebar'), ov = document.getElementById('sidebar-overlay');
-            sb?.classList.toggle('show'); ov?.classList.toggle('show');
+            const sb = document.getElementById('mobile-sidebar');
+            const ov = document.getElementById('sidebar-overlay');
+            if (sb) sb.classList.toggle('show');
+            if (ov) ov.classList.toggle('show');
             document.body.style.overflow = sb?.classList.contains('show') ? 'hidden' : '';
         };
+        
         window.closeMobileMenu = () => {
-            document.getElementById('mobile-sidebar')?.classList.remove('show');
-            document.getElementById('sidebar-overlay')?.classList.remove('show');
+            const sb = document.getElementById('mobile-sidebar');
+            const ov = document.getElementById('sidebar-overlay');
+            if (sb) sb.classList.remove('show');
+            if (ov) ov.classList.remove('show');
             document.body.style.overflow = '';
         };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchEl = document.getElementById('product-search');
+            if (searchEl) {
+                searchEl.addEventListener('input', e => {
+                    currentSearch = e.target.value;
+                    renderProducts();
+                });
+            }
+        });
     </script>
 </head>
 <body class="transition-colors duration-300">
-
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
-    <!-- Mobile Sidebar -->
     <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
         <div class="p-4 border-b flex justify-between items-center">
             <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
@@ -509,9 +775,11 @@
         </div>
     </aside>
 
-    <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
-        <div class="p-4 border-b"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Admin Panel</p></div>
+        <div class="p-4 border-b">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <p class="text-xs opacity-60 mt-2">Admin Panel</p>
+        </div>
         <nav class="p-4">
             <div class="nav-item active" onclick="showSection('dashboard',this)"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></div>
             <div class="nav-item" onclick="showSection('products',this)"><i class="fas fa-box w-5"></i><span>Products</span></div>
@@ -526,7 +794,6 @@
         </div>
     </aside>
 
-    <!-- Main -->
     <main class="main-content flex-1 md:ml-64">
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -536,7 +803,7 @@
             <div class="flex items-center space-x-4">
                 <button onclick="toggleTheme()" class="p-2 rounded-full transition" title="Toggle theme">
                     <i class="fas fa-moon icon-moon"></i>
-                    <i class="fas fa-sun  icon-sun" style="display:none"></i>
+                    <i class="fas fa-sun icon-sun" style="display:none"></i>
                 </button>
                 <div class="flex items-center space-x-2">
                     <i class="fas fa-user-circle text-2xl"></i>
@@ -546,7 +813,6 @@
         </div>
 
         <div class="p-4 md:p-6">
-            <!-- Dashboard -->
             <div id="section-dashboard" class="section">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="stat-card p-4 rounded-xl" id="stat-sellers">Loading...</div>
@@ -555,15 +821,22 @@
                     <div class="stat-card p-4 rounded-xl" id="stat-products">Loading...</div>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Revenue Trend</h3><canvas id="revenueChart" height="200"></canvas></div>
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-semibold mb-4">Revenue Trend</h3>
+                        <canvas id="revenueChart" height="200"></canvas>
+                    </div>
                 </div>
                 <div class="card p-6 rounded-xl">
                     <h3 class="text-lg font-semibold mb-4">Recent Orders</h3>
-                    <div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></thead><tbody id="recent-orders-table"></tbody></table></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead>
+                            <tbody id="recent-orders-table"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- Products -->
             <div id="section-products" class="section hidden">
                 <div class="card p-6 rounded-xl">
                     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
@@ -573,69 +846,180 @@
                             <button onclick="showAddProductModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">+ Add Product</button>
                         </div>
                     </div>
-                    <div class="mb-6"><div class="flex flex-wrap gap-2" id="category-filter-buttons"><button onclick="filterProducts('all')" data-category="all" class="category-filter active px-4 py-2 rounded-lg text-sm font-medium transition">All</button></div></div>
-                    <div id="products-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"><div class="text-center py-8 col-span-full opacity-60">Loading...</div></div>
+                    <div class="mb-6"><div class="flex flex-wrap gap-2" id="category-filter-buttons"></div></div>
+                    <div id="products-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
                 </div>
             </div>
 
-            <!-- Categories -->
             <div id="section-categories" class="section hidden">
                 <div class="card p-6 rounded-xl">
                     <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-semibold">Categories</h3><button onclick="showAddCategoryModal()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">+ Add Category</button></div>
-                    <div id="categories-list" class="overflow-x-auto"><div class="text-center py-8 opacity-60">Loading...</div></div>
+                    <div id="categories-list" class="overflow-x-auto"></div>
                 </div>
             </div>
 
-            <!-- Orders -->
             <div id="section-orders" class="section hidden">
                 <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">All Orders</h3><div id="orders-table-container" class="overflow-x-auto">Loading...</div></div>
             </div>
 
-            <!-- Sellers -->
             <div id="section-sellers" class="section hidden">
                 <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Seller Management</h3><div id="sellers-table-container" class="overflow-x-auto">Loading...</div></div>
             </div>
 
-            <!-- Notifications -->
             <div id="section-notifications" class="section hidden">
                 <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Notifications</h3><div id="notifications-list">Loading...</div></div>
             </div>
 
-            <!-- Settings -->
             <div id="section-settings" class="section hidden">
                 <div class="card p-6 rounded-xl"><h3 class="text-lg font-semibold mb-4">Settings</h3><div id="settings-content">Loading...</div></div>
             </div>
         </div>
     </main>
 
-    <!-- Product Modal -->
+    <!-- Product Detail Modal -->
+    <div id="product-detail-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
+        <div class="card rounded-xl p-4 md:p-6 max-w-5xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
+            <!-- Header - Responsive -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 pb-4 border-b">
+                <div class="flex items-center gap-3">
+                    <button onclick="closeProductDetail()" class="text-purple-500 hover:text-purple-700 text-sm md:text-base">
+                        <i class="fas fa-arrow-left mr-1"></i> Back
+                    </button>
+                    <h2 class="text-lg md:text-2xl font-bold" id="detail-product-name">Product Details</h2>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="editCurrentProduct()" class="flex-1 sm:flex-none bg-blue-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm md:text-base hover:bg-blue-600 transition">
+                        <i class="fas fa-edit mr-1"></i> Edit
+                    </button>
+                    <button onclick="deleteCurrentProduct()" class="flex-1 sm:flex-none bg-red-500 text-white px-3 md:px-4 py-2 rounded-lg text-sm md:text-base hover:bg-red-600 transition">
+                        <i class="fas fa-trash mr-1"></i> Delete
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Images Section -->
+                <div class="lg:w-1/2">
+                    <div class="relative">
+                        <div id="detail-main-image" class="bg-gray-100 rounded-lg flex items-center justify-center min-h-[300px] md:min-h-[400px]">
+                            <div class="text-center"><i class="fas fa-box text-6xl text-gray-400"></i></div>
+                        </div>
+                    </div>
+                    <div id="detail-thumbnails" class="thumbnail-slider mt-4"></div>
+                </div>
+                
+                <!-- Info Section -->
+                <div class="lg:w-1/2">
+                    <div class="mb-4">
+                        <div class="text-2xl md:text-3xl font-bold text-purple-500" id="detail-sale-price"></div>
+                        <div id="detail-regular-price"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-sm">
+                            <strong>Stock Status:</strong><br>
+                            <span id="detail-stock-status"></span>
+                        </div>
+                        <div class="text-sm">
+                            <strong>Visibility:</strong><br>
+                            <span id="detail-visibility"></span>
+                        </div>
+                        <div class="text-sm">
+                            <strong>Category:</strong><br>
+                            <span id="detail-product-category"></span>
+                        </div>
+                        <div class="text-sm">
+                            <strong>Product ID:</strong><br>
+                            <span class="text-xs opacity-70">#<span id="detail-product-id"></span></span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Description</h4>
+                        <p class="text-sm opacity-80 whitespace-pre-wrap" id="detail-product-description"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Zoom Modal -->
+    <div id="image-zoom-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 hidden" onclick="closeImageZoom()">
+        <div class="relative max-w-4xl w-full mx-4">
+            <img id="zoom-image" class="w-full h-auto rounded-lg" alt="Zoomed image">
+            <button onclick="closeImageZoom()" class="absolute -top-10 right-0 text-white text-3xl">&times;</button>
+        </div>
+    </div>
+
+    <!-- Product Edit/Add Modal -->
     <div id="product-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
-        <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold" id="modal-title">Add New Product</h3><button onclick="closeProductModal()" class="text-2xl">&times;</button></div>
-            <form id="product-form" class="space-y-4">
+        <div class="card rounded-xl p-4 md:p-6 max-w-3xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" id="modal-title">Add New Product</h3>
+                <button onclick="closeProductModal()" class="text-2xl">&times;</button>
+            </div>
+            <form id="product-form" class="space-y-4" onsubmit="event.preventDefault(); saveProduct();">
                 <input type="hidden" id="product-id">
-                <div><label class="block text-sm font-medium mb-1">Product Title *</label><input type="text" id="product-name" required class="w-full px-4 py-2 rounded-lg border"></div>
-                <div><label class="block text-sm font-medium mb-1">Description *</label><textarea id="product-description" rows="3" required class="w-full px-4 py-2 rounded-lg border"></textarea></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium mb-1">Category *</label><select id="product-category" required class="w-full px-4 py-2 rounded-lg border"><option value="">Select category</option></select></div>
-                    <div><label class="block text-sm font-medium mb-1">Price (AED) *</label><input type="number" id="product-price" required min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium mb-1">Brand</label><input type="text" id="product-brand" class="w-full px-4 py-2 rounded-lg border"></div>
-                    <div><label class="block text-sm font-medium mb-1">Condition *</label><select id="product-condition" required class="w-full px-4 py-2 rounded-lg border"><option value="New">New</option><option value="Like New">Like New</option><option value="Good">Good</option><option value="Fair">Fair</option></select></div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-medium mb-1">Quantity *</label><input type="number" id="product-quantity" value="1" min="1" required class="w-full px-4 py-2 rounded-lg border"></div>
-                    <div><label class="block text-sm font-medium mb-1">Material</label><input type="text" id="product-material" class="w-full px-4 py-2 rounded-lg border"></div>
-                </div>
-                <div><label class="block text-sm font-medium mb-1">SKU (Optional)</label><input type="text" id="product-sku" class="w-full px-4 py-2 rounded-lg border"></div>
+                
+                <!-- 1. Product Images -->
                 <div>
-                    <label class="block text-sm font-medium mb-1">Product Image</label>
-                    <input type="file" id="product-image-file" accept="image/jpeg,image/png,image/webp" class="w-full px-4 py-2 rounded-lg border">
-                    <div id="upload-status" class="text-xs mt-1 hidden"></div>
-                    <div id="image-preview" class="mt-3 hidden"><img id="preview-img" class="w-32 h-32 object-cover rounded-lg" alt="Preview"><button type="button" onclick="removeImage()" class="text-red-500 text-sm mt-1 block">Remove image</button></div>
-                    <input type="hidden" id="product-image-url">
+                    <label class="block text-sm font-medium mb-1">Product Images</label>
+                    <input type="file" id="product-images" accept="image/jpeg,image/png,image/webp" multiple class="w-full px-4 py-2 rounded-lg border">
+                    <div id="existing-images" class="mt-3"></div>
                 </div>
+                
+                <!-- 2. Product Name - Full width -->
+                <div>
+                    <label class="block text-sm font-medium mb-1">Product Name *</label>
+                    <input type="text" id="product-name" required class="w-full px-4 py-2 rounded-lg border">
+                </div>
+                
+                <!-- 3. Description - Full width -->
+                <div>
+                    <label class="block text-sm font-medium mb-1">Description *</label>
+                    <textarea id="product-description" rows="4" required class="w-full px-4 py-2 rounded-lg border"></textarea>
+                </div>
+                
+                <!-- 4. Sale Price and Regular Price - 50/50 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Sale Price (AED) *</label>
+                        <input type="number" id="product-sale-price" required min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Regular Price (AED)</label>
+                        <input type="number" id="product-regular-price" min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border">
+                    </div>
+                </div>
+                
+                <!-- 5. Stock Status and Category - 50/50 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Stock Status *</label>
+                        <select id="product-stock-status" required class="w-full px-4 py-2 rounded-lg border">
+                            <option value="in-stock">In Stock</option>
+                            <option value="out-of-stock">Out of Stock</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Category *</label>
+                        <select id="product-category" required class="w-full px-4 py-2 rounded-lg border">
+                            <option value="">Select category</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 6. Visibility - 50% -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Visibility *</label>
+                        <select id="product-visibility" required class="w-full px-4 py-2 rounded-lg border">
+                            <option value="published">Published</option>
+                            <option value="hidden">Hidden</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div class="flex space-x-3 pt-4">
                     <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save Product</button>
                     <button type="button" onclick="closeProductModal()" class="flex-1 border py-2 rounded-lg">Cancel</button>
@@ -644,33 +1028,14 @@
         </div>
     </div>
 
-    <!-- Product Detail Modal -->
-    <div id="product-detail-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden overflow-y-auto">
-        <div class="card rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold" id="detail-product-name">Product Details</h3><button onclick="closeProductDetail()" class="text-2xl">&times;</button></div>
-            <div class="flex flex-col md:flex-row gap-6">
-                <div class="md:w-1/2"><div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center"><img id="detail-product-image" class="w-full h-full object-cover rounded-lg hidden" alt=""><div id="detail-no-image" class="text-center"><i class="fas fa-box text-6xl text-gray-400"></i><p class="mt-2 text-sm">No image</p></div></div></div>
-                <div class="md:w-1/2">
-                    <div class="mb-4"><div class="text-3xl font-bold text-purple-500" id="detail-product-price"></div><div class="flex items-center gap-2 mt-1"><span class="text-sm px-2 py-1 bg-green-500/20 text-green-500 rounded" id="detail-product-condition"></span><span class="text-xs opacity-60">ID: #<span id="detail-product-id"></span></span></div></div>
-                    <div class="grid grid-cols-2 gap-4 mb-4"><div class="text-sm" id="detail-product-category"></div><div class="text-sm" id="detail-product-quantity"></div><div class="text-sm" id="detail-product-brand"></div></div>
-                    <div><h4 class="font-semibold mb-2">Description</h4><p class="text-sm opacity-80" id="detail-product-description"></p></div>
-                </div>
-            </div>
-            <div class="mt-6 pt-4 border-t"><button onclick="closeProductDetail()" class="px-4 py-2 bg-gray-500 text-white rounded-lg">Close</button></div>
-        </div>
-    </div>
-
-    <!-- Category Modal — FIX: added missing hidden #category-id input -->
+    <!-- Category Modal -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="card rounded-xl p-6 max-w-md w-full mx-4">
             <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">Add Category</h3><button onclick="closeCategoryModal()" class="text-2xl">&times;</button></div>
-            <form id="category-form" onsubmit="event.preventDefault(); addCategory();">
+            <form onsubmit="event.preventDefault(); addCategory();">
                 <input type="hidden" id="category-id">
                 <div><label class="block text-sm font-medium mb-1">Category Name *</label><input type="text" id="category-name" required class="w-full px-4 py-2 rounded-lg border"></div>
-                <div class="flex space-x-3 pt-4">
-                    <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save</button>
-                    <button type="button" onclick="closeCategoryModal()" class="flex-1 border py-2 rounded-lg">Cancel</button>
-                </div>
+                <div class="flex space-x-3 pt-4"><button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save</button><button type="button" onclick="closeCategoryModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div>
             </form>
         </div>
     </div>
@@ -684,14 +1049,13 @@
         .stat-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:1rem; transition:transform .2s; }
         .stat-card:hover { transform:translateY(-2px); }
         .status-badge { display:inline-block; padding:.25rem .75rem; border-radius:9999px; font-size:.75rem; font-weight:500; }
-        .status-pending   { background:#f59e0b20; color:#f59e0b; }
-        .status-approved  { background:#10b98120; color:#10b981; }
+        .status-pending { background:#f59e0b20; color:#f59e0b; }
+        .status-approved { background:#10b98120; color:#10b981; }
         .status-completed { background:#3b82f620; color:#3b82f6; }
-        .status-paid      { background:#8b5cf620; color:#8b5cf6; }
+        .status-paid { background:#8b5cf620; color:#8b5cf6; }
         .category-filter { background:var(--bg-tertiary); color:var(--text-secondary); border:1px solid var(--border-color); transition:all .2s; cursor:pointer; }
         .category-filter.active { background:var(--active-bg); color:white; border-color:var(--active-bg); }
         .line-clamp-1 { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
-        .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .aspect-square { aspect-ratio:1/1; }
         #mobile-sidebar { transform:translateX(-100%); transition:transform .3s ease; }
         #mobile-sidebar.show { transform:translateX(0); }
@@ -700,7 +1064,11 @@
         @media(min-width:768px){ #mobile-sidebar,#sidebar-overlay{ display:none; } }
         @media(max-width:767px){ .desktop-sidebar{ display:none; } .main-content{ margin-left:0!important; } }
         @media(min-width:769px){ .main-content{ margin-left:16rem; } }
+        .thumbnail-slider { display: flex; gap: 10px; overflow-x: auto; scroll-behavior: smooth; padding: 10px 0; }
+        .thumbnail-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .thumbnail-img.active { border-color: #8b5cf6; transform: scale(1.05); }
+        .main-product-image { width: 100%; height: auto; max-height: 400px; object-fit: contain; background: #f3f4f6; border-radius: 12px; }
+        @media (max-width: 768px) { .thumbnail-img { width: 50px; height: 50px; } }
     </style>
-    <script src="app.js"></script>
 </body>
 </html>
