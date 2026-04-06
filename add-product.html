@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <!-- Include Quill Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <style>
         .form-section { transition: all 0.2s ease; }
         .form-section:hover { transform: translateY(-2px); }
@@ -14,25 +17,33 @@
         .image-preview-item { position: relative; transition: all 0.2s ease; }
         .image-preview-item:hover .remove-image-btn { opacity: 1; }
         .remove-image-btn { opacity: 0; transition: opacity 0.2s ease; }
-        .profit-card { background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); border: 1px solid rgba(139, 92, 246, 0.3); }
+        .profit-card { 
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        .profit-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+        }
+        .profit-amount-positive { color: #10b981; }
+        .profit-amount-negative { color: #ef4444; }
         .back-btn, .cancel-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; background: var(--bg-tertiary); color: var(--text-primary); transition: all 0.2s; text-decoration: none; cursor: pointer; }
         .back-btn:hover, .cancel-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
         .save-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 0.75rem; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; transition: all 0.2s; cursor: pointer; border: none; font-weight: 500; }
         .save-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
         
-        /* Sidebar navigation styles matching admin dashboard */
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            margin: 0.25rem 0;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text-secondary);
-            text-decoration: none;
-        }
+        /* Rich Text Editor Styles */
+        .ql-container { min-height: 200px; font-size: 14px; }
+        .ql-toolbar { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; background: var(--bg-tertiary); border-color: var(--border-color); }
+        .ql-container { border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; background: var(--input-bg); border-color: var(--border-color); }
+        .ql-editor { min-height: 200px; color: var(--text-primary); }
+        .ql-toolbar button { color: var(--text-secondary); }
+        .ql-toolbar button:hover { color: #8b5cf6; }
+        
+        /* Sidebar navigation styles */
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin: 0.25rem 0; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; color: var(--text-secondary); text-decoration: none; }
         .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
         .nav-item.active { background: var(--active-bg); color: white; }
         
@@ -120,7 +131,14 @@
                     </div>
                     <div class="p-6 space-y-5">
                         <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Product Name <span class="text-red-500">*</span></label><input type="text" id="product-name" required class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                        <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Description <span class="text-red-500">*</span></label><textarea id="product-description" rows="5" required class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea></div>
+                        
+                        <!-- Rich Text Editor for Description -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">Description <span class="text-red-500">*</span></label>
+                            <div id="editor-container" style="height: 250px;"></div>
+                            <textarea id="product-description" style="display:none;"></textarea>
+                        </div>
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Category <span class="text-red-500">*</span></label><select id="product-category" required class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="">Select Category</option></select></div>
                             <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Brand</label><input type="text" id="product-brand" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
@@ -144,18 +162,57 @@
                     </div>
                 </div>
                 
-                <!-- Pricing -->
+                <!-- Pricing & Profit Calculator -->
                 <div class="card rounded-xl overflow-hidden form-section">
                     <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
-                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-tag text-purple-500"></i> Pricing</h2>
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i class="fas fa-tag text-purple-500"></i> Pricing & Profit Calculator</h2>
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Sale Price (AED) <span class="text-red-500">*</span></label><input type="number" id="product-sale-price" required min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Regular Price (AED)</label><input type="number" id="product-regular-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                            <div><label class="block text-sm font-medium mb-2 dark:text-gray-300">Cost Price (AED)</label><input type="number" id="product-cost-price" min="0" step="0.01" class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Sale Price (AED) <span class="text-red-500">*</span></label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">AED</span>
+                                    <input type="number" id="product-sale-price" required min="0" step="0.01" class="w-full pl-12 pr-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Regular Price (AED)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">AED</span>
+                                    <input type="number" id="product-regular-price" min="0" step="0.01" class="w-full pl-12 pr-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 dark:text-gray-300">Cost Price (AED)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">AED</span>
+                                    <input type="number" id="product-cost-price" min="0" step="0.01" class="w-full pl-12 pr-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                </div>
+                            </div>
                         </div>
-                        <div id="profit-display" class="mt-4 profit-card rounded-xl p-4 hidden"><div class="flex justify-between items-center"><span class="font-semibold dark:text-white">Your Profit:</span><span id="profit-amount" class="text-2xl font-bold text-purple-600">AED 0.00</span></div></div>
+                        
+                        <!-- Profit Calculator Display -->
+                        <div id="profit-display" class="mt-4 profit-card p-5 hidden">
+                            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                        <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">Your Estimated Profit</span>
+                                        <div class="text-2xl font-bold" id="profit-amount">AED 0.00</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div id="profit-margin-bar" class="h-full bg-gradient-to-r from-green-500 to-purple-500 rounded-full transition-all duration-300" style="width: 0%;"></div>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Profit Margin</span>
+                                    <div class="text-xl font-semibold" id="profit-margin-percent">0%</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -247,6 +304,31 @@
         let productId = null;
         let existingImageUrls = [];
         let pendingNewFiles = [];
+        let quillEditor = null;
+
+        // Initialize Quill Rich Text Editor
+        function initQuillEditor() {
+            quillEditor = new Quill('#editor-container', {
+                theme: 'snow',
+                placeholder: 'Write a detailed description of your product...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link', 'image', 'video'],
+                        ['clean']
+                    ]
+                }
+            });
+            
+            quillEditor.on('text-change', function() {
+                const html = quillEditor.root.innerHTML;
+                document.getElementById('product-description').value = html;
+            });
+        }
 
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -274,6 +356,7 @@
                 return;
             }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
+            initQuillEditor();
             await loadCategories();
             await checkForEdit();
         });
@@ -312,7 +395,15 @@
             
             document.getElementById('product-id').value = productId;
             document.getElementById('product-name').value = p.name || '';
-            document.getElementById('product-description').value = p.description || '';
+            
+            // Set rich text editor content
+            if (quillEditor && p.description) {
+                quillEditor.root.innerHTML = p.description;
+                document.getElementById('product-description').value = p.description;
+            } else if (quillEditor) {
+                quillEditor.root.innerHTML = '';
+            }
+            
             document.getElementById('product-category').value = p.category || '';
             document.getElementById('product-brand').value = p.brand || '';
             document.getElementById('product-sale-price').value = p.salePrice || p.price || '';
@@ -363,12 +454,21 @@
             const salePrice = parseFloat(document.getElementById('product-sale-price').value) || 0;
             const costPrice = parseFloat(document.getElementById('product-cost-price').value) || 0;
             const profit = salePrice - costPrice;
+            const margin = costPrice > 0 ? (profit / salePrice) * 100 : 0;
+            
             const profitDisplay = document.getElementById('profit-display');
             const profitAmount = document.getElementById('profit-amount');
+            const profitMarginPercent = document.getElementById('profit-margin-percent');
+            const profitMarginBar = document.getElementById('profit-margin-bar');
             
-            if (costPrice > 0) {
+            if (costPrice > 0 && salePrice > 0) {
                 profitDisplay.classList.remove('hidden');
-                profitAmount.textContent = `AED ${profit.toFixed(2)}`;
+                profitAmount.innerHTML = `AED ${profit.toFixed(2)}`;
+                profitAmount.className = `text-2xl font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+                profitMarginPercent.innerHTML = `${margin.toFixed(1)}%`;
+                profitMarginPercent.className = `text-xl font-semibold ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`;
+                const barWidth = Math.min(Math.max(margin, 0), 100);
+                profitMarginBar.style.width = `${barWidth}%`;
             } else {
                 profitDisplay.classList.add('hidden');
             }
@@ -419,7 +519,7 @@
 
         window.saveProduct = async () => {
             const name = document.getElementById('product-name').value.trim();
-            const description = document.getElementById('product-description').value.trim();
+            const description = quillEditor ? quillEditor.root.innerHTML : document.getElementById('product-description').value;
             const category = document.getElementById('product-category').value;
             const salePrice = parseFloat(document.getElementById('product-sale-price').value);
             
