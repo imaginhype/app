@@ -6,7 +6,7 @@
     <title>Announcements - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css");
     <style>
         .sidebar {
             background-color: var(--bg-secondary);
@@ -38,7 +38,6 @@
         .priority-low { color: #6b7280; background: #6b728020; }
         .status-active { color: #10b981; background: #10b98120; }
         .status-expired { color: #ef4444; background: #ef444420; }
-        .status-draft { color: #6b7280; background: #6b728020; }
         
         #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
         #mobile-sidebar.show { transform: translateX(0); }
@@ -50,6 +49,29 @@
         
         .announcement-row:hover { background-color: var(--hover-bg); }
         .table-container { overflow-x: auto; }
+        .action-icon {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .action-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Modal Animation */
+        .modal-overlay {
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-content {
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
@@ -215,18 +237,18 @@
     </main>
 
     <!-- Create Announcement Modal -->
-    <div id="create-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div id="create-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCreateModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto modal-content" onclick="event.stopPropagation()">
             <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
                 <h2 class="text-xl font-bold dark:text-white">Create Announcement</h2>
-                <button onclick="closeCreateModal()" class="text-2xl">&times;</button>
+                <button onclick="closeCreateModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
             </div>
             <div class="p-6">
                 <p class="text-sm text-gray-500 mb-4">Create a new announcement to notify users. Notifications will be sent automatically.</p>
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Enter announcement title</label>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Title</label>
                         <input type="text" id="announcement-title" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="e.g., New Seller Guidelines">
                     </div>
                     
@@ -271,14 +293,58 @@
         </div>
     </div>
 
-    <!-- View Announcement Modal -->
-    <div id="view-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4">
+    <!-- Edit Announcement Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeEditModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto modal-content" onclick="event.stopPropagation()">
             <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold dark:text-white" id="view-modal-title">Announcement Details</h2>
-                <button onclick="closeViewModal()" class="text-2xl">&times;</button>
+                <h2 class="text-xl font-bold dark:text-white">Edit Announcement</h2>
+                <button onclick="closeEditModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
             </div>
-            <div class="p-6" id="view-modal-content"></div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Title</label>
+                        <input type="text" id="edit-announcement-title" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Message</label>
+                        <textarea id="edit-announcement-message" rows="4" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Priority</label>
+                        <select id="edit-announcement-priority" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            <option value="normal">Normal</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="high">High</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Target Audience</label>
+                        <select id="edit-announcement-target" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            <option value="all_users">All Users</option>
+                            <option value="sellers">All Sellers</option>
+                            <option value="specific">Specific Sellers</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Expiration Date (Optional)</label>
+                        <input type="date" id="edit-announcement-expiry" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                        <p class="text-xs text-gray-500 mt-1">Announcement will be hidden after this date</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button onclick="updateAnnouncement()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">
+                        <i class="fas fa-save mr-1"></i> Save Changes
+                    </button>
+                    <button onclick="closeEditModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -305,6 +371,7 @@
         let currentSearch = '';
         let currentPriority = 'all';
         let currentStatusFilter = 'all';
+        let currentEditId = null;
         const itemsPerPage = 10;
 
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -423,7 +490,7 @@
                         <td class="px-4 py-3">
                             <div class="font-medium dark:text-white">${escapeHtml(a.title || 'Untitled')}</div>
                             <div class="text-xs text-gray-500 mt-1 line-clamp-1">${escapeHtml(a.message?.substring(0, 60))}${a.message?.length > 60 ? '...' : ''}</div>
-                         </td>
+                          </td>
                         <td class="px-4 py-3"><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${priorityClass}">${(a.priority || 'normal').toUpperCase()}</span></td>
                         <td class="px-4 py-3 text-sm">${formatTarget(a.target)}</td>
                         <td class="px-4 py-3"><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span></td>
@@ -432,11 +499,14 @@
                         <td class="px-4 py-3 text-sm">${a.expiryDate ? formatDate(a.expiryDate) : 'Never'}</td>
                         <td class="px-4 py-3">
                             <div class="flex gap-2">
-                                <button onclick="viewAnnouncement('${a.id}')" class="text-blue-500 hover:text-blue-700" title="View Details">
-                                    <i class="fas fa-eye"></i>
+                                <button onclick="openEditModal('${a.id}')" class="action-icon text-blue-500 hover:text-blue-700" title="Edit">
+                                    <i class="fas fa-edit text-lg"></i>
                                 </button>
-                                <button onclick="deleteAnnouncement('${a.id}')" class="text-red-500 hover:text-red-700" title="Delete">
-                                    <i class="fas fa-trash"></i>
+                                <button onclick="viewAnnouncement('${a.id}')" class="action-icon text-purple-500 hover:text-purple-700" title="View">
+                                    <i class="fas fa-eye text-lg"></i>
+                                </button>
+                                <button onclick="deleteAnnouncement('${a.id}')" class="action-icon text-red-500 hover:text-red-700" title="Delete">
+                                    <i class="fas fa-trash-alt text-lg"></i>
                                 </button>
                             </div>
                         </td>
@@ -476,7 +546,8 @@
             document.getElementById('create-modal').classList.remove('hidden');
         };
 
-        window.closeCreateModal = () => {
+        window.closeCreateModal = (event) => {
+            if (event && event.target !== event.currentTarget) return;
             document.getElementById('create-modal').classList.add('hidden');
             document.getElementById('announcement-title').value = '';
             document.getElementById('announcement-message').value = '';
@@ -511,54 +582,59 @@
             alert('Announcement created and notifications sent!');
         };
 
+        window.openEditModal = async (id) => {
+            const announcement = allAnnouncements.find(a => a.id === id);
+            if (!announcement) return;
+            
+            currentEditId = id;
+            document.getElementById('edit-announcement-title').value = announcement.title || '';
+            document.getElementById('edit-announcement-message').value = announcement.message || '';
+            document.getElementById('edit-announcement-priority').value = announcement.priority || 'normal';
+            document.getElementById('edit-announcement-target').value = announcement.target || 'all_users';
+            document.getElementById('edit-announcement-expiry').value = announcement.expiryDate ? announcement.expiryDate.split('T')[0] : '';
+            
+            document.getElementById('edit-modal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = (event) => {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('edit-modal').classList.add('hidden');
+            currentEditId = null;
+        };
+
+        window.updateAnnouncement = async () => {
+            if (!currentEditId) return;
+            
+            const title = document.getElementById('edit-announcement-title').value.trim();
+            const message = document.getElementById('edit-announcement-message').value.trim();
+            const priority = document.getElementById('edit-announcement-priority').value;
+            const target = document.getElementById('edit-announcement-target').value;
+            const expiryDate = document.getElementById('edit-announcement-expiry').value;
+            
+            if (!title || !message) {
+                alert('Please enter both title and message.');
+                return;
+            }
+            
+            await updateDoc(doc(db, 'announcements', currentEditId), {
+                title,
+                message,
+                priority,
+                target,
+                expiryDate: expiryDate || null,
+                updatedAt: new Date().toISOString()
+            });
+            
+            closeEditModal();
+            await loadAnnouncements();
+            alert('Announcement updated successfully!');
+        };
+
         window.viewAnnouncement = async (id) => {
             const announcement = allAnnouncements.find(a => a.id === id);
             if (!announcement) return;
             
-            const modal = document.getElementById('view-modal');
-            const title = document.getElementById('view-modal-title');
-            const content = document.getElementById('view-modal-content');
-            
-            title.textContent = announcement.title;
-            content.innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span class="text-sm font-medium">Priority:</span>
-                        <span class="inline-block px-2 py-1 rounded-full text-xs font-medium priority-${announcement.priority || 'normal'}">${(announcement.priority || 'normal').toUpperCase()}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span class="text-sm font-medium">Target Audience:</span>
-                        <span class="text-sm">${formatTarget(announcement.target)}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span class="text-sm font-medium">Status:</span>
-                        <span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${isActive(announcement) ? 'status-active' : 'status-expired'}">${isActive(announcement) ? 'Active' : 'Expired'}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span class="text-sm font-medium">Sent To:</span>
-                        <span class="text-sm">${announcement.sentCount || 0} users</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span class="text-sm font-medium">Created:</span>
-                        <span class="text-sm">${formatDateTime(announcement.createdAt)}</span>
-                    </div>
-                    ${announcement.expiryDate ? `
-                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span class="text-sm font-medium">Expires:</span>
-                        <span class="text-sm">${formatDateTime(announcement.expiryDate)}</span>
-                    </div>
-                    ` : ''}
-                    <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <div class="text-sm font-medium mb-2">Message:</div>
-                        <div class="text-sm whitespace-pre-wrap">${escapeHtml(announcement.message)}</div>
-                    </div>
-                </div>
-            `;
-            modal.classList.remove('hidden');
-        };
-
-        window.closeViewModal = () => {
-            document.getElementById('view-modal').classList.add('hidden');
+            alert(`📢 ${announcement.title}\n\n${announcement.message}\n\nPriority: ${announcement.priority}\nTarget: ${formatTarget(announcement.target)}\nCreated: ${formatDateTime(announcement.createdAt)}`);
         };
 
         window.deleteAnnouncement = async (id) => {
