@@ -26,6 +26,7 @@
         }
         .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
         .nav-item.active { background: var(--active-bg); color: white; }
+        
         .status-badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -37,16 +38,60 @@
         .status-suspended { background: #ef444420; color: #ef4444; }
         .status-pending { background: #f59e0b20; color: #f59e0b; }
         
-        #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
-        #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay:not(.show) { display: none; }
-        #sidebar-overlay.show { display: block; }
+        /* Mobile Sidebar Styles */
+        #mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+        #mobile-sidebar.show {
+            transform: translateX(0);
+        }
+        #sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            cursor: pointer;
+        }
+        #sidebar-overlay.show {
+            display: block;
+        }
+        #sidebar-overlay:not(.show) {
+            display: none;
+        }
         
-        @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
-        @media (min-width: 768px) { #mobile-sidebar, #sidebar-overlay { display: none; } .main-content { margin-left: 16rem; } }
+        @media (max-width: 767px) {
+            .desktop-sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+        @media (min-width: 768px) {
+            #mobile-sidebar,
+            #sidebar-overlay {
+                display: none;
+            }
+            .main-content {
+                margin-left: 16rem;
+            }
+        }
         
-        .table-container { overflow-x: auto; }
         .seller-row:hover { background-color: var(--hover-bg); }
+        .table-container { overflow-x: auto; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
@@ -195,7 +240,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -219,6 +264,24 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
+        // ========== MOBILE SIDEBAR FUNCTIONS ==========
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
+            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
+        };
+
+        window.closeMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        };
+
+        // ========== USER MENU FUNCTIONS ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -239,27 +302,23 @@
             }
         });
 
+        // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
 
-        window.toggleMobileMenu = () => {
-            document.getElementById('mobile-sidebar').classList.toggle('show');
-            document.getElementById('sidebar-overlay').classList.toggle('show');
-        };
-        
-        window.closeMobileMenu = () => {
-            document.getElementById('mobile-sidebar').classList.remove('show');
-            document.getElementById('sidebar-overlay').classList.remove('show');
-        };
-
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
-            document.getElementById('admin-name').textContent = 'Admin';
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.data()?.role !== 'admin') {
+                window.location.href = '/seller-dashboard.html';
+                return;
+            }
+            document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
             await loadUsers();
         });
 
@@ -341,6 +400,9 @@
                         <td class="px-4 py-3 text-sm">${formatDate(user.lastLogin)}</td>
                         <td class="px-4 py-3">
                             <div class="flex gap-2">
+                                <button onclick="viewSellerDetails('${user.id}')" class="text-blue-500 hover:text-blue-700" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                                 <button onclick="toggleUserStatus('${user.id}', '${user.status}')" class="text-${user.status === 'suspended' ? 'green' : 'orange'}-500 hover:text-${user.status === 'suspended' ? 'green' : 'orange'}-700" title="${user.status === 'suspended' ? 'Activate' : 'Suspend'}">
                                     <i class="fas fa-${user.status === 'suspended' ? 'play' : 'pause'}"></i>
                                 </button>
@@ -360,53 +422,47 @@
         function renderPagination(total) {
             const totalPages = Math.ceil(total / itemsPerPage);
             const container = document.getElementById('pagination-container');
-            if (totalPages <= 1) {
-                container.innerHTML = '';
-                return;
-            }
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) {
-                html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
-            }
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
                 html += `<button onclick="goToPage(${i})" class="px-3 py-1 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
             }
-            if (currentPage < totalPages) {
-                html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
-            }
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
             container.innerHTML = html;
         }
 
-        window.goToPage = (page) => {
-            currentPage = page;
-            renderUsers();
+        window.goToPage = (page) => { currentPage = page; renderUsers(); };
+        
+        window.viewSellerDetails = (userId) => {
+            alert(`Seller details page coming soon. User ID: ${userId}`);
         };
-
+        
         window.toggleUserStatus = async (userId, currentStatus) => {
             const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
             if (!confirm(`${newStatus === 'active' ? 'Activate' : 'Suspend'} this user?`)) return;
             await updateDoc(doc(db, 'users', userId), { status: newStatus });
             await loadUsers();
         };
-
+        
         window.deleteUser = async (userId) => {
             if (!confirm('Delete this user? This action cannot be undone.')) return;
-            // Note: You may want to implement soft delete or handle related data
-            alert('Delete functionality - Implement based on your requirements');
+            // Soft delete - mark as deleted
+            await updateDoc(doc(db, 'users', userId), { 
+                status: 'deleted',
+                email: `deleted_${Date.now()}@removed.com`,
+                name: 'Deleted User'
+            });
+            await loadUsers();
         };
-
+        
         window.exportToCSV = () => {
             let filtered = allUsers;
             if (currentSearch) {
                 const search = currentSearch.toLowerCase();
-                filtered = filtered.filter(u => 
-                    u.name?.toLowerCase().includes(search) || 
-                    u.email?.toLowerCase().includes(search)
-                );
+                filtered = filtered.filter(u => u.name?.toLowerCase().includes(search) || u.email?.toLowerCase().includes(search));
             }
-            if (currentRole !== 'all') {
-                filtered = filtered.filter(u => u.role === currentRole);
-            }
+            if (currentRole !== 'all') filtered = filtered.filter(u => u.role === currentRole);
             
             const headers = ['ID', 'Name', 'Email', 'Role', 'Status', 'Orders', 'Revenue', 'Registered', 'Last Login'];
             const rows = filtered.map(u => [
@@ -446,23 +502,9 @@
             });
         }
 
-        // Search and filters
-        document.getElementById('search-sellers').addEventListener('input', (e) => {
-            currentSearch = e.target.value;
-            currentPage = 1;
-            renderUsers();
-        });
-        
-        document.getElementById('role-filter').addEventListener('change', (e) => {
-            currentRole = e.target.value;
-            currentPage = 1;
-            renderUsers();
-        });
-        
-        document.getElementById('filter-btn').addEventListener('click', () => {
-            currentPage = 1;
-            renderUsers();
-        });
+        document.getElementById('search-sellers').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderUsers(); });
+        document.getElementById('role-filter').addEventListener('change', (e) => { currentRole = e.target.value; currentPage = 1; renderUsers(); });
+        document.getElementById('filter-btn').addEventListener('click', () => { currentPage = 1; renderUsers(); });
     </script>
 </body>
 </html>
