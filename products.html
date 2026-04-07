@@ -64,14 +64,14 @@
             box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
         }
         
-        /* Product Image Container - White background, taller aspect ratio */
+        /* Product Image Container - White background, SHORTER aspect ratio (4:3) */
         .product-image-container {
             background: #ffffff;
             padding: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            aspect-ratio: 3 / 4;
+            aspect-ratio: 4 / 3;
             width: 100%;
         }
         .dark .product-image-container {
@@ -87,10 +87,10 @@
             transform: scale(1.05);
         }
         
-        /* Mobile: Even taller for better product visibility */
+        /* Mobile: Adjust for smaller screens */
         @media (max-width: 640px) {
             .product-image-container {
-                aspect-ratio: 2 / 2.5;
+                aspect-ratio: 3 / 2.5;
             }
             .product-title {
                 font-size: 14px;
@@ -370,7 +370,7 @@
             flex-wrap: wrap;
         }
         
-        /* Category Item - More spacing between edit/delete buttons */
+        /* Category Item */
         .category-item {
             display: flex;
             justify-content: space-between;
@@ -394,7 +394,7 @@
             background: var(--hover-bg);
         }
         
-        /* Add Category Form - Responsive */
+        /* Add Category Form */
         .add-category-form {
             display: flex;
             gap: 12px;
@@ -429,9 +429,6 @@
             }
             .add-category-form button {
                 width: 100%;
-            }
-            .category-actions {
-                gap: 12px;
             }
         }
     </style>
@@ -561,7 +558,7 @@
                 Showing <span id="product-count-start">0</span> - <span id="product-count-end">0</span> of <span id="product-total">0</span> products
             </div>
 
-            <!-- Products Container -->
+            <!-- Products Container - 4 columns on desktop, image height reduced -->
             <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <div class="text-center py-8 col-span-full">Loading products...</div>
             </div>
@@ -571,7 +568,7 @@
         </div>
     </main>
 
-    <!-- Manage Categories Modal - Fixed responsive layout -->
+    <!-- Manage Categories Modal -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" onclick="closeCategoryModal(event)">
         <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
             <div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
@@ -579,17 +576,14 @@
                 <button onclick="closeCategoryModal()" class="text-2xl hover:text-gray-500">&times;</button>
             </div>
             <div class="p-5">
-                <!-- Add New Category - Responsive form -->
                 <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
                     <h3 class="font-semibold mb-3">Add New Category</h3>
                     <div class="add-category-form">
-                        <input type="text" id="new-category-name" placeholder="Enter category name" class="flex-1">
+                        <input type="text" id="new-category-name" placeholder="Enter category name">
                         <button onclick="addCategory()">+ Add Category</button>
                     </div>
                     <p class="text-xs text-gray-500 mt-2">Category names must be between 2-50 characters</p>
                 </div>
-
-                <!-- Existing Categories -->
                 <h3 class="font-semibold mb-3">Existing Categories</h3>
                 <div id="categories-list" class="space-y-2 max-h-96 overflow-y-auto">
                     <div class="text-center py-4 text-gray-500">Loading categories...</div>
@@ -649,7 +643,6 @@
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        // UI Functions
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -826,7 +819,6 @@
             renderProducts();
         }
 
-        // Product actions
         window.viewProduct = (id) => { window.location.href = `product-view.html?id=${id}`; };
         window.editProduct = (id) => { window.location.href = `add-product.html?id=${id}`; };
         window.deleteProduct = async (id) => {
@@ -835,12 +827,10 @@
             await loadProducts();
         };
         
-        // Filter by category from badge click
         window.filterByCategoryFromBadge = (category) => {
             filterByCategory(category);
         };
 
-        // Dropdown menu handlers
         window.toggleDropdown = (event, id) => {
             event.stopPropagation();
             document.querySelectorAll('.dropdown-menu').forEach(menu => {
@@ -854,7 +844,6 @@
             document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
         });
 
-        // Helper function to strip HTML tags
         function stripHtml(html) {
             if (!html) return '';
             const div = document.createElement('div');
