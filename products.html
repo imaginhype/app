@@ -62,6 +62,30 @@
         
         @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
         @media (min-width: 768px) { #mobile-sidebar, #sidebar-overlay { display: none; } .main-content { margin-left: 16rem; } }
+        
+        .action-icon {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .action-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Modal Animation */
+        .modal-overlay {
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-content {
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
@@ -201,14 +225,15 @@
         </div>
     </main>
 
-    <!-- Manage Categories Modal -->
-    <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+    <!-- Manage Categories Modal (with Edit Option) -->
+    <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCategoryModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto modal-content" onclick="event.stopPropagation()">
             <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
                 <h2 class="text-xl font-bold dark:text-white">Manage Categories</h2>
-                <button onclick="closeCategoryModal()" class="text-2xl">&times;</button>
+                <button onclick="closeCategoryModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
             </div>
             <div class="p-6">
+                <!-- Add New Category -->
                 <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                     <h3 class="font-semibold mb-3 dark:text-white">Add New Category</h3>
                     <div class="flex gap-3">
@@ -217,6 +242,8 @@
                     </div>
                     <p class="text-xs text-gray-500 mt-2">Category names must be between 2-50 characters</p>
                 </div>
+
+                <!-- Existing Categories -->
                 <h3 class="font-semibold mb-3 dark:text-white">Existing Categories</h3>
                 <div id="categories-list" class="space-y-2">
                     <div class="text-center py-4 text-gray-500">Loading categories...</div>
@@ -225,10 +252,33 @@
         </div>
     </div>
 
+    <!-- Edit Category Modal -->
+    <div id="edit-category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeEditCategoryModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4 modal-content" onclick="event.stopPropagation()">
+            <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold dark:text-white">Edit Category</h2>
+                <button onclick="closeEditCategoryModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2 dark:text-gray-300">Category Name</label>
+                    <input type="text" id="edit-category-name" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="Enter category name">
+                    <p class="text-xs text-gray-500 mt-1">Category names must be between 2-50 characters</p>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="updateCategory()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">
+                        <i class="fas fa-save mr-1"></i> Save Changes
+                    </button>
+                    <button onclick="closeEditCategoryModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -249,6 +299,7 @@
         let currentSearch = '';
         let currentView = 'grid';
         let currentPage = 1;
+        let currentEditCategoryId = null;
         const itemsPerPage = 12;
 
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -310,7 +361,7 @@
 
         async function loadCategories() {
             const snap = await getDocs(collection(db, 'categories'));
-            allCategories = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
+            allCategories = snap.docs.map(d => ({ id: d.id, name: d.data().name, createdAt: d.data().createdAt }));
             renderCategoryChips();
             renderCategoriesList();
         }
@@ -338,14 +389,56 @@
                 <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
                     <div>
                         <span class="font-medium dark:text-white">${escapeHtml(cat.name)}</span>
-                        <p class="text-xs text-gray-500">Created: ${new Date(cat.createdAt || Date.now()).toLocaleDateString()}</p>
+                        <p class="text-xs text-gray-500">Created: ${cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : 'N/A'}</p>
                     </div>
-                    <button onclick="deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="openEditCategoryModal('${cat.id}', '${escapeHtml(cat.name)}')" class="action-icon text-blue-500 hover:text-blue-700" title="Edit Category">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteCategory('${cat.id}')" class="action-icon text-red-500 hover:text-red-700" title="Delete Category">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
+
+        window.openEditCategoryModal = (id, name) => {
+            currentEditCategoryId = id;
+            document.getElementById('edit-category-name').value = name;
+            document.getElementById('edit-category-modal').classList.remove('hidden');
+        };
+
+        window.closeEditCategoryModal = (event) => {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('edit-category-modal').classList.add('hidden');
+            currentEditCategoryId = null;
+        };
+
+        window.updateCategory = async () => {
+            if (!currentEditCategoryId) return;
+            
+            const newName = document.getElementById('edit-category-name').value.trim();
+            if (!newName || newName.length < 2 || newName.length > 50) {
+                alert('Category name must be between 2-50 characters');
+                return;
+            }
+            
+            // Check if category with same name already exists
+            if (allCategories.some(cat => cat.id !== currentEditCategoryId && cat.name.toLowerCase() === newName.toLowerCase())) {
+                alert('A category with this name already exists');
+                return;
+            }
+            
+            await updateDoc(doc(db, 'categories', currentEditCategoryId), {
+                name: newName,
+                updatedAt: new Date().toISOString()
+            });
+            
+            closeEditCategoryModal();
+            await loadCategories();
+            await loadProducts(); // Refresh products to update category filters
+        };
 
         window.addCategory = async () => {
             const name = document.getElementById('new-category-name').value.trim();
@@ -353,6 +446,13 @@
                 alert('Category name must be between 2-50 characters');
                 return;
             }
+            
+            // Check if category already exists
+            if (allCategories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
+                alert('A category with this name already exists');
+                return;
+            }
+            
             await addDoc(collection(db, 'categories'), { name, createdAt: new Date().toISOString() });
             document.getElementById('new-category-name').value = '';
             await loadCategories();
@@ -368,7 +468,8 @@
             document.getElementById('category-modal').classList.remove('hidden');
         };
 
-        window.closeCategoryModal = () => {
+        window.closeCategoryModal = (event) => {
+            if (event && event.target !== event.currentTarget) return;
             document.getElementById('category-modal').classList.add('hidden');
         };
 
