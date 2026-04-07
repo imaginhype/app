@@ -34,12 +34,14 @@
         }
         .notification-item {
             transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .notification-item.unread {
+            border-left-color: #8b5cf6;
+            background: linear-gradient(90deg, rgba(139,92,246,0.05) 0%, transparent 100%);
         }
         .notification-item:hover {
             background-color: var(--hover-bg);
-        }
-        .notification-item.unread {
-            border-left: 3px solid #8b5cf6;
         }
         .filter-chip {
             cursor: pointer;
@@ -57,6 +59,13 @@
         .status-tab.active {
             border-bottom: 2px solid #8b5cf6;
             color: #8b5cf6;
+        }
+        .action-icon {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .action-icon:hover {
+            transform: scale(1.1);
         }
         
         #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
@@ -84,6 +93,22 @@
         @keyframes pulse {
             0% { transform: scale(0.8); opacity: 1; }
             100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        /* Modal Animation */
+        .modal-overlay {
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-content {
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
@@ -214,11 +239,11 @@
                 <h3 class="text-sm font-medium mb-3 dark:text-white">Notification Center</h3>
                 <div class="flex flex-wrap gap-2">
                     <button class="filter-chip active px-4 py-2 rounded-full text-sm bg-purple-500 text-white" data-type="all">All</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="announcements">Announcements</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="orders">Orders</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="payments">Payments</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="chat">Chat</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="system">System</button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="announcements">📢 Announcements</button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="orders">🛒 Orders</button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="payments">💰 Payments</button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="chat">💬 Chat</button>
+                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="system">⚙️ System</button>
                 </div>
             </div>
 
@@ -247,10 +272,39 @@
         </div>
     </main>
 
+    <!-- Notification Details Modal (Professional Design) -->
+    <div id="notification-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeNotificationModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4 modal-content" onclick="event.stopPropagation()">
+            <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div id="modal-icon" class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                        <i class="fas fa-bell text-purple-500"></i>
+                    </div>
+                    <h2 class="text-xl font-bold dark:text-white" id="modal-title">Notification Details</h2>
+                </div>
+                <button onclick="closeNotificationModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="p-5" id="modal-content">
+                <!-- Content loaded dynamically -->
+            </div>
+            <div class="p-5 border-t dark:border-gray-700 flex gap-3">
+                <button id="modal-mark-read" class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition">
+                    <i class="fas fa-check mr-1"></i> Mark as Read
+                </button>
+                <button id="modal-mark-unread" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition">
+                    <i class="fas fa-undo mr-1"></i> Mark as Unread
+                </button>
+                <button id="modal-delete" class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">
+                    <i class="fas fa-trash mr-1"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -270,6 +324,7 @@
         let currentStatus = 'all';
         let currentSearch = '';
         let currentPage = 1;
+        let currentModalNotification = null;
         const itemsPerPage = 10;
 
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -324,9 +379,8 @@
             await loadNotifications();
         });
 
-        // Sample notifications data - In production, fetch from Firestore 'notifications' collection
         async function loadNotifications() {
-            // For demo purposes, creating sample notifications
+            // Sample notifications data
             allNotifications = [
                 { id: '1', title: 'New Order Request', message: 'Order #3572 from John Doe requires approval', type: 'orders', read: false, createdAt: new Date(Date.now() - 3600000).toISOString() },
                 { id: '2', title: 'Payment Received', message: 'Payment of AED 1,299 received for order #2345', type: 'payments', read: false, createdAt: new Date(Date.now() - 7200000).toISOString() },
@@ -373,7 +427,6 @@
                 );
             }
             
-            // Sort by date (newest first)
             filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
             const total = filtered.length;
@@ -389,23 +442,29 @@
             }
             
             container.innerHTML = paginated.map(notif => `
-                <div class="notification-item ${notif.read ? '' : 'unread'} bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700 cursor-pointer" onclick="markAsRead('${notif.id}')">
+                <div class="notification-item ${notif.read ? '' : 'unread'} bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
                     <div class="flex justify-between items-start">
-                        <div class="flex-1">
+                        <div class="flex-1 cursor-pointer" onclick="viewNotificationDetails('${notif.id}')">
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700">${getTypeLabel(notif.type)}</span>
                                 <span class="text-xs text-gray-500">${formatDate(notif.createdAt)}</span>
                                 ${!notif.read ? '<span class="text-xs text-purple-500 font-medium">● New</span>' : ''}
                             </div>
                             <h4 class="font-semibold dark:text-white">${escapeHtml(notif.title)}</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${escapeHtml(notif.message)}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">${escapeHtml(notif.message)}</p>
                         </div>
                         <div class="flex gap-2 ml-4">
-                            <button onclick="event.stopPropagation(); viewNotificationDetails('${notif.id}')" class="text-purple-500 hover:text-purple-700 text-sm">
-                                View Details →
+                            <button onclick="event.stopPropagation(); markAsRead('${notif.id}')" class="action-icon text-green-500 hover:text-green-700" title="Mark as Read">
+                                <i class="fas fa-check-circle text-lg"></i>
                             </button>
-                            <button onclick="event.stopPropagation(); deleteNotification('${notif.id}')" class="text-red-500 hover:text-red-700">
-                                <i class="fas fa-trash"></i>
+                            <button onclick="event.stopPropagation(); markAsUnread('${notif.id}')" class="action-icon text-gray-500 hover:text-blue-500" title="Mark as Unread">
+                                <i class="fas fa-circle text-lg"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteNotification('${notif.id}')" class="action-icon text-red-500 hover:text-red-700" title="Delete">
+                                <i class="fas fa-trash-alt text-lg"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); viewNotificationDetails('${notif.id}')" class="action-icon text-purple-500 hover:text-purple-700" title="View Details">
+                                <i class="fas fa-eye text-lg"></i>
                             </button>
                         </div>
                     </div>
@@ -440,16 +499,33 @@
             renderNotifications();
         };
 
-        window.markAsRead = async (id) => {
+        window.markAsRead = (id) => {
             const notif = allNotifications.find(n => n.id === id);
             if (notif && !notif.read) {
                 notif.read = true;
                 updateStats();
                 renderNotifications();
+                if (currentModalNotification && currentModalNotification.id === id) {
+                    currentModalNotification.read = true;
+                    updateModalContent();
+                }
             }
         };
 
-        window.markAllAsRead = async () => {
+        window.markAsUnread = (id) => {
+            const notif = allNotifications.find(n => n.id === id);
+            if (notif && notif.read) {
+                notif.read = false;
+                updateStats();
+                renderNotifications();
+                if (currentModalNotification && currentModalNotification.id === id) {
+                    currentModalNotification.read = false;
+                    updateModalContent();
+                }
+            }
+        };
+
+        window.markAllAsRead = () => {
             allNotifications.forEach(notif => {
                 notif.read = true;
             });
@@ -459,16 +535,61 @@
 
         window.viewNotificationDetails = (id) => {
             const notif = allNotifications.find(n => n.id === id);
-            if (notif) {
-                alert(`📢 Notification Details\n\nTitle: ${notif.title}\nMessage: ${notif.message}\nType: ${getTypeLabel(notif.type)}\nDate: ${formatDateTime(notif.createdAt)}`);
-                // Also mark as read when viewed
-                if (!notif.read) {
-                    notif.read = true;
-                    updateStats();
-                    renderNotifications();
-                }
-            }
+            if (!notif) return;
+            
+            currentModalNotification = notif;
+            updateModalContent();
+            document.getElementById('notification-modal').classList.remove('hidden');
         };
+
+        function updateModalContent() {
+            if (!currentModalNotification) return;
+            
+            const modalContent = document.getElementById('modal-content');
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Type:</span>
+                        <span class="text-sm">${getTypeLabel(currentModalNotification.type)}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Status:</span>
+                        <span class="inline-flex items-center gap-1 text-sm ${currentModalNotification.read ? 'text-green-500' : 'text-purple-500'}">
+                            <i class="fas ${currentModalNotification.read ? 'fa-check-circle' : 'fa-circle'}"></i>
+                            ${currentModalNotification.read ? 'Read' : 'Unread'}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Date:</span>
+                        <span class="text-sm">${formatDateTime(currentModalNotification.createdAt)}</span>
+                    </div>
+                    <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div class="text-sm font-medium mb-2">Message:</div>
+                        <div class="text-sm whitespace-pre-wrap">${escapeHtml(currentModalNotification.message)}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modal-title').textContent = currentModalNotification.title;
+            
+            // Setup modal buttons
+            const markReadBtn = document.getElementById('modal-mark-read');
+            const markUnreadBtn = document.getElementById('modal-mark-unread');
+            const deleteBtn = document.getElementById('modal-delete');
+            
+            markReadBtn.onclick = () => {
+                markAsRead(currentModalNotification.id);
+                updateModalContent();
+            };
+            markUnreadBtn.onclick = () => {
+                markAsUnread(currentModalNotification.id);
+                updateModalContent();
+            };
+            deleteBtn.onclick = () => {
+                deleteNotification(currentModalNotification.id);
+                closeNotificationModal();
+            };
+        }
 
         window.deleteNotification = (id) => {
             if (!confirm('Delete this notification?')) return;
@@ -478,6 +599,12 @@
                 currentPage = currentPage - 1;
             }
             renderNotifications();
+        };
+
+        window.closeNotificationModal = (event) => {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('notification-modal').classList.add('hidden');
+            currentModalNotification = null;
         };
 
         function getTypeLabel(type) {
