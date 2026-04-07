@@ -9,26 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .stat-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            transition: transform 0.2s;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        .status-pending { background: #f59e0b20; color: #f59e0b; }
-        .status-approved { background: #10b98120; color: #10b981; }
-        .status-completed { background: #3b82f620; color: #3b82f6; }
-        .status-paid { background: #8b5cf620; color: #8b5cf6; }
+        /* Sidebar Styles */
         .sidebar {
             background-color: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
@@ -45,25 +26,111 @@
             color: var(--text-secondary);
             text-decoration: none;
         }
-        .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
-        .nav-item.active { background: var(--active-bg); color: white; }
+        .nav-item:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+        .nav-item.active {
+            background: var(--active-bg);
+            color: white;
+        }
         
-        #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
-        #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay:not(.show) { display: none; }
-        #sidebar-overlay.show { display: block; }
+        /* Stat Cards */
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
         
-        @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
-        @media (min-width: 768px) { #mobile-sidebar, #sidebar-overlay { display: none; } .main-content { margin-left: 16rem; } }
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-pending { background: #f59e0b20; color: #f59e0b; }
+        .status-approved { background: #10b98120; color: #10b981; }
+        .status-completed { background: #3b82f620; color: #3b82f6; }
+        .status-paid { background: #8b5cf620; color: #8b5cf6; }
+        
+        /* Mobile Sidebar Styles */
+        #mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+        #mobile-sidebar.show {
+            transform: translateX(0);
+        }
+        #sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            cursor: pointer;
+        }
+        #sidebar-overlay.show {
+            display: block;
+        }
+        #sidebar-overlay:not(.show) {
+            display: none;
+        }
+        
+        @media (max-width: 767px) {
+            .desktop-sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+        @media (min-width: 768px) {
+            #mobile-sidebar,
+            #sidebar-overlay {
+                display: none;
+            }
+            .main-content {
+                margin-left: 16rem;
+            }
+        }
+        
+        .section {
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Sidebar Overlay for Mobile -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Sidebar -->
     <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
         <div class="p-4 border-b flex justify-between items-center">
-            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-store text-2xl text-purple-500"></i>
+                <span class="text-xl font-bold">Marketplace Pro</span>
+            </div>
             <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
         </div>
         <div class="p-4">
@@ -75,7 +142,7 @@
                 <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
                 <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
                 <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
-                <div class="nav-item" onclick="showSection('settings',this)"><i class="fas fa-cog w-5"></i><span>Settings</span></div>
+                <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
             </nav>
         </div>
         <div class="absolute bottom-0 w-full p-4 border-t">
@@ -86,7 +153,10 @@
     <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
         <div class="p-4 border-b">
-            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-store text-2xl text-purple-500"></i>
+                <span class="text-xl font-bold">Marketplace Pro</span>
+            </div>
             <p class="text-xs opacity-60 mt-2">Admin Panel</p>
         </div>
         <nav class="p-4">
@@ -96,7 +166,7 @@
             <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
             <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
             <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
-            <div class="nav-item" onclick="showSection('settings',this)"><i class="fas fa-cog w-5"></i><span>Settings</span></div>
+            <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
         </nav>
         <div class="absolute bottom-0 w-full p-4 border-t">
             <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
@@ -105,14 +175,13 @@
 
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar -->
+        <!-- Top Bar with Profile Dropdown -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold">Dashboard</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Welcome back, Admin</p>
-                </div>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="text-xl md:text-2xl font-bold">Dashboard</h1>
             </div>
             <div class="flex items-center space-x-4">
                 <button onclick="toggleTheme()" class="p-2 rounded-full transition" title="Toggle theme">
@@ -271,7 +340,36 @@
             });
         }
 
-        // User Menu Functions
+        // ========== MOBILE SIDEBAR FUNCTIONS ==========
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) {
+                sidebar.classList.toggle('show');
+            }
+            if (overlay) {
+                overlay.classList.toggle('show');
+            }
+            if (sidebar && sidebar.classList.contains('show')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        };
+
+        window.closeMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) {
+                sidebar.classList.remove('show');
+            }
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+            document.body.style.overflow = '';
+        };
+
+        // ========== USER MENU FUNCTIONS ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -294,33 +392,20 @@
             }
         });
 
+        // ========== THEME FUNCTIONS ==========
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
 
-        window.toggleMobileMenu = () => {
-            const sb = document.getElementById('mobile-sidebar');
-            const ov = document.getElementById('sidebar-overlay');
-            if (sb) sb.classList.toggle('show');
-            if (ov) ov.classList.toggle('show');
-            document.body.style.overflow = sb?.classList.contains('show') ? 'hidden' : '';
-        };
-        
-        window.closeMobileMenu = () => {
-            const sb = document.getElementById('mobile-sidebar');
-            const ov = document.getElementById('sidebar-overlay');
-            if (sb) sb.classList.remove('show');
-            if (ov) ov.classList.remove('show');
-            document.body.style.overflow = '';
-        };
-
+        // ========== LOGOUT ==========
         window.logout = async () => {
             await signOut(auth);
             window.location.href = '/';
         };
 
+        // ========== SECTION SWITCHER ==========
         window.showSection = (section, clickedEl) => {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
             const sectionEl = document.getElementById(`section-${section}`);
@@ -330,6 +415,7 @@
             window.closeMobileMenu?.();
         };
 
+        // ========== AUTHENTICATION ==========
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
