@@ -6,7 +6,7 @@
     <title>Announcements - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css");
+    <link rel="stylesheet" href="style.css">
     <style>
         .sidebar {
             background-color: var(--bg-secondary);
@@ -32,12 +32,12 @@
         .stat-card:hover {
             transform: translateY(-2px);
         }
-        .priority-urgent { color: #ef4444; background: #ef444420; }
-        .priority-high { color: #f59e0b; background: #f59e0b20; }
-        .priority-normal { color: #3b82f6; background: #3b82f620; }
-        .priority-low { color: #6b7280; background: #6b728020; }
-        .status-active { color: #10b981; background: #10b98120; }
-        .status-expired { color: #ef4444; background: #ef444420; }
+        .priority-urgent { color: #ef4444; background: rgba(239, 68, 68, 0.125); }
+        .priority-high { color: #f59e0b; background: rgba(245, 158, 11, 0.125); }
+        .priority-normal { color: #3b82f6; background: rgba(59, 130, 246, 0.125); }
+        .priority-low { color: #6b7280; background: rgba(107, 114, 128, 0.125); }
+        .status-active { color: #10b981; background: rgba(16, 185, 129, 0.125); }
+        .status-expired { color: #ef4444; background: rgba(239, 68, 68, 0.125); }
         
         #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
         #mobile-sidebar.show { transform: translateX(0); }
@@ -490,7 +490,7 @@
                         <td class="px-4 py-3">
                             <div class="font-medium dark:text-white">${escapeHtml(a.title || 'Untitled')}</div>
                             <div class="text-xs text-gray-500 mt-1 line-clamp-1">${escapeHtml(a.message?.substring(0, 60))}${a.message?.length > 60 ? '...' : ''}</div>
-                          </td>
+                           </td>
                         <td class="px-4 py-3"><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${priorityClass}">${(a.priority || 'normal').toUpperCase()}</span></td>
                         <td class="px-4 py-3 text-sm">${formatTarget(a.target)}</td>
                         <td class="px-4 py-3"><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span></td>
