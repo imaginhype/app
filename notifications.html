@@ -8,6 +8,48 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Import Inter Font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Theme Variables */
+        :root {
+            --accent-color: #2563eb;
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --hover-bg: #f1f5f9;
+            --active-bg: #2563eb;
+            --input-bg: #ffffff;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --card-bg: #1e293b;
+            --hover-bg: #334155;
+            --active-bg: #2563eb;
+            --input-bg: #334155;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Sidebar Styles */
         .sidebar {
             background-color: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
@@ -27,53 +69,7 @@
         .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
         .nav-item.active { background: var(--active-bg); color: white; }
         
-        .stat-card {
-            transition: all 0.2s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-        
-        .notification-item {
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-        }
-        .notification-item.unread {
-            border-left-color: #8b5cf6;
-            background: linear-gradient(90deg, rgba(139,92,246,0.05) 0%, transparent 100%);
-        }
-        .notification-item:hover {
-            background-color: var(--hover-bg);
-        }
-        
-        .filter-chip {
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .filter-chip.active {
-            background-color: #8b5cf6;
-            color: white;
-        }
-        
-        .status-tab {
-            cursor: pointer;
-            transition: all 0.2s;
-            padding-bottom: 0.5rem;
-        }
-        .status-tab.active {
-            border-bottom: 2px solid #8b5cf6;
-            color: #8b5cf6;
-        }
-        
-        .action-icon {
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .action-icon:hover {
-            transform: scale(1.1);
-        }
-        
-        /* Mobile Sidebar Styles */
+        /* Mobile Sidebar */
         #mobile-sidebar {
             transform: translateX(-100%);
             transition: transform 0.3s ease;
@@ -87,9 +83,7 @@
             border-right: 1px solid var(--border-color);
             overflow-y: auto;
         }
-        #mobile-sidebar.show {
-            transform: translateX(0);
-        }
+        #mobile-sidebar.show { transform: translateX(0); }
         #sidebar-overlay {
             position: fixed;
             top: 0;
@@ -100,29 +94,149 @@
             z-index: 999;
             cursor: pointer;
         }
-        #sidebar-overlay.show {
-            display: block;
-        }
-        #sidebar-overlay:not(.show) {
-            display: none;
-        }
+        #sidebar-overlay.show { display: block; }
+        #sidebar-overlay:not(.show) { display: none; }
         
         @media (max-width: 767px) {
-            .desktop-sidebar {
-                display: none;
-            }
-            .main-content {
-                margin-left: 0 !important;
-            }
+            .desktop-sidebar { display: none; }
+            .main-content { margin-left: 0 !important; }
         }
         @media (min-width: 768px) {
-            #mobile-sidebar,
-            #sidebar-overlay {
-                display: none;
-            }
-            .main-content {
-                margin-left: 16rem;
-            }
+            #mobile-sidebar, #sidebar-overlay { display: none; }
+            .main-content { margin-left: 16rem; }
+        }
+        
+        /* Stat Cards */
+        .stat-card {
+            transition: all 0.2s ease;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Notification Item */
+        .notification-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+        }
+        .notification-item.unread {
+            border-left-color: var(--accent-color);
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.03) 0%, transparent 100%);
+        }
+        .notification-item:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        /* Filter Chips */
+        .filter-chip {
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .filter-chip.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        /* Status Tabs */
+        .status-tab {
+            cursor: pointer;
+            transition: all 0.2s;
+            padding-bottom: 0.5rem;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .status-tab.active {
+            border-bottom: 2px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        /* Action Icons */
+        .action-icon {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+        }
+        .action-icon:hover {
+            transform: scale(1.1);
+            background: var(--hover-bg);
+        }
+        
+        /* Action Toolbar */
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        /* Search Input */
+        .search-input {
+            padding: 8px 14px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            width: 100%;
+            max-width: 280px;
+            font-size: 13px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        /* Pagination */
+        .pagination-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+        .pagination-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-content {
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
         .live-indicator {
@@ -143,25 +257,9 @@
             0% { transform: scale(0.8); opacity: 1; }
             100% { transform: scale(1.5); opacity: 0; }
         }
-        
-        /* Modal Animation */
-        .modal-overlay {
-            animation: fadeIn 0.2s ease;
-        }
-        .modal-content {
-            animation: slideUp 0.3s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body>
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Sidebar -->
@@ -210,41 +308,35 @@
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
         <!-- Top Bar -->
-        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Notifications</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Monitor all system notifications, user activities, and important events</p>
+                    <p class="text-sm text-gray-500">Monitor all system notifications, user activities, and important events</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="markAllAsRead()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
-                    <i class="fas fa-check-double mr-1"></i> Mark All Read
-                </button>
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
                     <i class="fas fa-moon dark:block hidden"></i>
                     <i class="fas fa-sun dark:hidden block"></i>
                 </button>
                 <div class="relative">
                     <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
                         <i class="fas fa-user-circle text-2xl"></i>
-                        <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
+                        <span class="hidden md:inline" id="admin-name">Admin</span>
                         <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
                     </button>
-                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border dark:border-gray-700">
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
                         <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-user-circle w-5 text-gray-500"></i>
-                            <span>My Profile</span>
+                            <i class="fas fa-user-circle w-5"></i> My Profile
                         </a>
                         <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-cog w-5 text-gray-500"></i>
-                            <span>Account Settings</span>
+                            <i class="fas fa-cog w-5"></i> Account Settings
                         </a>
-                        <div class="border-t dark:border-gray-700"></div>
+                        <div class="border-t"></div>
                         <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-sign-out-alt w-5"></i>
-                            <span>Logout</span>
+                            <i class="fas fa-sign-out-alt w-5"></i> Logout
                         </button>
                     </div>
                 </div>
@@ -253,6 +345,13 @@
 
         <!-- Main Content -->
         <div class="p-4 md:p-6">
+            <!-- Action Toolbar (Mark All Read button moved here) -->
+            <div class="action-toolbar">
+                <button onclick="markAllAsRead()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
+                    <i class="fas fa-check-double"></i> Mark All Read
+                </button>
+            </div>
+
             <!-- Live Indicator -->
             <div class="flex items-center gap-3 mb-6">
                 <div class="live-indicator">
@@ -265,19 +364,19 @@
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                <div class="stat-card p-4">
                     <div class="text-2xl font-bold text-purple-500" id="stat-total">0</div>
                     <div class="text-sm text-gray-500">Total</div>
                 </div>
-                <div class="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                <div class="stat-card p-4">
                     <div class="text-2xl font-bold text-blue-500" id="stat-unread">0</div>
                     <div class="text-sm text-gray-500">Unread</div>
                 </div>
-                <div class="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                <div class="stat-card p-4">
                     <div class="text-2xl font-bold text-green-500" id="stat-read">0</div>
                     <div class="text-sm text-gray-500">Read</div>
                 </div>
-                <div class="stat-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                <div class="stat-card p-4">
                     <div class="text-2xl font-bold text-orange-500" id="stat-system">0</div>
                     <div class="text-sm text-gray-500">System</div>
                 </div>
@@ -287,12 +386,12 @@
             <div class="mb-6">
                 <h3 class="text-sm font-medium mb-3 dark:text-white">Notification Center</h3>
                 <div class="flex flex-wrap gap-2">
-                    <button class="filter-chip active px-4 py-2 rounded-full text-sm bg-purple-500 text-white" data-type="all">All</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="announcements">📢 Announcements</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="orders">🛒 Orders</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="payments">💰 Payments</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="chat">💬 Chat</button>
-                    <button class="filter-chip px-4 py-2 rounded-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-purple-500 hover:text-white transition" data-type="system">⚙️ System</button>
+                    <button class="filter-chip active" data-type="all">All</button>
+                    <button class="filter-chip" data-type="announcements">📢 Announcements</button>
+                    <button class="filter-chip" data-type="orders">🛒 Orders</button>
+                    <button class="filter-chip" data-type="payments">💰 Payments</button>
+                    <button class="filter-chip" data-type="chat">💬 Chat</button>
+                    <button class="filter-chip" data-type="system">⚙️ System</button>
                 </div>
             </div>
 
@@ -307,7 +406,7 @@
             <div class="mb-6">
                 <div class="relative max-w-md">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="search-notifications" placeholder="Search notifications..." class="w-full pl-10 pr-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    <input type="text" id="search-notifications" placeholder="Search notifications..." class="search-input w-full pl-10">
                 </div>
             </div>
 
@@ -321,21 +420,19 @@
         </div>
     </main>
 
-    <!-- Notification Details Modal (Professional Design) -->
+    <!-- Notification Details Modal -->
     <div id="notification-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeNotificationModal(event)">
         <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4 modal-content" onclick="event.stopPropagation()">
             <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <div id="modal-icon" class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                         <i class="fas fa-bell text-purple-500"></i>
                     </div>
                     <h2 class="text-xl font-bold dark:text-white" id="modal-title">Notification Details</h2>
                 </div>
                 <button onclick="closeNotificationModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
             </div>
-            <div class="p-5" id="modal-content">
-                <!-- Content loaded dynamically -->
-            </div>
+            <div class="p-5" id="modal-content"></div>
             <div class="p-5 border-t dark:border-gray-700 flex gap-3">
                 <button id="modal-mark-read" class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition">
                     <i class="fas fa-check mr-1"></i> Mark as Read
@@ -376,10 +473,10 @@
         let currentModalNotification = null;
         const itemsPerPage = 10;
 
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        // ========== MOBILE SIDEBAR FUNCTIONS ==========
+        // ========== MOBILE SIDEBAR ==========
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -396,7 +493,7 @@
             document.body.style.overflow = '';
         };
 
-        // ========== USER MENU FUNCTIONS ==========
+        // ========== USER MENU ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -419,7 +516,7 @@
 
         // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
@@ -438,7 +535,7 @@
         });
 
         async function loadNotifications() {
-            // Sample notifications data - In production, fetch from Firestore
+            // Sample notifications data
             allNotifications = [
                 { id: '1', title: 'New Order Request', message: 'Order #3572 from John Doe requires approval', type: 'orders', read: false, createdAt: new Date(Date.now() - 3600000).toISOString() },
                 { id: '2', title: 'Payment Received', message: 'Payment of AED 1,299 received for order #2345', type: 'payments', read: false, createdAt: new Date(Date.now() - 7200000).toISOString() },
@@ -490,7 +587,7 @@
             }
             
             container.innerHTML = paginated.map(notif => `
-                <div class="notification-item ${notif.read ? '' : 'unread'} bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border dark:border-gray-700">
+                <div class="notification-item ${notif.read ? '' : 'unread'} p-4">
                     <div class="flex justify-between items-start">
                         <div class="flex-1 cursor-pointer" onclick="viewNotificationDetails('${notif.id}')">
                             <div class="flex items-center gap-2 mb-1">
@@ -501,7 +598,7 @@
                             <h4 class="font-semibold dark:text-white">${escapeHtml(notif.title)}</h4>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">${escapeHtml(notif.message)}</p>
                         </div>
-                        <div class="flex gap-2 ml-4">
+                        <div class="flex gap-1 ml-4">
                             <button onclick="event.stopPropagation(); markAsRead('${notif.id}')" class="action-icon text-green-500 hover:text-green-700" title="Mark as Read">
                                 <i class="fas fa-check-circle text-lg"></i>
                             </button>
@@ -527,11 +624,11 @@
             const container = document.getElementById('pagination-container');
             if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                html += `<button onclick="goToPage(${i})" class="px-3 py-1 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
+                html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`;
             }
-            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`;
             container.innerHTML = html;
         }
 
@@ -659,14 +756,13 @@
             });
         }
         
+        // Event Listeners
         document.querySelectorAll('.filter-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 document.querySelectorAll('.filter-chip').forEach(c => {
-                    c.classList.remove('active', 'bg-purple-500', 'text-white');
-                    c.classList.add('bg-gray-200', 'dark:bg-gray-700');
+                    c.classList.remove('active');
                 });
-                chip.classList.add('active', 'bg-purple-500', 'text-white');
-                chip.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+                chip.classList.add('active');
                 currentType = chip.dataset.type;
                 currentPage = 1;
                 renderNotifications();
