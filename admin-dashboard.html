@@ -40,10 +40,20 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 1rem;
-            transition: transform 0.2s;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
         }
         .stat-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .stat-icon {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            opacity: 0.15;
+            font-size: 3rem;
         }
         
         /* Status Badges */
@@ -58,6 +68,10 @@
         .status-approved { background: #10b98120; color: #10b981; }
         .status-completed { background: #3b82f620; color: #3b82f6; }
         .status-paid { background: #8b5cf620; color: #8b5cf6; }
+        
+        /* Trend indicators */
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
         
         /* Mobile Sidebar Styles */
         #mobile-sidebar {
@@ -118,19 +132,35 @@
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        /* Date Range Picker */
+        .date-preset {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .date-preset.active {
+            background-color: #8b5cf6;
+            color: white;
+            border-color: #8b5cf6;
+        }
+        
+        /* Top Seller / Top Item Cards */
+        .rank-card {
+            transition: all 0.2s;
+        }
+        .rank-card:hover {
+            transform: translateX(4px);
+            background-color: var(--hover-bg);
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
-    <!-- Sidebar Overlay for Mobile -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Sidebar -->
     <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
         <div class="p-4 border-b flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <i class="fas fa-store text-2xl text-purple-500"></i>
-                <span class="text-xl font-bold">Marketplace Pro</span>
-            </div>
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
             <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
         </div>
         <div class="p-4">
@@ -153,10 +183,7 @@
     <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
         <div class="p-4 border-b">
-            <div class="flex items-center space-x-2">
-                <i class="fas fa-store text-2xl text-purple-500"></i>
-                <span class="text-xl font-bold">Marketplace Pro</span>
-            </div>
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
             <p class="text-xs opacity-60 mt-2">Admin Panel</p>
         </div>
         <nav class="p-4">
@@ -175,13 +202,14 @@
 
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar with Profile Dropdown -->
+        <!-- Top Bar -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="text-xl md:text-2xl font-bold">Dashboard</h1>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold">Dashboard</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Welcome back, Admin</p>
+                </div>
             </div>
             <div class="flex items-center space-x-4">
                 <button onclick="toggleTheme()" class="p-2 rounded-full transition" title="Toggle theme">
@@ -212,95 +240,146 @@
             </div>
         </div>
 
-        <!-- Dynamic Content Sections -->
+        <!-- Main Dashboard Content -->
         <div class="p-4 md:p-6">
-            <!-- Dashboard Section -->
-            <div id="section-dashboard" class="section">
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div class="stat-card p-4 rounded-xl" id="stat-sellers">
-                        <div class="text-2xl font-bold">0</div>
-                        <div class="text-sm opacity-70">Sellers</div>
+            <!-- Date Range Filter -->
+            <div class="card rounded-xl p-4 mb-6">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button class="date-preset px-3 py-1.5 rounded-lg text-sm border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition" data-days="1">Today</button>
+                        <button class="date-preset px-3 py-1.5 rounded-lg text-sm border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition" data-days="7">Last 7 Days</button>
+                        <button class="date-preset px-3 py-1.5 rounded-lg text-sm border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition" data-days="14">Last 14 Days</button>
+                        <button class="date-preset px-3 py-1.5 rounded-lg text-sm border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition" data-days="30">Last 30 Days</button>
+                        <button class="date-preset px-3 py-1.5 rounded-lg text-sm border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition" data-days="90">This Quarter</button>
+                        <button class="date-preset active px-3 py-1.5 rounded-lg text-sm bg-purple-500 text-white border-purple-500" data-days="365">This Year</button>
                     </div>
-                    <div class="stat-card p-4 rounded-xl" id="stat-orders">
-                        <div class="text-2xl font-bold">0</div>
-                        <div class="text-sm opacity-70">Total Orders</div>
-                    </div>
-                    <div class="stat-card p-4 rounded-xl" id="stat-pending">
-                        <div class="text-2xl font-bold">0</div>
-                        <div class="text-sm opacity-70">Pending</div>
-                    </div>
-                    <div class="stat-card p-4 rounded-xl" id="stat-products">
-                        <div class="text-2xl font-bold">0</div>
-                        <div class="text-sm opacity-70">Products</div>
-                    </div>
-                </div>
-
-                <!-- Revenue Chart -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <div class="card p-6 rounded-xl">
-                        <h3 class="text-lg font-semibold mb-4">Revenue Trend</h3>
-                        <canvas id="revenueChart" height="200"></canvas>
-                    </div>
-                </div>
-
-                <!-- Recent Orders -->
-                <div class="card p-6 rounded-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold">Recent Orders</h3>
-                        <a href="orders.html" class="text-purple-500 text-sm hover:underline">View All Orders →</a>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="border-b">
-                                <tr>
-                                    <th class="px-4 py-2 text-left">Order ID</th>
-                                    <th class="px-4 py-2 text-left">Customer</th>
-                                    <th class="px-4 py-2 text-left">Amount</th>
-                                    <th class="px-4 py-2 text-left">Status</th>
-                                    <th class="px-4 py-2 text-left">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recent-orders-table">
-                                <tr><td colspan="5" class="text-center py-4">Loading orders...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="flex gap-2">
+                        <input type="date" id="custom-start" class="px-3 py-1.5 rounded-lg border dark:border-gray-600 dark:bg-gray-700 text-sm">
+                        <span class="self-center">to</span>
+                        <input type="date" id="custom-end" class="px-3 py-1.5 rounded-lg border dark:border-gray-600 dark:bg-gray-700 text-sm">
+                        <button id="apply-custom" class="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">Apply</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Settings Section -->
-            <div id="section-settings" class="section hidden">
+            <!-- Stats Row 1 - Main KPIs -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-users"></i>
+                    <div class="text-2xl font-bold" id="stat-registered-users">0</div>
+                    <div class="text-sm opacity-70">Registered Users</div>
+                    <div class="text-xs trend-up mt-1" id="user-trend">+0%</div>
+                </div>
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-shopping-cart"></i>
+                    <div class="text-2xl font-bold" id="stat-total-orders">0</div>
+                    <div class="text-sm opacity-70">Total Orders</div>
+                    <div class="text-xs trend-up mt-1" id="orders-trend">+0%</div>
+                </div>
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-clock"></i>
+                    <div class="text-2xl font-bold" id="stat-pending-orders">0</div>
+                    <div class="text-sm opacity-70">Pending Orders</div>
+                </div>
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-chart-line"></i>
+                    <div class="text-2xl font-bold" id="stat-revenue">AED 0</div>
+                    <div class="text-sm opacity-70">Revenue</div>
+                    <div class="text-xs trend-up mt-1" id="revenue-trend">+0%</div>
+                </div>
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-coins"></i>
+                    <div class="text-2xl font-bold" id="stat-profit">AED 0</div>
+                    <div class="text-sm opacity-70">Profit</div>
+                    <div class="text-xs trend-up mt-1" id="profit-trend">+0%</div>
+                </div>
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-hourglass-half"></i>
+                    <div class="text-2xl font-bold" id="stat-pending-payments">AED 0</div>
+                    <div class="text-sm opacity-70">Pending Payments</div>
+                </div>
+            </div>
+
+            <!-- Stats Row 2 - Secondary KPIs -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-calendar-day"></i>
+                    <div class="text-2xl font-bold" id="stat-orders-today">0</div>
+                    <div class="text-sm opacity-70">Orders Today</div>
+                </div>
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-chart-simple"></i>
+                    <div class="text-2xl font-bold" id="stat-success-rate">0%</div>
+                    <div class="text-sm opacity-70">Success Rate</div>
+                    <div class="text-xs trend-up mt-1">+5.2% vs last month</div>
+                </div>
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-truck"></i>
+                    <div class="text-2xl font-bold" id="stat-next-deliveries">0</div>
+                    <div class="text-sm opacity-70">Next Deliveries</div>
+                </div>
+                <div class="stat-card p-4 rounded-xl">
+                    <i class="stat-icon fas fa-check-circle"></i>
+                    <div class="text-2xl font-bold" id="stat-recently-delivered">0</div>
+                    <div class="text-sm opacity-70">Recently Delivered</div>
+                </div>
+            </div>
+
+            <!-- Charts and Order Status Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Revenue Trend Chart -->
                 <div class="card p-6 rounded-xl">
-                    <h3 class="text-lg font-semibold mb-4">Settings</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center p-4 border rounded-lg">
-                            <div>
-                                <h4 class="font-medium">Dark Mode</h4>
-                                <p class="text-sm opacity-60">Toggle between light and dark theme</p>
-                            </div>
-                            <button onclick="toggleTheme()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
-                                Toggle Theme
-                            </button>
-                        </div>
-                        <div class="flex justify-between items-center p-4 border rounded-lg">
-                            <div>
-                                <h4 class="font-medium">Notifications</h4>
-                                <p class="text-sm opacity-60">Configure notification preferences</p>
-                            </div>
-                            <a href="notifications.html" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
-                                Manage
-                            </a>
-                        </div>
-                        <div class="flex justify-between items-center p-4 border rounded-lg">
-                            <div>
-                                <h4 class="font-medium">Profile Settings</h4>
-                                <p class="text-sm opacity-60">Update your profile information</p>
-                            </div>
-                            <a href="profile.html" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
-                                Edit Profile
-                            </a>
-                        </div>
+                    <h3 class="text-lg font-semibold mb-4">Revenue Trend</h3>
+                    <canvas id="revenueChart" height="250"></canvas>
+                </div>
+                
+                <!-- Order by Status (Donut/Pie Chart) -->
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">Order by Status</h3>
+                    <canvas id="statusChart" height="250"></canvas>
+                    <div class="flex justify-center gap-4 mt-4 text-sm flex-wrap">
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span><span id="pending-count">Pending: 0</span></div>
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#10b981]"></span><span id="approved-count">Approved: 0</span></div>
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#3b82f6]"></span><span id="completed-count">Completed: 0</span></div>
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-[#8b5cf6]"></span><span id="paid-count">Paid: 0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Deliveries & Recently Delivered Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Next Deliveries -->
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">🚚 Next Deliveries</h3>
+                    <div id="next-deliveries-list" class="space-y-3">
+                        <div class="text-center py-4 text-gray-500">Loading deliveries...</div>
+                    </div>
+                </div>
+                
+                <!-- Recently Delivered -->
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">✅ Recently Delivered</h3>
+                    <div id="recently-delivered-list" class="space-y-3">
+                        <div class="text-center py-4 text-gray-500">Loading deliveries...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top 10 Sellers & Top 10 Items Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Top 10 Sellers -->
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">🏆 Top 10 Sellers</h3>
+                    <div id="top-sellers-list" class="space-y-2">
+                        <div class="text-center py-4 text-gray-500">Loading sellers...</div>
+                    </div>
+                </div>
+                
+                <!-- Top 10 Items -->
+                <div class="card p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-4">📦 Top 10 Items</h3>
+                    <div id="top-items-list" class="space-y-2">
+                        <div class="text-center py-4 text-gray-500">Loading items...</div>
                     </div>
                 </div>
             </div>
@@ -310,7 +389,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -329,43 +408,23 @@
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         let revenueChartInstance = null;
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
+        let statusChartInstance = null;
+        let currentDateRange = { days: 365, start: null, end: null };
 
         // ========== MOBILE SIDEBAR FUNCTIONS ==========
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) {
-                sidebar.classList.toggle('show');
-            }
-            if (overlay) {
-                overlay.classList.toggle('show');
-            }
-            if (sidebar && sidebar.classList.contains('show')) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
+            if (sidebar) sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
+            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
         };
 
         window.closeMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) {
-                sidebar.classList.remove('show');
-            }
-            if (overlay) {
-                overlay.classList.remove('show');
-            }
+            if (sidebar) sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
             document.body.style.overflow = '';
         };
 
@@ -376,9 +435,7 @@
             if (dropdown) {
                 const isHidden = dropdown.classList.contains('hidden');
                 dropdown.classList.toggle('hidden');
-                if (chevron) {
-                    chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-                }
+                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
             }
         };
 
@@ -392,30 +449,18 @@
             }
         });
 
-        // ========== THEME FUNCTIONS ==========
+        // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
 
-        // ========== LOGOUT ==========
         window.logout = async () => {
             await signOut(auth);
             window.location.href = '/';
         };
 
-        // ========== SECTION SWITCHER ==========
-        window.showSection = (section, clickedEl) => {
-            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            const sectionEl = document.getElementById(`section-${section}`);
-            if (sectionEl) sectionEl.classList.remove('hidden');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            if (clickedEl) clickedEl.classList.add('active');
-            window.closeMobileMenu?.();
-        };
-
-        // ========== AUTHENTICATION ==========
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -424,92 +469,256 @@
                 return;
             }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
-            loadDashboard();
+            await loadDashboardData();
         });
 
-        async function loadDashboard() {
+        async function loadDashboardData() {
             await loadStats();
-            await loadRecentOrders();
-            await loadChart();
+            await loadCharts();
+            await loadDeliveries();
+            await loadTopSellers();
+            await loadTopItems();
+        }
+
+        function getDateFilter() {
+            const now = new Date();
+            if (currentDateRange.start && currentDateRange.end) {
+                return { start: currentDateRange.start, end: currentDateRange.end };
+            }
+            const start = new Date();
+            start.setDate(now.getDate() - currentDateRange.days);
+            return { start, end: now };
         }
 
         async function loadStats() {
-            try {
-                const [usersSnap, ordersSnap, productsSnap] = await Promise.all([
-                    getDocs(collection(db, 'users')),
-                    getDocs(collection(db, 'orders')),
-                    getDocs(collection(db, 'products'))
-                ]);
-                const sellers = usersSnap.docs.filter(d => d.data().role === 'seller').length;
-                const pending = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
+            const { start, end } = getDateFilter();
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const usersSnap = await getDocs(collection(db, 'users'));
+            const productsSnap = await getDocs(collection(db, 'products'));
+            
+            const sellers = usersSnap.docs.filter(d => d.data().role === 'seller').length;
+            const totalOrders = ordersSnap.size;
+            const pending = ordersSnap.docs.filter(d => d.data().status === 'pending').length;
+            
+            let totalRevenue = 0;
+            let totalProfit = 0;
+            let pendingPayments = 0;
+            let ordersToday = 0;
+            let completedOrders = 0;
+            const today = new Date().toDateString();
+            
+            ordersSnap.docs.forEach(doc => {
+                const o = doc.data();
+                const amount = o.totalAmount || 0;
+                totalRevenue += amount;
                 
-                const statSellers = document.getElementById('stat-sellers');
-                const statOrders = document.getElementById('stat-orders');
-                const statPending = document.getElementById('stat-pending');
-                const statProducts = document.getElementById('stat-products');
-                
-                if (statSellers) statSellers.innerHTML = `<div class="text-2xl font-bold">${sellers}</div><div class="text-sm opacity-70">Sellers</div>`;
-                if (statOrders) statOrders.innerHTML = `<div class="text-2xl font-bold">${ordersSnap.size}</div><div class="text-sm opacity-70">Total Orders</div>`;
-                if (statPending) statPending.innerHTML = `<div class="text-2xl font-bold">${pending}</div><div class="text-sm opacity-70">Pending</div>`;
-                if (statProducts) statProducts.innerHTML = `<div class="text-2xl font-bold">${productsSnap.size}</div><div class="text-sm opacity-70">Products</div>`;
-            } catch (e) { console.error('loadStats', e); }
+                if (o.status === 'paid') {
+                    totalProfit += amount * 0.1;
+                }
+                if (o.status === 'pending') {
+                    pendingPayments += amount;
+                }
+                if (o.createdAt && new Date(o.createdAt).toDateString() === today) {
+                    ordersToday++;
+                }
+                if (o.status === 'completed') {
+                    completedOrders++;
+                }
+            });
+            
+            const successRate = totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toFixed(1) : 0;
+            
+            document.getElementById('stat-registered-users').textContent = sellers;
+            document.getElementById('stat-total-orders').textContent = totalOrders;
+            document.getElementById('stat-pending-orders').textContent = pending;
+            document.getElementById('stat-revenue').textContent = `AED ${totalRevenue.toLocaleString()}`;
+            document.getElementById('stat-profit').textContent = `AED ${totalProfit.toLocaleString()}`;
+            document.getElementById('stat-pending-payments').textContent = `AED ${pendingPayments.toLocaleString()}`;
+            document.getElementById('stat-orders-today').textContent = ordersToday;
+            document.getElementById('stat-success-rate').textContent = `${successRate}%`;
         }
 
-        async function loadRecentOrders() {
-            try {
-                const snap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
-                const tbody = document.getElementById('recent-orders-table');
-                if (!tbody) return;
-                if (snap.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 opacity-60">No orders yet.</td></tr>';
-                    return;
+        async function loadCharts() {
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const monthly = { Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0, Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0 };
+            const statusCounts = { pending: 0, approved: 0, completed: 0, paid: 0 };
+            
+            ordersSnap.docs.forEach(d => {
+                const o = d.data();
+                if (o.createdAt) {
+                    const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' });
+                    monthly[m] = (monthly[m] || 0) + (o.totalAmount || 0);
                 }
-                tbody.innerHTML = '';
-                for (const d of snap.docs) {
-                    const o = d.data();
-                    const safeStatus = ['pending', 'approved', 'completed', 'paid'].includes(o.status) ? o.status : 'pending';
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b';
-                    tr.innerHTML = `
-                        <td class="px-4 py-2 text-sm">#${d.id.slice(0, 8)}</td>
-                        <td class="px-4 py-2 text-sm">${escapeHtml(o.customerName || 'N/A')}</td>
-                        <td class="px-4 py-2 text-sm">AED ${o.totalAmount || 0}</td>
-                        <td class="px-4 py-2"><span class="status-badge status-${safeStatus}">${safeStatus}</span></td>
-                        <td class="px-4 py-2 text-sm">${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
-                    `;
-                    tbody.appendChild(tr);
+                if (o.status && statusCounts[o.status] !== undefined) {
+                    statusCounts[o.status]++;
                 }
-            } catch (e) { console.error('loadRecentOrders', e); }
+            });
+            
+            document.getElementById('pending-count').textContent = `Pending: ${statusCounts.pending}`;
+            document.getElementById('approved-count').textContent = `Approved: ${statusCounts.approved}`;
+            document.getElementById('completed-count').textContent = `Completed: ${statusCounts.completed}`;
+            document.getElementById('paid-count').textContent = `Paid: ${statusCounts.paid}`;
+            
+            const ctx = document.getElementById('revenueChart');
+            if (revenueChartInstance) revenueChartInstance.destroy();
+            revenueChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(monthly),
+                    datasets: [{ label: 'Revenue (AED)', data: Object.values(monthly), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.4, fill: true }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            
+            const statusCtx = document.getElementById('statusChart');
+            if (statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Approved', 'Completed', 'Paid'],
+                    datasets: [{ data: [statusCounts.pending, statusCounts.approved, statusCounts.completed, statusCounts.paid], backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
         }
 
-        async function loadChart() {
-            try {
-                const snap = await getDocs(query(collection(db, 'orders'), limit(100)));
-                const monthly = {};
-                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                monthNames.forEach(m => monthly[m] = 0);
-                
-                snap.docs.forEach(d => {
-                    const o = d.data();
-                    if (o.createdAt) {
-                        const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' });
-                        monthly[m] = (monthly[m] || 0) + (o.totalAmount || 0);
-                    }
-                });
-                
-                const ctx = document.getElementById('revenueChart');
-                if (!ctx) return;
-                if (revenueChartInstance) revenueChartInstance.destroy();
-                revenueChartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: Object.keys(monthly),
-                        datasets: [{ label: 'Revenue (AED)', data: Object.values(monthly), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.4, fill: true }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            } catch (e) { console.error('loadChart', e); }
+        async function loadDeliveries() {
+            const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
+            const nextDeliveries = [];
+            const recentlyDelivered = [];
+            
+            ordersSnap.docs.forEach(d => {
+                const o = d.data();
+                if (o.status === 'approved') {
+                    nextDeliveries.push({ id: d.id.slice(0, 8), customer: o.customerName, date: o.createdAt });
+                } else if (o.status === 'completed') {
+                    recentlyDelivered.push({ id: d.id.slice(0, 8), customer: o.customerName, date: o.createdAt });
+                }
+            });
+            
+            const nextContainer = document.getElementById('next-deliveries-list');
+            if (nextDeliveries.length === 0) {
+                nextContainer.innerHTML = '<div class="text-center py-4 text-gray-500">No upcoming deliveries</div>';
+            } else {
+                nextContainer.innerHTML = nextDeliveries.slice(0, 5).map(d => `
+                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                        <div><span class="font-medium">#${d.id}</span><p class="text-xs text-gray-500">${escapeHtml(d.customer)}</p></div>
+                        <div class="text-right"><span class="text-xs">${formatDate(d.date)}</span><button class="block text-xs text-purple-500 mt-1">Track →</button></div>
+                    </div>
+                `).join('');
+            }
+            
+            const recentContainer = document.getElementById('recently-delivered-list');
+            if (recentlyDelivered.length === 0) {
+                recentContainer.innerHTML = '<div class="text-center py-4 text-gray-500">No recent deliveries</div>';
+            } else {
+                recentContainer.innerHTML = recentlyDelivered.slice(0, 5).map(d => `
+                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                        <div><span class="font-medium">#${d.id}</span><p class="text-xs text-gray-500">${escapeHtml(d.customer)}</p></div>
+                        <div class="text-right"><span class="text-xs">${formatDate(d.date)}</span><span class="block text-xs text-green-500">Delivered</span></div>
+                    </div>
+                `).join('');
+            }
         }
+
+        async function loadTopSellers() {
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const sellerRevenue = {};
+            
+            ordersSnap.docs.forEach(d => {
+                const o = d.data();
+                const sellerName = o.sellerName || o.customerName || 'Unknown';
+                sellerRevenue[sellerName] = (sellerRevenue[sellerName] || 0) + (o.totalAmount || 0);
+            });
+            
+            const sorted = Object.entries(sellerRevenue).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const container = document.getElementById('top-sellers-list');
+            
+            if (sorted.length === 0) {
+                container.innerHTML = '<div class="text-center py-4 text-gray-500">No seller data available</div>';
+            } else {
+                container.innerHTML = sorted.map(([name, revenue], index) => `
+                    <div class="rank-card flex justify-between items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 text-center font-bold ${index < 3 ? 'text-yellow-500' : 'text-gray-500'}">#${index + 1}</span>
+                            <span class="font-medium">${escapeHtml(name)}</span>
+                        </div>
+                        <span class="font-semibold text-purple-500">AED ${revenue.toLocaleString()}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function loadTopItems() {
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const itemSales = {};
+            
+            ordersSnap.docs.forEach(d => {
+                const o = d.data();
+                if (o.items && Array.isArray(o.items)) {
+                    o.items.forEach(item => {
+                        const itemName = item.name || 'Unknown Product';
+                        itemSales[itemName] = (itemSales[itemName] || 0) + (item.quantity || 1);
+                    });
+                }
+            });
+            
+            const sorted = Object.entries(itemSales).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const container = document.getElementById('top-items-list');
+            
+            if (sorted.length === 0) {
+                container.innerHTML = '<div class="text-center py-4 text-gray-500">No product sales data available</div>';
+            } else {
+                container.innerHTML = sorted.map(([name, qty], index) => `
+                    <div class="rank-card flex justify-between items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 text-center font-bold ${index < 3 ? 'text-yellow-500' : 'text-gray-500'}">#${index + 1}</span>
+                            <span class="font-medium">${escapeHtml(name)}</span>
+                        </div>
+                        <span class="text-sm">${qty} sold</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Date Preset Handlers
+        document.querySelectorAll('.date-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.date-preset').forEach(b => b.classList.remove('active', 'bg-purple-500', 'text-white'));
+                btn.classList.add('active', 'bg-purple-500', 'text-white');
+                const days = parseInt(btn.dataset.days);
+                if (!isNaN(days)) {
+                    currentDateRange = { days, start: null, end: null };
+                    loadDashboardData();
+                }
+            });
+        });
+        
+        document.getElementById('apply-custom').addEventListener('click', () => {
+            const start = document.getElementById('custom-start').value;
+            const end = document.getElementById('custom-end').value;
+            if (start && end) {
+                currentDateRange = { days: null, start: new Date(start), end: new Date(end) };
+                document.querySelectorAll('.date-preset').forEach(b => b.classList.remove('active', 'bg-purple-500', 'text-white'));
+                loadDashboardData();
+            }
+        });
     </script>
 </body>
 </html>
