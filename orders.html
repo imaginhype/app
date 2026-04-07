@@ -8,105 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Import Inter Font */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
-        
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        /* Theme Variables */
-        :root {
-            --accent-color: #2563eb;
-        }
-        [data-theme="light"] {
-            --bg-primary: #f8fafc;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f1f5f9;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --border-color: #e2e8f0;
-            --card-bg: #ffffff;
-            --hover-bg: #f1f5f9;
-            --active-bg: #2563eb;
-            --input-bg: #ffffff;
-        }
-        [data-theme="dark"] {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #334155;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --card-bg: #1e293b;
-            --hover-bg: #334155;
-            --active-bg: #2563eb;
-            --input-bg: #334155;
-        }
-        
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-        }
-        
-        /* Sidebar Styles */
-        .sidebar {
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            margin: 0.25rem 0;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text-secondary);
-            text-decoration: none;
-        }
-        .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
-        .nav-item.active { background: var(--active-bg); color: white; }
-        
-        /* Mobile Sidebar */
-        #mobile-sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            overflow-y: auto;
-        }
-        #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            cursor: pointer;
-        }
-        #sidebar-overlay.show { display: block; }
-        #sidebar-overlay:not(.show) { display: none; }
-        
-        @media (max-width: 767px) {
-            .desktop-sidebar { display: none; }
-            .main-content { margin-left: 0 !important; }
-        }
-        @media (min-width: 768px) {
-            #mobile-sidebar, #sidebar-overlay { display: none; }
-            .main-content { margin-left: 16rem; }
-        }
-        
-        /* Status Badges */
         .status-badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -120,7 +21,6 @@
         .status-paid { background: #8b5cf620; color: #8b5cf6; }
         .status-cancelled { background: #ef444420; color: #ef4444; }
         
-        /* Filter Tabs */
         .filter-tab {
             cursor: pointer;
             transition: all 0.2s;
@@ -133,24 +33,17 @@
             color: var(--accent-color);
         }
         
-        /* Action Toolbar */
         .action-toolbar {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             gap: 12px;
             margin-bottom: 20px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border-color);
         }
-        .toolbar-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
         
-        /* Search and Filters - Responsive */
         .filters-container {
             display: flex;
             flex-wrap: wrap;
@@ -172,10 +65,6 @@
             background: var(--input-bg);
             color: var(--text-primary);
             font-size: 13px;
-        }
-        .search-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
         }
         .date-range-wrapper {
             display: flex;
@@ -199,29 +88,14 @@
             border: none;
             cursor: pointer;
             font-size: 13px;
-            transition: all 0.2s;
         }
-        .apply-btn:hover {
-            opacity: 0.9;
-        }
-        
         @media (max-width: 640px) {
-            .filters-container {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .search-wrapper {
-                max-width: 100%;
-            }
-            .date-range-wrapper {
-                justify-content: space-between;
-            }
-            .date-input {
-                flex: 1;
-            }
+            .filters-container { flex-direction: column; align-items: stretch; }
+            .search-wrapper { max-width: 100%; }
+            .date-range-wrapper { justify-content: space-between; }
+            .date-input { flex: 1; }
         }
         
-        /* Bulk Actions Bar */
         .bulk-actions-bar {
             display: flex;
             justify-content: space-between;
@@ -232,11 +106,9 @@
             margin-bottom: 16px;
         }
         
-        /* Table Styles */
         .order-row:hover { background-color: var(--hover-bg); }
         .table-container { overflow-x: auto; }
         
-        /* Pagination */
         .pagination-btn {
             padding: 6px 12px;
             border-radius: 8px;
@@ -247,11 +119,7 @@
             font-size: 13px;
             transition: all 0.2s;
         }
-        .pagination-btn:hover {
-            background: var(--accent-color);
-            color: white;
-        }
-        .pagination-btn.active {
+        .pagination-btn:hover, .pagination-btn.active {
             background: var(--accent-color);
             color: white;
         }
@@ -286,7 +154,10 @@
     <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
         <div class="p-4 border-b">
-            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <div class="flex items-center space-x-2 sidebar-logo">
+                <i class="fas fa-store text-2xl text-purple-500"></i>
+                <span class="text-xl font-bold">Marketplace Pro</span>
+            </div>
             <p class="text-xs opacity-60 mt-2">Admin Panel</p>
         </div>
         <nav class="p-4">
@@ -305,10 +176,13 @@
 
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar -->
+        <!-- Top Bar with Sidebar Toggle -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Orders</h1>
                     <p class="text-sm text-gray-500">Manage and track all customer orders</p>
@@ -343,13 +217,11 @@
 
         <!-- Main Content -->
         <div class="p-4 md:p-6">
-            <!-- Action Toolbar (Export button moved here) -->
+            <!-- Action Toolbar -->
             <div class="action-toolbar">
-                <div class="toolbar-buttons">
-                    <button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
+                <button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">
+                    <i class="fas fa-download"></i> Export
+                </button>
             </div>
 
             <!-- Status Filter Tabs -->
@@ -362,7 +234,7 @@
                 <button class="filter-tab pb-2 text-sm font-medium" data-status="cancelled">Cancelled</button>
             </div>
 
-            <!-- Search and Date Filters - Responsive -->
+            <!-- Search and Date Filters -->
             <div class="filters-container">
                 <div class="search-wrapper">
                     <input type="text" id="search-orders" placeholder="Search by Order ID or Customer..." class="search-input">
@@ -382,20 +254,16 @@
                     <button onclick="bulkApprove()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm">
                         <i class="fas fa-check-circle mr-1"></i> Approve Selected
                     </button>
-                    <button onclick="clearSelection()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm">
-                        Clear
-                    </button>
+                    <button onclick="clearSelection()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm">Clear</button>
                 </div>
             </div>
 
             <!-- Orders Table -->
             <div class="table-container bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-                <table class="w-full">
+                <table class="w-full min-w-[800px]">
                     <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
                         <tr>
-                            <th class="px-4 py-3 text-left text-sm font-semibold w-10">
-                                <input type="checkbox" id="select-all" class="rounded">
-                            </th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold w-10"><input type="checkbox" id="select-all" class="rounded"></th>
                             <th class="px-4 py-3 text-left text-sm font-semibold">Order ID</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold">Customer</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold">Amount</th>
@@ -460,6 +328,25 @@
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
+        // ========== COLLAPSIBLE SIDEBAR ==========
+        function initCollapsibleSidebar() {
+            const sidebar = document.querySelector('.desktop-sidebar');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            if (!sidebar || !toggleBtn) return;
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            }
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                const collapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', collapsed);
+                toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+            });
+        }
+
         // ========== MOBILE SIDEBAR ==========
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
@@ -515,6 +402,7 @@
                 return;
             }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
+            initCollapsibleSidebar();
             await loadOrders();
         });
 
@@ -556,39 +444,23 @@
             
             tbody.innerHTML = paginated.map(order => `
                 <tr class="order-row border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td class="px-4 py-3">
-                        <input type="checkbox" class="order-checkbox rounded" data-id="${order.id}" ${selectedOrders.has(order.id) ? 'checked' : ''}>
-                    </td>
+                    <td class="px-4 py-3"><input type="checkbox" class="order-checkbox rounded" data-id="${order.id}" ${selectedOrders.has(order.id) ? 'checked' : ''}></td>
                     <td class="px-4 py-3 text-sm font-mono">#${order.id.slice(0, 8)}</td>
-                    <td class="px-4 py-3">
-                        <div class="font-medium dark:text-white">${escapeHtml(order.customerName || 'N/A')}</div>
-                        <div class="text-xs text-gray-500">${escapeHtml(order.customerEmail || '')}</div>
-                    </td>
+                    <td class="px-4 py-3"><div class="font-medium dark:text-white">${escapeHtml(order.customerName || 'N/A')}</div><div class="text-xs text-gray-500">${escapeHtml(order.customerEmail || '')}</div></td>
                     <td class="px-4 py-3 text-sm font-semibold">AED ${(order.totalAmount || 0).toLocaleString()}</td>
                     <td class="px-4 py-3"><span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
                     <td class="px-4 py-3 text-sm">${order.paymentMethod || 'COD'}</td>
                     <td class="px-4 py-3 text-sm">${formatDate(order.createdAt)}</td>
                     <td class="px-4 py-3">
                         <div class="flex gap-2">
-                            <button onclick="viewOrderDetails('${order.id}')" class="text-blue-500 hover:text-blue-700" title="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            ${order.status === 'pending' ? `
-                                <button onclick="approveOrder('${order.id}', ${order.totalAmount})" class="text-green-500 hover:text-green-700" title="Approve">
-                                    <i class="fas fa-check-circle"></i>
-                                </button>
-                            ` : ''}
-                            ${order.status === 'approved' ? `
-                                <button onclick="markAsCompleted('${order.id}')" class="text-blue-500 hover:text-blue-700" title="Mark Completed">
-                                    <i class="fas fa-truck"></i>
-                                </button>
-                            ` : ''}
+                            <button onclick="viewOrderDetails('${order.id}')" class="text-blue-500 hover:text-blue-700" title="View Details"><i class="fas fa-eye"></i></button>
+                            ${order.status === 'pending' ? `<button onclick="approveOrder('${order.id}', ${order.totalAmount})" class="text-green-500 hover:text-green-700" title="Approve"><i class="fas fa-check-circle"></i></button>` : ''}
+                            ${order.status === 'approved' ? `<button onclick="markAsCompleted('${order.id}')" class="text-blue-500 hover:text-blue-700" title="Mark Completed"><i class="fas fa-truck"></i></button>` : ''}
                         </div>
                     </td>
                 </tr>
             `).join('');
             
-            // Re-attach checkbox events
             document.querySelectorAll('.order-checkbox').forEach(cb => {
                 cb.addEventListener('change', (e) => {
                     if (e.target.checked) selectedOrders.add(e.target.dataset.id);
@@ -667,18 +539,15 @@
         };
 
         window.closeOrderModal = () => { document.getElementById('order-modal').classList.add('hidden'); };
-        
         window.approveOrder = async (id, total) => {
             const commission = total * 0.1;
             await updateDoc(doc(db, 'orders', id), { status: 'approved', approvedAt: new Date().toISOString(), commissionAmount: commission, sellerEarnings: total - commission });
             await loadOrders();
         };
-        
         window.markAsCompleted = async (id) => {
             await updateDoc(doc(db, 'orders', id), { status: 'completed', completedAt: new Date().toISOString() });
             await loadOrders();
         };
-        
         window.bulkApprove = async () => {
             if (!confirm(`Approve ${selectedOrders.size} orders?`)) return;
             for (const id of selectedOrders) {
@@ -691,7 +560,6 @@
             clearSelection();
             await loadOrders();
         };
-        
         window.exportToCSV = () => {
             let filtered = allOrders;
             if (currentStatus !== 'all') filtered = filtered.filter(o => o.status === currentStatus);
@@ -707,31 +575,11 @@
             URL.revokeObjectURL(url);
         };
 
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleDateString();
-        }
-        
-        function formatDateTime(dateString) {
-            if (!dateString) return 'N/A';
-            const date = new Date(dateString);
-            return date.toLocaleString();
-        }
-        
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
+        function formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); return date.toLocaleDateString(); }
+        function formatDateTime(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); return date.toLocaleString(); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 
-        // Event Listeners
         document.getElementById('search-orders').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderOrders(); });
-        
         document.querySelectorAll('.filter-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
@@ -741,14 +589,12 @@
                 renderOrders();
             });
         });
-        
         document.getElementById('apply-date-filter').addEventListener('click', () => {
             dateFrom = document.getElementById('date-from').value;
             dateTo = document.getElementById('date-to').value;
             currentPage = 1;
             renderOrders();
         });
-        
         document.getElementById('select-all').addEventListener('change', (e) => {
             const checkboxes = document.querySelectorAll('.order-checkbox');
             checkboxes.forEach(cb => {
