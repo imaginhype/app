@@ -49,10 +49,10 @@
             color: var(--text-primary);
         }
         
-        /* Modern Card Design */
+        /* Modern Card Design - Reduced padding */
         .product-card {
             background: var(--card-bg);
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
             transition: all 0.3s ease;
             border: 1px solid var(--border-color);
@@ -60,14 +60,14 @@
             cursor: pointer;
         }
         .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.1);
         }
         
-        /* Product Image Container - White background, SHORTER aspect ratio (4:3) */
+        /* Product Image Container - Reduced padding */
         .product-image-container {
             background: #ffffff;
-            padding: 16px;
+            padding: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -84,28 +84,20 @@
             transition: transform 0.3s ease;
         }
         .product-card:hover .product-image {
-            transform: scale(1.05);
+            transform: scale(1.03);
         }
         
-        /* Mobile: Adjust for smaller screens */
-        @media (max-width: 640px) {
-            .product-image-container {
-                aspect-ratio: 3 / 2.5;
-            }
-            .product-title {
-                font-size: 14px;
-            }
-            .sale-price {
-                font-size: 16px;
-            }
+        /* Content padding reduced */
+        .product-card .p-4 {
+            padding: 12px !important;
         }
         
-        /* Category Badge - Clickable */
+        /* Category Badge */
         .category-badge {
             font-size: 10px;
             background: var(--bg-tertiary);
-            padding: 4px 10px;
-            border-radius: 20px;
+            padding: 3px 8px;
+            border-radius: 16px;
             color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.2s;
@@ -116,30 +108,29 @@
             color: white;
         }
         
-        /* Title - Two lines with ellipsis */
+        /* Title - Two lines */
         .product-title {
-            font-weight: 700;
-            font-size: 16px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 6px 0 4px 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
+            min-height: 38px;
+        }
+        
+        /* Description */
+        .product-description {
+            font-size: 11px;
+            color: var(--text-secondary);
             margin-bottom: 8px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.4;
-            min-height: 44px;
-        }
-        
-        /* Description - Plain text, remove HTML */
-        .product-description {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.4;
+            line-height: 1.35;
         }
         
         /* Price Section - Sale price below regular price */
@@ -148,21 +139,26 @@
             flex-direction: column;
             gap: 2px;
         }
+        .currency {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
         .sale-price {
             font-weight: 700;
-            font-size: 18px;
+            font-size: 16px;
             color: var(--accent-color);
         }
         .regular-price {
-            font-size: 11px;
+            font-size: 10px;
             text-decoration: line-through;
             color: var(--text-secondary);
         }
         
-        /* Stock Badge */
+        /* Stock Badge - Smaller */
         .stock-badge {
-            font-size: 11px;
-            padding: 4px 10px;
+            font-size: 10px;
+            padding: 3px 8px;
             border-radius: 20px;
             font-weight: 500;
         }
@@ -183,36 +179,28 @@
             color: #f87171;
         }
         
-        /* 3-Dot Menu */
-        .menu-container {
-            position: relative;
-            z-index: 10;
-        }
+        /* 3-Dot Menu - Smaller */
         .menu-btn {
             background: none;
             border: none;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
             color: var(--text-secondary);
-            padding: 4px 8px;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-        .menu-btn:hover {
-            background: var(--hover-bg);
+            padding: 2px 6px;
+            border-radius: 6px;
         }
         .dropdown-menu {
             position: absolute;
             right: 0;
-            top: 28px;
+            top: 24px;
             background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
-            min-width: 140px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.15);
+            min-width: 120px;
             z-index: 20;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-8px);
+            transform: translateY(-6px);
             transition: all 0.2s ease;
             border: 1px solid var(--border-color);
         }
@@ -224,13 +212,11 @@
         .dropdown-menu a {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            font-size: 13px;
+            gap: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
             text-decoration: none;
             color: var(--text-primary);
-            transition: background 0.2s;
-            cursor: pointer;
         }
         .dropdown-menu a:hover {
             background: var(--hover-bg);
@@ -305,9 +291,9 @@
         .category-chip {
             transition: all 0.2s ease;
             cursor: pointer;
-            padding: 6px 16px;
+            padding: 5px 14px;
             border-radius: 30px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             background: var(--bg-tertiary);
             color: var(--text-secondary);
@@ -324,33 +310,29 @@
         
         /* Search Bar */
         .search-input {
-            padding: 10px 16px;
+            padding: 8px 14px;
             border-radius: 30px;
             border: 1px solid var(--border-color);
             background: var(--input-bg);
             color: var(--text-primary);
             width: 100%;
-            max-width: 320px;
-        }
-        .search-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
+            max-width: 280px;
+            font-size: 13px;
         }
         
         /* View Toggle */
         .view-toggle-btn {
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background: var(--bg-tertiary);
             color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
+            font-size: 13px;
         }
         .view-toggle-btn.active {
             background-color: var(--accent-color);
             color: white;
-            border-color: var(--accent-color);
         }
         
         /* Action Toolbar */
@@ -360,14 +342,19 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
             border-bottom: 1px solid var(--border-color);
         }
         .toolbar-buttons {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
+        }
+        .toolbar-buttons button {
+            padding: 6px 14px;
+            font-size: 13px;
+            border-radius: 8px;
         }
         
         /* Category Item */
@@ -375,60 +362,88 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
+            padding: 10px 12px;
             background: var(--bg-tertiary);
-            border-radius: 12px;
+            border-radius: 10px;
             margin-bottom: 8px;
         }
         .category-actions {
             display: flex;
-            gap: 16px;
+            gap: 14px;
         }
         .category-actions button {
-            padding: 6px;
+            padding: 4px;
             cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 8px;
-        }
-        .category-actions button:hover {
-            background: var(--hover-bg);
+            font-size: 14px;
         }
         
         /* Add Category Form */
         .add-category-form {
             display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
         }
         .add-category-form input {
             flex: 1;
-            padding: 10px 14px;
-            border-radius: 12px;
+            min-width: 180px;
+            padding: 8px 12px;
+            border-radius: 10px;
             border: 1px solid var(--border-color);
             background: var(--input-bg);
             color: var(--text-primary);
+            font-size: 13px;
         }
         .add-category-form button {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: var(--accent-color);
             color: white;
-            border-radius: 12px;
+            border-radius: 10px;
             border: none;
             cursor: pointer;
-            transition: all 0.2s;
+            font-size: 13px;
             white-space: nowrap;
         }
-        .add-category-form button:hover {
-            opacity: 0.9;
-            transform: scale(1.02);
+        
+        /* Categories Modal - Wider */
+        #category-modal .rounded-xl {
+            max-width: 500px !important;
+            width: 90% !important;
         }
         
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
             .add-category-form {
                 flex-direction: column;
             }
             .add-category-form button {
                 width: 100%;
+            }
+            #category-modal .rounded-xl {
+                width: 95% !important;
+                margin: 0 10px;
+            }
+            .product-card .p-4 {
+                padding: 10px !important;
+            }
+            .sale-price {
+                font-size: 14px;
+            }
+        }
+        
+        /* 4 columns grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 16px;
+        }
+        @media (min-width: 640px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .products-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
     </style>
@@ -558,8 +573,8 @@
                 Showing <span id="product-count-start">0</span> - <span id="product-count-end">0</span> of <span id="product-total">0</span> products
             </div>
 
-            <!-- Products Container - 4 columns on desktop, image height reduced -->
-            <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Products Container -->
+            <div id="products-container" class="products-grid">
                 <div class="text-center py-8 col-span-full">Loading products...</div>
             </div>
 
@@ -568,9 +583,9 @@
         </div>
     </main>
 
-    <!-- Manage Categories Modal -->
+    <!-- Manage Categories Modal - Wider -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" onclick="closeCategoryModal(event)">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
             <div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
                 <h2 class="text-xl font-bold">Manage Categories</h2>
                 <button onclick="closeCategoryModal()" class="text-2xl hover:text-gray-500">&times;</button>
@@ -734,10 +749,10 @@
                     </div>
                     <div class="category-actions">
                         <button onclick="openEditCategoryModal('${cat.id}', '${escapeHtml(cat.name)}')" class="text-blue-500 hover:text-blue-700" title="Edit">
-                            <i class="fas fa-edit text-base"></i>
+                            <i class="fas fa-edit"></i>
                         </button>
                         <button onclick="deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700" title="Delete">
-                            <i class="fas fa-trash text-base"></i>
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -807,9 +822,15 @@
         }
 
         function filterByCategory(category) {
-            currentCategory = category;
+            // Toggle: if same category is clicked again, reset to 'all'
+            if (currentCategory === category && category !== 'all') {
+                currentCategory = 'all';
+            } else {
+                currentCategory = category;
+            }
+            
             document.querySelectorAll('.category-chip').forEach(btn => {
-                if (btn.dataset.category === category || (category === 'all' && btn.dataset.category === 'all')) {
+                if (btn.dataset.category === currentCategory || (currentCategory === 'all' && btn.dataset.category === 'all')) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
@@ -873,7 +894,6 @@
             }
             
             if (currentView === 'grid') {
-                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
                 container.innerHTML = paginated.map(p => {
                     const isInStock = p.stockStatus === 'in-stock';
                     const mainImage = p.images && p.images[0] ? p.images[0] : null;
@@ -885,10 +905,10 @@
                     return `
                         <div class="product-card" onclick="viewProduct('${p.id}')">
                             <div class="product-image-container">
-                                ${mainImage ? `<img src="${mainImage}" class="product-image" alt="${escapeHtml(p.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : '<i class="fas fa-box text-5xl text-gray-400"></i>'}
+                                ${mainImage ? `<img src="${mainImage}" class="product-image" alt="${escapeHtml(p.name)}">` : '<i class="fas fa-box text-4xl text-gray-400"></i>'}
                             </div>
                             <div class="p-4">
-                                <div class="flex justify-between items-start mb-2">
+                                <div class="flex justify-between items-start mb-1">
                                     <span class="category-badge" onclick="event.stopPropagation(); filterByCategoryFromBadge('${escapeHtml(p.category || 'Uncategorized')}')">${escapeHtml(p.category || 'Uncategorized')}</span>
                                     <div class="menu-container">
                                         <button class="menu-btn" onclick="toggleDropdown(event, '${p.id}')">⋮</button>
@@ -901,10 +921,10 @@
                                     </div>
                                 </div>
                                 <h3 class="product-title">${escapeHtml(p.name || 'Untitled')}</h3>
-                                <p class="product-description">${escapeHtml(plainDescription.substring(0, 80))}${plainDescription.length > 80 ? '...' : ''}</p>
-                                <div class="flex justify-between items-end">
+                                <p class="product-description">${escapeHtml(plainDescription.substring(0, 70))}${plainDescription.length > 70 ? '...' : ''}</p>
+                                <div class="flex justify-between items-end mt-2">
                                     <div class="price-container">
-                                        <span class="sale-price">AED ${salePrice.toFixed(2)}</span>
+                                        <span class="sale-price"><span class="currency">AED</span> ${salePrice.toFixed(2)}</span>
                                         ${hasDiscount ? `<span class="regular-price">AED ${regularPrice.toFixed(2)}</span>` : ''}
                                     </div>
                                     <span class="stock-badge ${isInStock ? 'stock-in' : 'stock-out'}">${isInStock ? 'In Stock' : 'Out of Stock'}</span>
@@ -914,7 +934,6 @@
                     `;
                 }).join('');
             } else {
-                container.className = 'space-y-3';
                 container.innerHTML = paginated.map(p => {
                     const isInStock = p.stockStatus === 'in-stock';
                     const mainImage = p.images && p.images[0] ? p.images[0] : null;
@@ -924,15 +943,15 @@
                     const plainDescription = stripHtml(p.description || 'No description');
                     
                     return `
-                        <div class="product-card flex p-4 gap-4" onclick="viewProduct('${p.id}')">
-                            <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                                ${mainImage ? `<img src="${mainImage}" class="w-full h-full object-cover rounded-xl">` : '<i class="fas fa-box text-2xl text-gray-400"></i>'}
+                        <div class="product-card flex p-3 gap-3" onclick="viewProduct('${p.id}')">
+                            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                                ${mainImage ? `<img src="${mainImage}" class="w-full h-full object-cover rounded-lg">` : '<i class="fas fa-box text-2xl text-gray-400"></i>'}
                             </div>
                             <div class="flex-1">
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <span class="category-badge" onclick="event.stopPropagation(); filterByCategoryFromBadge('${escapeHtml(p.category || 'Uncategorized')}')">${escapeHtml(p.category || 'Uncategorized')}</span>
-                                        <h3 class="font-bold text-lg mt-1">${escapeHtml(p.name || 'Untitled')}</h3>
+                                        <h3 class="font-semibold text-sm mt-1">${escapeHtml(p.name || 'Untitled')}</h3>
                                     </div>
                                     <div class="menu-container">
                                         <button class="menu-btn" onclick="toggleDropdown(event, '${p.id}')">⋮</button>
@@ -944,11 +963,11 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-sm text-gray-500 line-clamp-1 mt-1">${escapeHtml(plainDescription.substring(0, 60))}${plainDescription.length > 60 ? '...' : ''}</p>
+                                <p class="text-xs text-gray-500 line-clamp-1 mt-1">${escapeHtml(plainDescription.substring(0, 50))}${plainDescription.length > 50 ? '...' : ''}</p>
                                 <div class="flex justify-between items-center mt-2">
                                     <div class="price-container">
-                                        <span class="sale-price">AED ${salePrice.toFixed(2)}</span>
-                                        ${hasDiscount ? `<span class="regular-price">AED ${regularPrice.toFixed(2)}</span>` : ''}
+                                        <span class="sale-price text-sm"><span class="currency">AED</span> ${salePrice.toFixed(2)}</span>
+                                        ${hasDiscount ? `<span class="regular-price text-xs">AED ${regularPrice.toFixed(2)}</span>` : ''}
                                     </div>
                                     <span class="stock-badge ${isInStock ? 'stock-in' : 'stock-out'}">${isInStock ? 'In Stock' : 'Out of Stock'}</span>
                                 </div>
@@ -965,11 +984,11 @@
             const container = document.getElementById('pagination-container');
             if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-4 py-2 rounded-lg border hover:bg-blue-600 hover:text-white transition">Prev</button>`;
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1.5 rounded-lg border hover:bg-blue-600 hover:text-white transition text-sm">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                html += `<button onclick="goToPage(${i})" class="px-4 py-2 rounded-lg border ${currentPage === i ? 'bg-blue-600 text-white' : 'hover:bg-blue-600 hover:text-white'} transition">${i}</button>`;
+                html += `<button onclick="goToPage(${i})" class="px-3 py-1.5 rounded-lg border ${currentPage === i ? 'bg-blue-600 text-white' : 'hover:bg-blue-600 hover:text-white'} transition text-sm">${i}</button>`;
             }
-            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-4 py-2 rounded-lg border hover:bg-blue-600 hover:text-white transition">Next</button>`;
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1.5 rounded-lg border hover:bg-blue-600 hover:text-white transition text-sm">Next</button>`;
             container.innerHTML = html;
         }
 
