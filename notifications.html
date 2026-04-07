@@ -26,12 +26,14 @@
         }
         .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
         .nav-item.active { background: var(--active-bg); color: white; }
+        
         .stat-card {
             transition: all 0.2s ease;
         }
         .stat-card:hover {
             transform: translateY(-2px);
         }
+        
         .notification-item {
             transition: all 0.2s ease;
             border-left: 3px solid transparent;
@@ -43,6 +45,7 @@
         .notification-item:hover {
             background-color: var(--hover-bg);
         }
+        
         .filter-chip {
             cursor: pointer;
             transition: all 0.2s;
@@ -51,6 +54,7 @@
             background-color: #8b5cf6;
             color: white;
         }
+        
         .status-tab {
             cursor: pointer;
             transition: all 0.2s;
@@ -60,6 +64,7 @@
             border-bottom: 2px solid #8b5cf6;
             color: #8b5cf6;
         }
+        
         .action-icon {
             transition: all 0.2s;
             cursor: pointer;
@@ -68,13 +73,57 @@
             transform: scale(1.1);
         }
         
-        #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
-        #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay:not(.show) { display: none; }
-        #sidebar-overlay.show { display: block; }
+        /* Mobile Sidebar Styles */
+        #mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+        #mobile-sidebar.show {
+            transform: translateX(0);
+        }
+        #sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            cursor: pointer;
+        }
+        #sidebar-overlay.show {
+            display: block;
+        }
+        #sidebar-overlay:not(.show) {
+            display: none;
+        }
         
-        @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
-        @media (min-width: 768px) { #mobile-sidebar, #sidebar-overlay { display: none; } .main-content { margin-left: 16rem; } }
+        @media (max-width: 767px) {
+            .desktop-sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+        @media (min-width: 768px) {
+            #mobile-sidebar,
+            #sidebar-overlay {
+                display: none;
+            }
+            .main-content {
+                margin-left: 16rem;
+            }
+        }
         
         .live-indicator {
             position: relative;
@@ -330,6 +379,24 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
+        // ========== MOBILE SIDEBAR FUNCTIONS ==========
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
+            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
+        };
+
+        window.closeMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        };
+
+        // ========== USER MENU FUNCTIONS ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -350,20 +417,11 @@
             }
         });
 
+        // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
-        };
-
-        window.toggleMobileMenu = () => {
-            document.getElementById('mobile-sidebar').classList.toggle('show');
-            document.getElementById('sidebar-overlay').classList.toggle('show');
-        };
-        
-        window.closeMobileMenu = () => {
-            document.getElementById('mobile-sidebar').classList.remove('show');
-            document.getElementById('sidebar-overlay').classList.remove('show');
         };
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
@@ -380,7 +438,7 @@
         });
 
         async function loadNotifications() {
-            // Sample notifications data
+            // Sample notifications data - In production, fetch from Firestore
             allNotifications = [
                 { id: '1', title: 'New Order Request', message: 'Order #3572 from John Doe requires approval', type: 'orders', read: false, createdAt: new Date(Date.now() - 3600000).toISOString() },
                 { id: '2', title: 'Payment Received', message: 'Payment of AED 1,299 received for order #2345', type: 'payments', read: false, createdAt: new Date(Date.now() - 7200000).toISOString() },
@@ -410,23 +468,13 @@
 
         function renderNotifications() {
             let filtered = allNotifications;
-            
-            if (currentType !== 'all') {
-                filtered = filtered.filter(n => n.type === currentType);
-            }
-            if (currentStatus === 'unread') {
-                filtered = filtered.filter(n => !n.read);
-            } else if (currentStatus === 'read') {
-                filtered = filtered.filter(n => n.read);
-            }
+            if (currentType !== 'all') filtered = filtered.filter(n => n.type === currentType);
+            if (currentStatus === 'unread') filtered = filtered.filter(n => !n.read);
+            else if (currentStatus === 'read') filtered = filtered.filter(n => n.read);
             if (currentSearch) {
                 const search = currentSearch.toLowerCase();
-                filtered = filtered.filter(n => 
-                    n.title.toLowerCase().includes(search) || 
-                    n.message.toLowerCase().includes(search)
-                );
+                filtered = filtered.filter(n => n.title.toLowerCase().includes(search) || n.message.toLowerCase().includes(search));
             }
-            
             filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
             const total = filtered.length;
@@ -477,28 +525,18 @@
         function renderPagination(total) {
             const totalPages = Math.ceil(total / itemsPerPage);
             const container = document.getElementById('pagination-container');
-            if (totalPages <= 1) {
-                container.innerHTML = '';
-                return;
-            }
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) {
-                html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
-            }
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
                 html += `<button onclick="goToPage(${i})" class="px-3 py-1 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
             }
-            if (currentPage < totalPages) {
-                html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
-            }
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
             container.innerHTML = html;
         }
 
-        window.goToPage = (page) => {
-            currentPage = page;
-            renderNotifications();
-        };
-
+        window.goToPage = (page) => { currentPage = page; renderNotifications(); };
+        
         window.markAsRead = (id) => {
             const notif = allNotifications.find(n => n.id === id);
             if (notif && !notif.read) {
@@ -511,7 +549,7 @@
                 }
             }
         };
-
+        
         window.markAsUnread = (id) => {
             const notif = allNotifications.find(n => n.id === id);
             if (notif && notif.read) {
@@ -524,27 +562,23 @@
                 }
             }
         };
-
+        
         window.markAllAsRead = () => {
-            allNotifications.forEach(notif => {
-                notif.read = true;
-            });
+            allNotifications.forEach(notif => notif.read = true);
             updateStats();
             renderNotifications();
         };
-
+        
         window.viewNotificationDetails = (id) => {
             const notif = allNotifications.find(n => n.id === id);
             if (!notif) return;
-            
             currentModalNotification = notif;
             updateModalContent();
             document.getElementById('notification-modal').classList.remove('hidden');
         };
-
+        
         function updateModalContent() {
             if (!currentModalNotification) return;
-            
             const modalContent = document.getElementById('modal-content');
             modalContent.innerHTML = `
                 <div class="space-y-4">
@@ -569,55 +603,32 @@
                     </div>
                 </div>
             `;
-            
             document.getElementById('modal-title').textContent = currentModalNotification.title;
             
-            // Setup modal buttons
-            const markReadBtn = document.getElementById('modal-mark-read');
-            const markUnreadBtn = document.getElementById('modal-mark-unread');
-            const deleteBtn = document.getElementById('modal-delete');
-            
-            markReadBtn.onclick = () => {
-                markAsRead(currentModalNotification.id);
-                updateModalContent();
-            };
-            markUnreadBtn.onclick = () => {
-                markAsUnread(currentModalNotification.id);
-                updateModalContent();
-            };
-            deleteBtn.onclick = () => {
-                deleteNotification(currentModalNotification.id);
-                closeNotificationModal();
-            };
+            document.getElementById('modal-mark-read').onclick = () => { markAsRead(currentModalNotification.id); updateModalContent(); };
+            document.getElementById('modal-mark-unread').onclick = () => { markAsUnread(currentModalNotification.id); updateModalContent(); };
+            document.getElementById('modal-delete').onclick = () => { deleteNotification(currentModalNotification.id); closeNotificationModal(); };
         }
-
+        
         window.deleteNotification = (id) => {
             if (!confirm('Delete this notification?')) return;
             allNotifications = allNotifications.filter(n => n.id !== id);
             updateStats();
-            if (currentPage > 1 && allNotifications.length <= (currentPage - 1) * itemsPerPage) {
-                currentPage = currentPage - 1;
-            }
+            if (currentPage > 1 && allNotifications.length <= (currentPage - 1) * itemsPerPage) currentPage--;
             renderNotifications();
         };
-
+        
         window.closeNotificationModal = (event) => {
             if (event && event.target !== event.currentTarget) return;
             document.getElementById('notification-modal').classList.add('hidden');
             currentModalNotification = null;
         };
-
+        
         function getTypeLabel(type) {
-            const labels = {
-                announcements: '📢 Announcement',
-                orders: '🛒 Order',
-                payments: '💰 Payment',
-                chat: '💬 Chat',
-                system: '⚙️ System'
-            };
+            const labels = { announcements: '📢 Announcement', orders: '🛒 Order', payments: '💰 Payment', chat: '💬 Chat', system: '⚙️ System' };
             return labels[type] || type;
         }
-
+        
         function formatDate(dateString) {
             const date = new Date(dateString);
             const now = new Date();
@@ -625,7 +636,6 @@
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor(diff / (1000 * 60 * 60));
             const minutes = Math.floor(diff / (1000 * 60));
-            
             if (minutes < 1) return 'Just now';
             if (minutes < 60) return `${minutes} min ago`;
             if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
@@ -633,12 +643,12 @@
             if (days < 7) return `${days} days ago`;
             return date.toLocaleDateString();
         }
-
+        
         function formatDateTime(dateString) {
             const date = new Date(dateString);
             return date.toLocaleString();
         }
-
+        
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {
@@ -648,8 +658,7 @@
                 return m;
             });
         }
-
-        // Event Listeners
+        
         document.querySelectorAll('.filter-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 document.querySelectorAll('.filter-chip').forEach(c => {
@@ -663,7 +672,7 @@
                 renderNotifications();
             });
         });
-
+        
         document.querySelectorAll('.status-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
@@ -673,7 +682,7 @@
                 renderNotifications();
             });
         });
-
+        
         document.getElementById('search-notifications').addEventListener('input', (e) => {
             currentSearch = e.target.value;
             currentPage = 1;
