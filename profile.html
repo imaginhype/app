@@ -64,32 +64,44 @@
             .main-content { margin-left: 16rem; }
         }
         
-        .profile-row {
+        .profile-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .info-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 0;
+            padding: 0.75rem 0;
             border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.2s;
         }
-        .profile-row:hover {
-            background-color: var(--hover-bg);
-            padding-left: 0.5rem;
+        .info-row:last-child {
+            border-bottom: none;
         }
-        .profile-label {
+        .info-label {
             font-size: 0.875rem;
             color: var(--text-secondary);
         }
-        .profile-value {
+        .info-value {
             font-size: 0.875rem;
             font-weight: 500;
             color: var(--text-primary);
-        }
-        .edit-mode {
-            background-color: var(--bg-tertiary);
-            border-radius: 0.5rem;
-            padding: 0.5rem;
+            text-align: right;
+            word-break: break-word;
+            max-width: 60%;
         }
         .avatar-container {
             position: relative;
@@ -109,15 +121,35 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .avatar-upload-btn:hover {
-            transform: scale(1.1);
-        }
+        .avatar-upload-btn:hover { transform: scale(1.1); }
         .avatar-preview {
             width: 100px;
             height: 100px;
             border-radius: 50%;
             object-fit: cover;
             background: #e2e8f0;
+        }
+        .edit-field-btn {
+            color: #8b5cf6;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .edit-field-btn:hover { text-decoration: underline; }
+        
+        /* Edit mode styles */
+        .edit-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+        .edit-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            ring: 2px solid rgba(139,92,246,0.2);
         }
     </style>
 </head>
@@ -173,9 +205,6 @@
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <a href="admin-dashboard.html" class="text-purple-500 hover:text-purple-600">
-                    <i class="fas fa-arrow-left mr-2"></i> Back
-                </a>
                 <h1 class="text-xl font-semibold dark:text-white">My Profile</h1>
             </div>
             <div class="flex items-center space-x-4">
@@ -208,169 +237,204 @@
             </div>
         </div>
 
-        <!-- Profile Content -->
-        <div class="max-w-3xl mx-auto px-4 py-8">
-            <div class="card rounded-xl overflow-hidden">
-                <!-- Avatar Section -->
-                <div class="flex flex-col items-center pt-8 pb-4">
-                    <div class="avatar-container">
-                        <img id="avatar-preview" class="avatar-preview" src="https://ui-avatars.com/api/?background=8b5cf6&color=fff&size=100&name=User" alt="Avatar">
-                        <label for="avatar-upload" class="avatar-upload-btn">
-                            <i class="fas fa-camera text-white text-sm"></i>
-                        </label>
-                        <input type="file" id="avatar-upload" accept="image/*" class="hidden">
+        <!-- Profile Content - Two Column Layout -->
+        <div class="max-w-6xl mx-auto px-4 py-8">
+            <!-- Avatar and Name Section (Full Width) -->
+            <div class="flex flex-col items-center mb-8">
+                <div class="avatar-container">
+                    <img id="avatar-preview" class="avatar-preview" src="https://ui-avatars.com/api/?background=8b5cf6&color=fff&size=100&name=User" alt="Avatar">
+                    <label for="avatar-upload" class="avatar-upload-btn">
+                        <i class="fas fa-camera text-white text-sm"></i>
+                    </label>
+                    <input type="file" id="avatar-upload" accept="image/*" class="hidden">
+                </div>
+                <h2 class="text-xl font-bold mt-3 dark:text-white" id="display-name">User Name</h2>
+                <p class="text-sm text-gray-500" id="display-email">user@example.com</p>
+                <button id="edit-toggle" class="mt-3 px-4 py-1.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition">
+                    <i class="fas fa-edit mr-1"></i> Edit Profile
+                </button>
+            </div>
+
+            <!-- Two Column Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- LEFT COLUMN -->
+                <div class="space-y-6">
+                    <!-- Personal Information Section -->
+                    <div class="profile-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-user text-purple-500"></i>
+                            Personal Information
+                        </h3>
+                        <div id="personal-info">
+                            <div class="info-row">
+                                <span class="info-label">Full Name</span>
+                                <span class="info-value" id="view-name">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Email Address</span>
+                                <span class="info-value" id="view-email">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Mobile Number</span>
+                                <span class="info-value" id="view-phone">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">WhatsApp Number</span>
+                                <span class="info-value" id="view-whatsapp">-</span>
+                            </div>
+                        </div>
                     </div>
-                    <h2 class="text-xl font-bold mt-3 dark:text-white" id="display-name">User Name</h2>
-                    <p class="text-sm text-gray-500" id="display-email">user@example.com</p>
+
+                    <!-- Address Section -->
+                    <div class="profile-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-location-dot text-purple-500"></i>
+                            Address Information
+                        </h3>
+                        <div id="address-info">
+                            <div class="info-row">
+                                <span class="info-label">Location</span>
+                                <span class="info-value" id="view-location">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Full Address</span>
+                                <span class="info-value" id="view-address">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Media Section -->
+                    <div class="profile-section">
+                        <h3 class="section-title">
+                            <i class="fab fa-facebook text-purple-500"></i>
+                            Social Media
+                        </h3>
+                        <div id="social-info">
+                            <div class="info-row">
+                                <span class="info-label">Facebook</span>
+                                <span class="info-value" id="view-facebook">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Instagram</span>
+                                <span class="info-value" id="view-instagram">-</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Profile Fields -->
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold dark:text-white">My Profile</h3>
-                        <button id="edit-toggle" class="text-purple-500 text-sm hover:underline">
-                            <i class="fas fa-edit mr-1"></i> Edit
-                        </button>
-                    </div>
-
-                    <!-- Read Mode View -->
-                    <div id="read-mode">
-                        <div class="profile-row" onclick="editField('name')">
-                            <span class="profile-label">Name</span>
-                            <span class="profile-value" id="view-name">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        <div class="profile-row" onclick="editField('email')">
-                            <span class="profile-label">Email account</span>
-                            <span class="profile-value" id="view-email">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        <div class="profile-row" onclick="editField('phone')">
-                            <span class="profile-label">Mobile number</span>
-                            <span class="profile-value" id="view-phone">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        <div class="profile-row" onclick="editField('whatsapp')">
-                            <span class="profile-label">WhatsApp</span>
-                            <span class="profile-value" id="view-whatsapp">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        <div class="profile-row" onclick="editField('location')">
-                            <span class="profile-label">Location</span>
-                            <span class="profile-value" id="view-location">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        <div class="profile-row" onclick="editField('address')">
-                            <span class="profile-label">Address</span>
-                            <span class="profile-value" id="view-address">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        
-                        <div class="mt-4 pt-2">
-                            <h4 class="font-semibold dark:text-white mb-2">Social Media</h4>
-                        </div>
-                        <div class="profile-row" onclick="editField('facebook')">
-                            <span class="profile-label">Facebook</span>
-                            <span class="profile-value" id="view-facebook">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        <div class="profile-row" onclick="editField('instagram')">
-                            <span class="profile-label">Instagram</span>
-                            <span class="profile-value" id="view-instagram">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        
-                        <div class="mt-4 pt-2">
-                            <h4 class="font-semibold dark:text-white mb-2">Store Links</h4>
-                        </div>
-                        <div class="profile-row" onclick="editField('website')">
-                            <span class="profile-label">Website</span>
-                            <span class="profile-value" id="view-website">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        <div class="profile-row" onclick="editField('dubizzle')">
-                            <span class="profile-label">Dubizzle</span>
-                            <span class="profile-value" id="view-dubizzle">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
-                        </div>
-                        <div class="profile-row" onclick="editField('marketplace')">
-                            <span class="profile-label">Marketplace</span>
-                            <span class="profile-value" id="view-marketplace">-</span>
-                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                <!-- RIGHT COLUMN -->
+                <div class="space-y-6">
+                    <!-- Store Links Section -->
+                    <div class="profile-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-store text-purple-500"></i>
+                            Store Links
+                        </h3>
+                        <div id="store-info">
+                            <div class="info-row">
+                                <span class="info-label">Website</span>
+                                <span class="info-value" id="view-website">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Dubizzle</span>
+                                <span class="info-value" id="view-dubizzle">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Marketplace</span>
+                                <span class="info-value" id="view-marketplace">-</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Edit Mode View (Hidden by default) -->
-                    <div id="edit-mode" class="hidden">
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Full Name</label>
-                                <input type="text" id="edit-name" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    <!-- Additional Info Section -->
+                    <div class="profile-section">
+                        <h3 class="section-title">
+                            <i class="fas fa-chart-line text-purple-500"></i>
+                            Account Statistics
+                        </h3>
+                        <div id="stats-info">
+                            <div class="info-row">
+                                <span class="info-label">Member Since</span>
+                                <span class="info-value" id="view-member-since">-</span>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Email</label>
-                                <input type="email" id="edit-email" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" disabled>
-                                <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                            <div class="info-row">
+                                <span class="info-label">Last Updated</span>
+                                <span class="info-value" id="view-last-updated">-</span>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Mobile Number</label>
-                                <input type="tel" id="edit-phone" placeholder="+971 XX XXX XXXX" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">WhatsApp Number</label>
-                                <input type="tel" id="edit-whatsapp" placeholder="+971 XX XXX XXXX" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Location (City, Country)</label>
-                                <input type="text" id="edit-location" placeholder="e.g., Dubai, UAE" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Full Address</label>
-                                <textarea id="edit-address" rows="2" placeholder="Street, building, apartment" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
-                            </div>
-                            
-                            <div class="pt-2">
-                                <h4 class="font-semibold dark:text-white mb-3">Social Media</h4>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Facebook Profile</label>
-                                <input type="url" id="edit-facebook" placeholder="https://facebook.com/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Instagram Profile</label>
-                                <input type="url" id="edit-instagram" placeholder="https://instagram.com/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            
-                            <div class="pt-2">
-                                <h4 class="font-semibold dark:text-white mb-3">Store Links</h4>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Website</label>
-                                <input type="url" id="edit-website" placeholder="https://yourwebsite.com" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Dubizzle Profile</label>
-                                <input type="url" id="edit-dubizzle" placeholder="https://dubizzle.com/u/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Marketplace Profile</label>
-                                <input type="url" id="edit-marketplace" placeholder="https://facebook.com/marketplace/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-3 mt-6">
-                            <button id="save-profile" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">
-                                <i class="fas fa-save mr-1"></i> Save Changes
-                            </button>
-                            <button id="cancel-edit" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                Cancel
-                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- Edit Profile Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeEditModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto modal-content" onclick="event.stopPropagation()">
+            <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold dark:text-white">Edit Profile</h2>
+                <button onclick="closeEditModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Full Name</label>
+                        <input type="text" id="edit-name" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Email</label>
+                        <input type="email" id="edit-email" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" disabled>
+                        <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Mobile Number</label>
+                        <input type="tel" id="edit-phone" placeholder="+971 XX XXX XXXX" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">WhatsApp Number</label>
+                        <input type="tel" id="edit-whatsapp" placeholder="+971 XX XXX XXXX" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Location (City, Country)</label>
+                        <input type="text" id="edit-location" placeholder="e.g., Dubai, UAE" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Full Address</label>
+                        <textarea id="edit-address" rows="2" placeholder="Street, building, apartment" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Facebook Profile</label>
+                        <input type="url" id="edit-facebook" placeholder="https://facebook.com/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Instagram Profile</label>
+                        <input type="url" id="edit-instagram" placeholder="https://instagram.com/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Website</label>
+                        <input type="url" id="edit-website" placeholder="https://yourwebsite.com" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Dubizzle Profile</label>
+                        <input type="url" id="edit-dubizzle" placeholder="https://dubizzle.com/u/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Marketplace Profile</label>
+                        <input type="url" id="edit-marketplace" placeholder="https://facebook.com/marketplace/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button id="save-profile" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">
+                        <i class="fas fa-save mr-1"></i> Save Changes
+                    </button>
+                    <button onclick="closeEditModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -397,7 +461,6 @@
 
         let currentUser = null;
         let currentUserData = null;
-        let isEditMode = false;
 
         // ========== MOBILE SIDEBAR FUNCTIONS ==========
         window.toggleMobileMenu = function() {
@@ -446,6 +509,16 @@
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
+        // Modal functions
+        window.openEditModal = () => {
+            document.getElementById('edit-modal').classList.remove('hidden');
+        };
+        window.closeEditModal = (event) => {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('edit-modal').classList.add('hidden');
+        };
+        document.getElementById('edit-toggle').addEventListener('click', openEditModal);
+
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -477,6 +550,11 @@
             document.getElementById('view-website').textContent = profile.website || '-';
             document.getElementById('view-dubizzle').textContent = profile.dubizzle || '-';
             document.getElementById('view-marketplace').textContent = profile.marketplace || '-';
+            
+            const memberSince = data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '-';
+            const lastUpdated = data.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : '-';
+            document.getElementById('view-member-since').textContent = memberSince;
+            document.getElementById('view-last-updated').textContent = lastUpdated;
             
             document.getElementById('edit-name').value = data.name || '';
             document.getElementById('edit-email').value = data.email || '';
@@ -510,22 +588,7 @@
             alert('Profile picture updated!');
         });
 
-        // Edit Toggle
-        document.getElementById('edit-toggle').addEventListener('click', () => {
-            isEditMode = !isEditMode;
-            document.getElementById('read-mode').classList.toggle('hidden', isEditMode);
-            document.getElementById('edit-mode').classList.toggle('hidden', !isEditMode);
-            document.getElementById('edit-toggle').textContent = isEditMode ? 'Cancel Edit' : 'Edit';
-        });
-
-        document.getElementById('cancel-edit').addEventListener('click', () => {
-            isEditMode = false;
-            document.getElementById('read-mode').classList.remove('hidden');
-            document.getElementById('edit-mode').classList.add('hidden');
-            document.getElementById('edit-toggle').textContent = 'Edit';
-            loadProfileData(); // Reload original data
-        });
-
+        // Save Profile
         document.getElementById('save-profile').addEventListener('click', async () => {
             const profile = {
                 phone: document.getElementById('edit-phone').value,
@@ -549,10 +612,7 @@
             });
             
             alert('Profile updated successfully!');
-            isEditMode = false;
-            document.getElementById('read-mode').classList.remove('hidden');
-            document.getElementById('edit-mode').classList.add('hidden');
-            document.getElementById('edit-toggle').textContent = 'Edit';
+            closeEditModal();
             loadProfileData();
         });
     </script>
