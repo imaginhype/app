@@ -55,13 +55,57 @@
         .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
         .nav-item.active { background: var(--active-bg); color: white; }
         
-        #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
-        #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay:not(.show) { display: none; }
-        #sidebar-overlay.show { display: block; }
+        /* Mobile Sidebar Styles */
+        #mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+        #mobile-sidebar.show {
+            transform: translateX(0);
+        }
+        #sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            cursor: pointer;
+        }
+        #sidebar-overlay.show {
+            display: block;
+        }
+        #sidebar-overlay:not(.show) {
+            display: none;
+        }
         
-        @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
-        @media (min-width: 768px) { #mobile-sidebar, #sidebar-overlay { display: none; } .main-content { margin-left: 16rem; } }
+        @media (max-width: 767px) {
+            .desktop-sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+        @media (min-width: 768px) {
+            #mobile-sidebar,
+            #sidebar-overlay {
+                display: none;
+            }
+            .main-content {
+                margin-left: 16rem;
+            }
+        }
         
         .action-icon {
             transition: all 0.2s;
@@ -225,7 +269,7 @@
         </div>
     </main>
 
-    <!-- Manage Categories Modal (with Edit Option) -->
+    <!-- Manage Categories Modal -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCategoryModal(event)">
         <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto modal-content" onclick="event.stopPropagation()">
             <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
@@ -233,7 +277,6 @@
                 <button onclick="closeCategoryModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
             </div>
             <div class="p-6">
-                <!-- Add New Category -->
                 <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                     <h3 class="font-semibold mb-3 dark:text-white">Add New Category</h3>
                     <div class="flex gap-3">
@@ -242,8 +285,6 @@
                     </div>
                     <p class="text-xs text-gray-500 mt-2">Category names must be between 2-50 characters</p>
                 </div>
-
-                <!-- Existing Categories -->
                 <h3 class="font-semibold mb-3 dark:text-white">Existing Categories</h3>
                 <div id="categories-list" class="space-y-2">
                     <div class="text-center py-4 text-gray-500">Loading categories...</div>
@@ -262,7 +303,7 @@
             <div class="p-6">
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2 dark:text-gray-300">Category Name</label>
-                    <input type="text" id="edit-category-name" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="Enter category name">
+                    <input type="text" id="edit-category-name" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
                     <p class="text-xs text-gray-500 mt-1">Category names must be between 2-50 characters</p>
                 </div>
                 <div class="flex gap-3 mt-6">
@@ -305,6 +346,24 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
+        // ========== MOBILE SIDEBAR FUNCTIONS ==========
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
+            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
+        };
+
+        window.closeMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        };
+
+        // ========== USER MENU FUNCTIONS ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -325,28 +384,17 @@
             }
         });
 
+        // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
 
-        window.toggleMobileMenu = () => {
-            document.getElementById('mobile-sidebar').classList.toggle('show');
-            document.getElementById('sidebar-overlay').classList.toggle('show');
-        };
-        
-        window.closeMobileMenu = () => {
-            document.getElementById('mobile-sidebar').classList.remove('show');
-            document.getElementById('sidebar-overlay').classList.remove('show');
-        };
-
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
-        
-        window.showAddProductModal = () => {
-            window.location.href = 'add-product.html';
-        };
+        window.showAddProductModal = () => { window.location.href = 'add-product.html'; };
 
+        // ========== AUTHENTICATION ==========
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -417,27 +465,19 @@
 
         window.updateCategory = async () => {
             if (!currentEditCategoryId) return;
-            
             const newName = document.getElementById('edit-category-name').value.trim();
             if (!newName || newName.length < 2 || newName.length > 50) {
                 alert('Category name must be between 2-50 characters');
                 return;
             }
-            
-            // Check if category with same name already exists
             if (allCategories.some(cat => cat.id !== currentEditCategoryId && cat.name.toLowerCase() === newName.toLowerCase())) {
                 alert('A category with this name already exists');
                 return;
             }
-            
-            await updateDoc(doc(db, 'categories', currentEditCategoryId), {
-                name: newName,
-                updatedAt: new Date().toISOString()
-            });
-            
+            await updateDoc(doc(db, 'categories', currentEditCategoryId), { name: newName, updatedAt: new Date().toISOString() });
             closeEditCategoryModal();
             await loadCategories();
-            await loadProducts(); // Refresh products to update category filters
+            await loadProducts();
         };
 
         window.addCategory = async () => {
@@ -446,28 +486,22 @@
                 alert('Category name must be between 2-50 characters');
                 return;
             }
-            
-            // Check if category already exists
             if (allCategories.some(cat => cat.name.toLowerCase() === name.toLowerCase())) {
                 alert('A category with this name already exists');
                 return;
             }
-            
             await addDoc(collection(db, 'categories'), { name, createdAt: new Date().toISOString() });
             document.getElementById('new-category-name').value = '';
             await loadCategories();
         };
 
         window.deleteCategory = async (id) => {
-            if (!confirm('Delete this category? Products in this category will remain but show as uncategorized.')) return;
+            if (!confirm('Delete this category? Products will show as uncategorized.')) return;
             await deleteDoc(doc(db, 'categories', id));
             await loadCategories();
         };
 
-        window.openCategoryModal = () => {
-            document.getElementById('category-modal').classList.remove('hidden');
-        };
-
+        window.openCategoryModal = () => { document.getElementById('category-modal').classList.remove('hidden'); };
         window.closeCategoryModal = (event) => {
             if (event && event.target !== event.currentTarget) return;
             document.getElementById('category-modal').classList.add('hidden');
@@ -494,12 +528,8 @@
 
         function renderProducts() {
             let filtered = allProducts;
-            if (currentCategory !== 'all') {
-                filtered = filtered.filter(p => p.category === currentCategory);
-            }
-            if (currentSearch) {
-                filtered = filtered.filter(p => p.name?.toLowerCase().includes(currentSearch.toLowerCase()));
-            }
+            if (currentCategory !== 'all') filtered = filtered.filter(p => p.category === currentCategory);
+            if (currentSearch) filtered = filtered.filter(p => p.name?.toLowerCase().includes(currentSearch.toLowerCase()));
             
             const total = filtered.length;
             const start = (currentPage - 1) * itemsPerPage;
@@ -551,38 +581,24 @@
                     </div>
                 `).join('');
             }
-            
             renderPagination(total);
         }
 
         function renderPagination(total) {
             const totalPages = Math.ceil(total / itemsPerPage);
             const container = document.getElementById('pagination-container');
-            if (totalPages <= 1) {
-                container.innerHTML = '';
-                return;
-            }
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) {
-                html += `<button onclick="goToPage(${currentPage - 1})" class="px-4 py-2 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
-            }
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-4 py-2 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
                 html += `<button onclick="goToPage(${i})" class="px-4 py-2 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
             }
-            if (currentPage < totalPages) {
-                html += `<button onclick="goToPage(${currentPage + 1})" class="px-4 py-2 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
-            }
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-4 py-2 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
             container.innerHTML = html;
         }
 
-        window.goToPage = (page) => {
-            currentPage = page;
-            renderProducts();
-        };
-
-        window.viewProduct = (id) => {
-            window.location.href = `product-view.html?id=${id}`;
-        };
+        window.goToPage = (page) => { currentPage = page; renderProducts(); };
+        window.viewProduct = (id) => { window.location.href = `product-view.html?id=${id}`; };
 
         function escapeHtml(str) {
             if (!str) return '';
