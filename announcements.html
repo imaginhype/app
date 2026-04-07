@@ -26,12 +26,14 @@
         }
         .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
         .nav-item.active { background: var(--active-bg); color: white; }
+        
         .stat-card {
             transition: all 0.2s ease;
         }
         .stat-card:hover {
             transform: translateY(-2px);
         }
+        
         .priority-urgent { color: #ef4444; background: rgba(239, 68, 68, 0.125); }
         .priority-high { color: #f59e0b; background: rgba(245, 158, 11, 0.125); }
         .priority-normal { color: #3b82f6; background: rgba(59, 130, 246, 0.125); }
@@ -39,13 +41,57 @@
         .status-active { color: #10b981; background: rgba(16, 185, 129, 0.125); }
         .status-expired { color: #ef4444; background: rgba(239, 68, 68, 0.125); }
         
-        #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 100; }
-        #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay:not(.show) { display: none; }
-        #sidebar-overlay.show { display: block; }
+        /* Mobile Sidebar Styles */
+        #mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+        #mobile-sidebar.show {
+            transform: translateX(0);
+        }
+        #sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            cursor: pointer;
+        }
+        #sidebar-overlay.show {
+            display: block;
+        }
+        #sidebar-overlay:not(.show) {
+            display: none;
+        }
         
-        @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
-        @media (min-width: 768px) { #mobile-sidebar, #sidebar-overlay { display: none; } .main-content { margin-left: 16rem; } }
+        @media (max-width: 767px) {
+            .desktop-sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+        @media (min-width: 768px) {
+            #mobile-sidebar,
+            #sidebar-overlay {
+                display: none;
+            }
+            .main-content {
+                margin-left: 16rem;
+            }
+        }
         
         .announcement-row:hover { background-color: var(--hover-bg); }
         .table-container { overflow-x: auto; }
@@ -348,6 +394,35 @@
         </div>
     </div>
 
+    <!-- View Announcement Modal (Professional Design) -->
+    <div id="view-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeViewModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4 modal-content" onclick="event.stopPropagation()">
+            <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                        <i class="fas fa-bullhorn text-purple-500"></i>
+                    </div>
+                    <h2 class="text-xl font-bold dark:text-white" id="view-modal-title">Announcement Details</h2>
+                </div>
+                <button onclick="closeViewModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="p-5" id="view-modal-content">
+                <!-- Content loaded dynamically -->
+            </div>
+            <div class="p-5 border-t dark:border-gray-700 flex gap-3">
+                <button id="view-modal-edit" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                </button>
+                <button id="view-modal-delete" class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">
+                    <i class="fas fa-trash mr-1"></i> Delete
+                </button>
+                <button onclick="closeViewModal()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -372,11 +447,30 @@
         let currentPriority = 'all';
         let currentStatusFilter = 'all';
         let currentEditId = null;
+        let currentViewAnnouncement = null;
         const itemsPerPage = 10;
 
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
+        // ========== MOBILE SIDEBAR FUNCTIONS ==========
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
+            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
+        };
+
+        window.closeMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        };
+
+        // ========== USER MENU FUNCTIONS ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -397,20 +491,11 @@
             }
         });
 
+        // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
-        };
-
-        window.toggleMobileMenu = () => {
-            document.getElementById('mobile-sidebar').classList.toggle('show');
-            document.getElementById('sidebar-overlay').classList.toggle('show');
-        };
-        
-        window.closeMobileMenu = () => {
-            document.getElementById('mobile-sidebar').classList.remove('show');
-            document.getElementById('sidebar-overlay').classList.remove('show');
         };
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
@@ -452,19 +537,11 @@
 
         function renderAnnouncements() {
             let filtered = allAnnouncements;
-            
-            if (currentSearch) {
-                filtered = filtered.filter(a => a.title?.toLowerCase().includes(currentSearch.toLowerCase()));
-            }
-            if (currentPriority !== 'all') {
-                filtered = filtered.filter(a => a.priority === currentPriority);
-            }
+            if (currentSearch) filtered = filtered.filter(a => a.title?.toLowerCase().includes(currentSearch.toLowerCase()));
+            if (currentPriority !== 'all') filtered = filtered.filter(a => a.priority === currentPriority);
             if (currentStatusFilter !== 'all') {
-                if (currentStatusFilter === 'active') {
-                    filtered = filtered.filter(a => isActive(a));
-                } else if (currentStatusFilter === 'expired') {
-                    filtered = filtered.filter(a => !isActive(a));
-                }
+                if (currentStatusFilter === 'active') filtered = filtered.filter(a => isActive(a));
+                else if (currentStatusFilter === 'expired') filtered = filtered.filter(a => !isActive(a));
             }
             
             const total = filtered.length;
@@ -502,7 +579,7 @@
                                 <button onclick="openEditModal('${a.id}')" class="action-icon text-blue-500 hover:text-blue-700" title="Edit">
                                     <i class="fas fa-edit text-lg"></i>
                                 </button>
-                                <button onclick="viewAnnouncement('${a.id}')" class="action-icon text-purple-500 hover:text-purple-700" title="View">
+                                <button onclick="openViewModal('${a.id}')" class="action-icon text-purple-500 hover:text-purple-700" title="View">
                                     <i class="fas fa-eye text-lg"></i>
                                 </button>
                                 <button onclick="deleteAnnouncement('${a.id}')" class="action-icon text-red-500 hover:text-red-700" title="Delete">
@@ -520,32 +597,19 @@
         function renderPagination(total) {
             const totalPages = Math.ceil(total / itemsPerPage);
             const container = document.getElementById('pagination-container');
-            if (totalPages <= 1) {
-                container.innerHTML = '';
-                return;
-            }
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) {
-                html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
-            }
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
                 html += `<button onclick="goToPage(${i})" class="px-3 py-1 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
             }
-            if (currentPage < totalPages) {
-                html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
-            }
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
             container.innerHTML = html;
         }
 
-        window.goToPage = (page) => {
-            currentPage = page;
-            renderAnnouncements();
-        };
+        window.goToPage = (page) => { currentPage = page; renderAnnouncements(); };
 
-        window.openCreateModal = () => {
-            document.getElementById('create-modal').classList.remove('hidden');
-        };
-
+        window.openCreateModal = () => { document.getElementById('create-modal').classList.remove('hidden'); };
         window.closeCreateModal = (event) => {
             if (event && event.target !== event.currentTarget) return;
             document.getElementById('create-modal').classList.add('hidden');
@@ -560,23 +624,8 @@
             const priority = document.getElementById('announcement-priority').value;
             const target = document.getElementById('announcement-target').value;
             const expiryDate = document.getElementById('announcement-expiry').value;
-            
-            if (!title || !message) {
-                alert('Please enter both title and message.');
-                return;
-            }
-            
-            await addDoc(collection(db, 'announcements'), {
-                title,
-                message,
-                priority,
-                target,
-                expiryDate: expiryDate || null,
-                status: 'active',
-                sentCount: 0,
-                createdAt: new Date().toISOString()
-            });
-            
+            if (!title || !message) { alert('Please enter both title and message.'); return; }
+            await addDoc(collection(db, 'announcements'), { title, message, priority, target, expiryDate: expiryDate || null, status: 'active', sentCount: 0, createdAt: new Date().toISOString() });
             closeCreateModal();
             await loadAnnouncements();
             alert('Announcement created and notifications sent!');
@@ -585,14 +634,12 @@
         window.openEditModal = async (id) => {
             const announcement = allAnnouncements.find(a => a.id === id);
             if (!announcement) return;
-            
             currentEditId = id;
             document.getElementById('edit-announcement-title').value = announcement.title || '';
             document.getElementById('edit-announcement-message').value = announcement.message || '';
             document.getElementById('edit-announcement-priority').value = announcement.priority || 'normal';
             document.getElementById('edit-announcement-target').value = announcement.target || 'all_users';
             document.getElementById('edit-announcement-expiry').value = announcement.expiryDate ? announcement.expiryDate.split('T')[0] : '';
-            
             document.getElementById('edit-modal').classList.remove('hidden');
         };
 
@@ -604,37 +651,76 @@
 
         window.updateAnnouncement = async () => {
             if (!currentEditId) return;
-            
             const title = document.getElementById('edit-announcement-title').value.trim();
             const message = document.getElementById('edit-announcement-message').value.trim();
             const priority = document.getElementById('edit-announcement-priority').value;
             const target = document.getElementById('edit-announcement-target').value;
             const expiryDate = document.getElementById('edit-announcement-expiry').value;
-            
-            if (!title || !message) {
-                alert('Please enter both title and message.');
-                return;
-            }
-            
-            await updateDoc(doc(db, 'announcements', currentEditId), {
-                title,
-                message,
-                priority,
-                target,
-                expiryDate: expiryDate || null,
-                updatedAt: new Date().toISOString()
-            });
-            
+            if (!title || !message) { alert('Please enter both title and message.'); return; }
+            await updateDoc(doc(db, 'announcements', currentEditId), { title, message, priority, target, expiryDate: expiryDate || null, updatedAt: new Date().toISOString() });
             closeEditModal();
             await loadAnnouncements();
             alert('Announcement updated successfully!');
         };
 
-        window.viewAnnouncement = async (id) => {
+        window.openViewModal = (id) => {
             const announcement = allAnnouncements.find(a => a.id === id);
             if (!announcement) return;
+            currentViewAnnouncement = announcement;
+            const modalContent = document.getElementById('view-modal-content');
+            document.getElementById('view-modal-title').textContent = announcement.title;
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Priority:</span>
+                        <span class="inline-block px-2 py-1 rounded-full text-xs font-medium priority-${announcement.priority || 'normal'}">${(announcement.priority || 'normal').toUpperCase()}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Target Audience:</span>
+                        <span class="text-sm">${formatTarget(announcement.target)}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Status:</span>
+                        <span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${isActive(announcement) ? 'status-active' : 'status-expired'}">${isActive(announcement) ? 'Active' : 'Expired'}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Sent To:</span>
+                        <span class="text-sm">${announcement.sentCount || 0} users</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Created:</span>
+                        <span class="text-sm">${formatDateTime(announcement.createdAt)}</span>
+                    </div>
+                    ${announcement.expiryDate ? `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span class="text-sm font-medium">Expires:</span>
+                        <span class="text-sm">${formatDateTime(announcement.expiryDate)}</span>
+                    </div>
+                    ` : ''}
+                    <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div class="text-sm font-medium mb-2">Message:</div>
+                        <div class="text-sm whitespace-pre-wrap">${escapeHtml(announcement.message)}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('view-modal').classList.remove('hidden');
             
-            alert(`📢 ${announcement.title}\n\n${announcement.message}\n\nPriority: ${announcement.priority}\nTarget: ${formatTarget(announcement.target)}\nCreated: ${formatDateTime(announcement.createdAt)}`);
+            document.getElementById('view-modal-edit').onclick = () => {
+                closeViewModal();
+                openEditModal(announcement.id);
+            };
+            document.getElementById('view-modal-delete').onclick = () => {
+                if (confirm('Delete this announcement?')) {
+                    deleteAnnouncement(announcement.id);
+                    closeViewModal();
+                }
+            };
+        };
+
+        window.closeViewModal = (event) => {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('view-modal').classList.add('hidden');
+            currentViewAnnouncement = null;
         };
 
         window.deleteAnnouncement = async (id) => {
@@ -644,11 +730,7 @@
         };
 
         function formatTarget(target) {
-            const targets = {
-                all_users: 'All Users',
-                sellers: 'All Sellers',
-                specific: 'Specific Sellers'
-            };
+            const targets = { all_users: 'All Users', sellers: 'All Sellers', specific: 'Specific Sellers' };
             return targets[target] || target;
         }
 
@@ -674,24 +756,9 @@
             });
         }
 
-        // Event Listeners
-        document.getElementById('search-announcements').addEventListener('input', (e) => {
-            currentSearch = e.target.value;
-            currentPage = 1;
-            renderAnnouncements();
-        });
-        
-        document.getElementById('filter-priority').addEventListener('change', (e) => {
-            currentPriority = e.target.value;
-            currentPage = 1;
-            renderAnnouncements();
-        });
-        
-        document.getElementById('filter-status').addEventListener('change', (e) => {
-            currentStatusFilter = e.target.value;
-            currentPage = 1;
-            renderAnnouncements();
-        });
+        document.getElementById('search-announcements').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderAnnouncements(); });
+        document.getElementById('filter-priority').addEventListener('change', (e) => { currentPriority = e.target.value; currentPage = 1; renderAnnouncements(); });
+        document.getElementById('filter-status').addEventListener('change', (e) => { currentStatusFilter = e.target.value; currentPage = 1; renderAnnouncements(); });
     </script>
 </body>
 </html>
