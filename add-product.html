@@ -233,7 +233,7 @@
             color: var(--text-primary);
         }
         
-        /* Product Card Preview (same as products page) */
+        /* Product Card Preview */
         .preview-card {
             background: var(--card-bg);
             border-radius: 16px;
@@ -465,7 +465,7 @@
                                 <div id="image-preview-grid" class="image-grid"></div>
                             </div>
                             
-                            <!-- Pricing Card - Fixed order: Regular Price (left), Sale Price (center), Cost Price (right) -->
+                            <!-- Pricing Card - Regular Price left, Sale Price center, Cost Price right -->
                             <div class="form-card">
                                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-tag text-purple-500"></i> Pricing & Profit</h2>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -571,7 +571,7 @@
                         </form>
                     </div>
 
-                    <!-- RIGHT COLUMN: Product Card Preview (Same as products page) -->
+                    <!-- RIGHT COLUMN: Product Card Preview -->
                     <div class="space-y-5">
                         <div class="preview-card">
                             <div class="preview-image-container">
@@ -630,7 +630,6 @@
         let quillEditor = null;
         let isSaving = false;
 
-        // Toast notification function
         function showToast(message, isError = false) {
             const existingToast = document.querySelector('.toast');
             if (existingToast) existingToast.remove();
@@ -689,7 +688,6 @@
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
-        // Initialize Quill Editor
         function initQuillEditor() {
             quillEditor = new Quill('#editor-container', {
                 theme: 'snow',
@@ -713,7 +711,6 @@
             });
         }
 
-        // Update live preview
         function updatePreview() {
             const name = document.getElementById('product-name').value || 'Product Name';
             const category = document.getElementById('product-category').options[document.getElementById('product-category').selectedIndex]?.text || '—';
@@ -762,7 +759,6 @@
             await loadCategories();
             await checkForEdit();
             
-            // Add live preview listeners
             document.getElementById('product-name').addEventListener('input', updatePreview);
             document.getElementById('product-category').addEventListener('change', updatePreview);
             document.getElementById('product-brand').addEventListener('input', updatePreview);
@@ -920,8 +916,8 @@
             return urls;
         }
 
+        // FIXED: Save Product function with proper button reset and redirect
         window.saveProduct = async () => {
-            // Prevent double submission
             if (isSaving) return;
             
             const name = document.getElementById('product-name').value.trim();
@@ -937,7 +933,6 @@
                 return;
             }
             
-            // Disable save button and show loading state
             isSaving = true;
             const saveBtn = document.getElementById('save-button');
             const originalBtnText = saveBtn.innerHTML;
@@ -951,7 +946,7 @@
                     regularPrice: regularPrice,
                     salePrice: salePrice > 0 && salePrice < regularPrice ? salePrice : 0,
                     costPrice: costPrice,
-                    price: regularPrice, // For backward compatibility
+                    price: regularPrice,
                     brand: document.getElementById('product-brand').value,
                     stockStatus: document.getElementById('product-stock-status').value,
                     stockQuantity: parseInt(document.getElementById('product-stock-quantity').value) || 0,
@@ -989,15 +984,17 @@
                     showToast('Product added successfully!');
                 }
                 
-                // Redirect to product view page after short delay
-                setTimeout(() => {
-                    window.location.href = `product-view.html?id=${savedProductId}`;
-                }, 1000);
+                // Reset button state
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnText;
+                isSaving = false;
+                
+                // Redirect to product view page
+                window.location.href = `product-view.html?id=${savedProductId}`;
                 
             } catch (error) {
                 console.error('Save error:', error);
                 showToast('Error saving product: ' + error.message, true);
-                // Re-enable button
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = originalBtnText;
                 isSaving = false;
