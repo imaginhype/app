@@ -8,6 +8,48 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Import Inter Font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Theme Variables */
+        :root {
+            --accent-color: #2563eb;
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --hover-bg: #f1f5f9;
+            --active-bg: #2563eb;
+            --input-bg: #ffffff;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --card-bg: #1e293b;
+            --hover-bg: #334155;
+            --active-bg: #2563eb;
+            --input-bg: #334155;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Sidebar Styles */
         .sidebar {
             background-color: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
@@ -27,18 +69,7 @@
         .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
         .nav-item.active { background: var(--active-bg); color: white; }
         
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        .status-active { background: #10b98120; color: #10b981; }
-        .status-suspended { background: #ef444420; color: #ef4444; }
-        .status-pending { background: #f59e0b20; color: #f59e0b; }
-        
-        /* Mobile Sidebar Styles */
+        /* Mobile Sidebar */
         #mobile-sidebar {
             transform: translateX(-100%);
             transition: transform 0.3s ease;
@@ -52,9 +83,7 @@
             border-right: 1px solid var(--border-color);
             overflow-y: auto;
         }
-        #mobile-sidebar.show {
-            transform: translateX(0);
-        }
+        #mobile-sidebar.show { transform: translateX(0); }
         #sidebar-overlay {
             position: fixed;
             top: 0;
@@ -65,36 +94,107 @@
             z-index: 999;
             cursor: pointer;
         }
-        #sidebar-overlay.show {
-            display: block;
-        }
-        #sidebar-overlay:not(.show) {
-            display: none;
-        }
+        #sidebar-overlay.show { display: block; }
+        #sidebar-overlay:not(.show) { display: none; }
         
         @media (max-width: 767px) {
-            .desktop-sidebar {
-                display: none;
-            }
-            .main-content {
-                margin-left: 0 !important;
-            }
+            .desktop-sidebar { display: none; }
+            .main-content { margin-left: 0 !important; }
         }
         @media (min-width: 768px) {
-            #mobile-sidebar,
-            #sidebar-overlay {
-                display: none;
-            }
-            .main-content {
-                margin-left: 16rem;
-            }
+            #mobile-sidebar, #sidebar-overlay { display: none; }
+            .main-content { margin-left: 16rem; }
         }
         
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-active { background: #10b98120; color: #10b981; }
+        .status-suspended { background: #ef444420; color: #ef4444; }
+        .status-pending { background: #f59e0b20; color: #f59e0b; }
+        
+        /* Table Styles */
         .seller-row:hover { background-color: var(--hover-bg); }
         .table-container { overflow-x: auto; }
+        
+        /* Search Input */
+        .search-input {
+            padding: 8px 14px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            width: 100%;
+            max-width: 280px;
+            font-size: 13px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        /* Filter Select */
+        .filter-select {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        /* Action Toolbar */
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .toolbar-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .toolbar-buttons button {
+            padding: 6px 14px;
+            font-size: 13px;
+            border-radius: 8px;
+        }
+        
+        /* Pagination */
+        .pagination-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        .pagination-btn.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body>
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Sidebar -->
@@ -143,41 +243,35 @@
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
         <!-- Top Bar -->
-        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Sellers</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Manage users, roles, and permissions</p>
+                    <p class="text-sm text-gray-500">Manage users, roles, and permissions</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="exportToCSV()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
-                    <i class="fas fa-download mr-1"></i> Export
-                </button>
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
                     <i class="fas fa-moon dark:block hidden"></i>
                     <i class="fas fa-sun dark:hidden block"></i>
                 </button>
                 <div class="relative">
                     <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
                         <i class="fas fa-user-circle text-2xl"></i>
-                        <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
+                        <span class="hidden md:inline" id="admin-name">Admin</span>
                         <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
                     </button>
-                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border dark:border-gray-700">
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
                         <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-user-circle w-5 text-gray-500"></i>
-                            <span>My Profile</span>
+                            <i class="fas fa-user-circle w-5"></i> My Profile
                         </a>
                         <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-cog w-5 text-gray-500"></i>
-                            <span>Account Settings</span>
+                            <i class="fas fa-cog w-5"></i> Account Settings
                         </a>
-                        <div class="border-t dark:border-gray-700"></div>
+                        <div class="border-t"></div>
                         <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-sign-out-alt w-5"></i>
-                            <span>Logout</span>
+                            <i class="fas fa-sign-out-alt w-5"></i> Logout
                         </button>
                     </div>
                 </div>
@@ -186,23 +280,29 @@
 
         <!-- Main Content -->
         <div class="p-4 md:p-6">
+            <!-- Action Toolbar (Export button moved here) -->
+            <div class="action-toolbar">
+                <div class="toolbar-buttons">
+                    <button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
             <!-- Search and Filters Bar -->
             <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <div class="flex-1 min-w-[200px] max-w-md">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="search-sellers" placeholder="Search by name, email, or phone..." class="w-full pl-10 pr-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                    </div>
+                <div class="flex-1 min-w-[180px] max-w-sm">
+                    <input type="text" id="search-sellers" placeholder="Search by name, email, or phone..." class="search-input w-full">
                 </div>
                 <div class="flex gap-3">
-                    <select id="role-filter" class="px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    <select id="role-filter" class="filter-select">
                         <option value="all">All Roles</option>
                         <option value="admin">Admin</option>
                         <option value="seller">Seller</option>
                         <option value="user">User</option>
                     </select>
-                    <button id="filter-btn" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">
-                        <i class="fas fa-filter mr-1"></i> Filters
+                    <button id="filter-btn" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-blue-600 hover:text-white transition text-sm">
+                        <i class="fas fa-filter mr-1"></i> Apply Filter
                     </button>
                 </div>
             </div>
@@ -261,10 +361,10 @@
         let currentPage = 1;
         const itemsPerPage = 15;
 
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        // ========== MOBILE SIDEBAR FUNCTIONS ==========
+        // ========== MOBILE SIDEBAR ==========
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -281,7 +381,7 @@
             document.body.style.overflow = '';
         };
 
-        // ========== USER MENU FUNCTIONS ==========
+        // ========== USER MENU ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -304,7 +404,7 @@
 
         // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
@@ -424,11 +524,15 @@
             const container = document.getElementById('pagination-container');
             if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
-            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                html += `<button onclick="goToPage(${i})" class="px-3 py-1 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
+            if (currentPage > 1) {
+                html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`;
             }
-            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`;
+            }
+            if (currentPage < totalPages) {
+                html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`;
+            }
             container.innerHTML = html;
         }
 
@@ -447,7 +551,6 @@
         
         window.deleteUser = async (userId) => {
             if (!confirm('Delete this user? This action cannot be undone.')) return;
-            // Soft delete - mark as deleted
             await updateDoc(doc(db, 'users', userId), { 
                 status: 'deleted',
                 email: `deleted_${Date.now()}@removed.com`,
@@ -502,9 +605,23 @@
             });
         }
 
-        document.getElementById('search-sellers').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderUsers(); });
-        document.getElementById('role-filter').addEventListener('change', (e) => { currentRole = e.target.value; currentPage = 1; renderUsers(); });
-        document.getElementById('filter-btn').addEventListener('click', () => { currentPage = 1; renderUsers(); });
+        // Event Listeners
+        document.getElementById('search-sellers').addEventListener('input', (e) => { 
+            currentSearch = e.target.value; 
+            currentPage = 1; 
+            renderUsers(); 
+        });
+        
+        document.getElementById('role-filter').addEventListener('change', (e) => { 
+            currentRole = e.target.value; 
+            currentPage = 1; 
+            renderUsers(); 
+        });
+        
+        document.getElementById('filter-btn').addEventListener('click', () => { 
+            currentPage = 1; 
+            renderUsers(); 
+        });
     </script>
 </body>
 </html>
