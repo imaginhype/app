@@ -8,34 +8,172 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .category-chip {
-            transition: all 0.2s ease;
-            cursor: pointer;
+        /* Import Inter Font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
         }
-        .category-chip.active {
-            background-color: #8b5cf6;
-            color: white;
-            border-color: #8b5cf6;
-        }
+        
+        /* Modern Card Design */
         .product-card {
-            transition: all 0.2s ease;
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+            position: relative;
         }
         .product-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
         }
-        .view-toggle-btn.active {
-            background-color: #8b5cf6;
-            color: white;
-            border-color: #8b5cf6;
+        
+        /* Product Image Container */
+        .product-image-container {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8edf8 100%);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 180px;
         }
-        .list-view-item {
+        .dark .product-image-container {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+        .product-image {
+            width: 100%;
+            height: 140px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        
+        /* Category Badge */
+        .category-badge {
+            font-size: 10px;
+            background: var(--bg-tertiary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+        }
+        
+        /* 3-Dot Menu */
+        .menu-container {
+            position: relative;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .menu-btn:hover {
+            background: var(--hover-bg);
+        }
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 28px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+            min-width: 140px;
+            z-index: 20;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
             transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
         }
-        .list-view-item:hover {
-            background-color: var(--hover-bg);
-            transform: translateX(4px);
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
         }
+        .dropdown-menu a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .dropdown-menu a:hover {
+            background: var(--hover-bg);
+        }
+        .dropdown-menu .divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+        .dropdown-menu .delete-item {
+            color: #ef4444;
+        }
+        
+        /* Price Section */
+        .current-price {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--accent-color, #2563eb);
+        }
+        .old-price {
+            font-size: 12px;
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+        
+        /* Stock Badge */
+        .stock-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .stock-in {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .dark .stock-in {
+            background: #064e3b;
+            color: #34d399;
+        }
+        .stock-out {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .dark .stock-out {
+            background: #7f1d1d;
+            color: #f87171;
+        }
+        
+        /* Toolbar Styles */
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .toolbar-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        /* Sidebar Styles */
         .sidebar {
             background-color: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
@@ -55,7 +193,7 @@
         .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
         .nav-item.active { background: var(--active-bg); color: white; }
         
-        /* Mobile Sidebar Styles */
+        /* Mobile Sidebar */
         #mobile-sidebar {
             transform: translateX(-100%);
             transition: transform 0.3s ease;
@@ -69,9 +207,7 @@
             border-right: 1px solid var(--border-color);
             overflow-y: auto;
         }
-        #mobile-sidebar.show {
-            transform: translateX(0);
-        }
+        #mobile-sidebar.show { transform: translateX(0); }
         #sidebar-overlay {
             position: fixed;
             top: 0;
@@ -82,57 +218,109 @@
             z-index: 999;
             cursor: pointer;
         }
-        #sidebar-overlay.show {
-            display: block;
-        }
-        #sidebar-overlay:not(.show) {
-            display: none;
-        }
+        #sidebar-overlay.show { display: block; }
+        #sidebar-overlay:not(.show) { display: none; }
         
         @media (max-width: 767px) {
-            .desktop-sidebar {
-                display: none;
-            }
-            .main-content {
-                margin-left: 0 !important;
-            }
+            .desktop-sidebar { display: none; }
+            .main-content { margin-left: 0 !important; }
         }
         @media (min-width: 768px) {
-            #mobile-sidebar,
-            #sidebar-overlay {
-                display: none;
-            }
-            .main-content {
-                margin-left: 16rem;
-            }
+            #mobile-sidebar, #sidebar-overlay { display: none; }
+            .main-content { margin-left: 16rem; }
         }
         
-        .action-icon {
-            transition: all 0.2s;
+        /* Category Chip */
+        .category-chip {
+            transition: all 0.2s ease;
             cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
         }
-        .action-icon:hover {
-            transform: scale(1.1);
+        .category-chip.active {
+            background-color: var(--accent-color, #2563eb);
+            color: white;
+            border-color: var(--accent-color, #2563eb);
+        }
+        .category-chip:hover:not(.active) {
+            background: var(--hover-bg);
         }
         
-        /* Modal Animation */
-        .modal-overlay {
-            animation: fadeIn 0.2s ease;
+        /* Search Bar */
+        .search-input {
+            padding: 10px 16px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            width: 100%;
+            max-width: 320px;
         }
-        .modal-content {
-            animation: slideUp 0.3s ease;
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color, #2563eb);
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        
+        /* View Toggle */
+        .view-toggle-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .view-toggle-btn.active {
+            background-color: var(--accent-color, #2563eb);
+            color: white;
+            border-color: var(--accent-color, #2563eb);
+        }
+        
+        /* Theme Variables */
+        :root {
+            --accent-color: #2563eb;
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --hover-bg: #f1f5f9;
+            --active-bg: #2563eb;
+            --input-bg: #ffffff;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --card-bg: #1e293b;
+            --hover-bg: #334155;
+            --active-bg: #2563eb;
+            --input-bg: #334155;
+        }
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
         }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
+<body>
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Sidebar -->
@@ -181,44 +369,35 @@
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
         <!-- Top Bar -->
-        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Products</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Browse and manage your products</p>
+                    <p class="text-sm text-gray-500">Browse and manage your products</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="openCategoryModal()" class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white hover:border-purple-500 transition">
-                    <i class="fas fa-cog mr-1"></i> Manage Categories
-                </button>
-                <button onclick="showAddProductModal()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
-                    <i class="fas fa-plus mr-1"></i> Add Product
-                </button>
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
                     <i class="fas fa-moon dark:block hidden"></i>
                     <i class="fas fa-sun dark:hidden block"></i>
                 </button>
                 <div class="relative">
                     <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
                         <i class="fas fa-user-circle text-2xl"></i>
-                        <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
+                        <span class="hidden md:inline" id="admin-name">Admin</span>
                         <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
                     </button>
-                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border dark:border-gray-700">
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
                         <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-user-circle w-5 text-gray-500"></i>
-                            <span>My Profile</span>
+                            <i class="fas fa-user-circle w-5"></i> My Profile
                         </a>
                         <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-cog w-5 text-gray-500"></i>
-                            <span>Account Settings</span>
+                            <i class="fas fa-cog w-5"></i> Account Settings
                         </a>
-                        <div class="border-t dark:border-gray-700"></div>
+                        <div class="border-t"></div>
                         <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-sign-out-alt w-5"></i>
-                            <span>Logout</span>
+                            <i class="fas fa-sign-out-alt w-5"></i> Logout
                         </button>
                     </div>
                 </div>
@@ -227,35 +406,42 @@
 
         <!-- Main Content -->
         <div class="p-4 md:p-6">
+            <!-- Action Toolbar (Buttons moved here) -->
+            <div class="action-toolbar">
+                <div class="toolbar-buttons">
+                    <button onclick="openCategoryModal()" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition flex items-center gap-2">
+                        <i class="fas fa-tags"></i> Categories
+                    </button>
+                    <button onclick="showAddProductModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                </div>
+            </div>
+
             <!-- Category Chips -->
             <div class="mb-6">
                 <div class="flex flex-wrap gap-2">
                     <div id="category-chips" class="flex flex-wrap gap-2">
-                        <button data-category="all" class="category-chip active px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">All</button>
+                        <button data-category="all" class="category-chip active">All</button>
                     </div>
                 </div>
             </div>
 
             <!-- Search and View Toggle Bar -->
             <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <div class="flex-1 max-w-md">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="search-products" placeholder="Search products..." class="w-full pl-10 pr-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                    </div>
-                </div>
+                <input type="text" id="search-products" placeholder="Search products..." class="search-input">
                 <div class="flex items-center gap-2">
-                    <button id="grid-view-btn" class="view-toggle-btn active px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">
+                    <button id="grid-view-btn" class="view-toggle-btn active">
                         <i class="fas fa-th-large"></i>
                     </button>
-                    <button id="list-view-btn" class="view-toggle-btn px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">
+                    <button id="list-view-btn" class="view-toggle-btn">
                         <i class="fas fa-list"></i>
                     </button>
                 </div>
             </div>
 
             <!-- Product Count -->
-            <div class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+            <div class="mb-4 text-sm text-gray-500">
                 Showing <span id="product-count-start">0</span> - <span id="product-count-end">0</span> of <span id="product-total">0</span> products
             </div>
 
@@ -270,22 +456,22 @@
     </main>
 
     <!-- Manage Categories Modal -->
-    <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCategoryModal(event)">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto modal-content" onclick="event.stopPropagation()">
-            <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold dark:text-white">Manage Categories</h2>
-                <button onclick="closeCategoryModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+    <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" onclick="closeCategoryModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-xl font-bold">Manage Categories</h2>
+                <button onclick="closeCategoryModal()" class="text-2xl">&times;</button>
             </div>
             <div class="p-6">
                 <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <h3 class="font-semibold mb-3 dark:text-white">Add New Category</h3>
+                    <h3 class="font-semibold mb-3">Add New Category</h3>
                     <div class="flex gap-3">
-                        <input type="text" id="new-category-name" placeholder="Enter category name" class="flex-1 px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                        <button onclick="addCategory()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">+ Add</button>
+                        <input type="text" id="new-category-name" placeholder="Enter category name" class="flex-1 px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700">
+                        <button onclick="addCategory()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">+ Add</button>
                     </div>
                     <p class="text-xs text-gray-500 mt-2">Category names must be between 2-50 characters</p>
                 </div>
-                <h3 class="font-semibold mb-3 dark:text-white">Existing Categories</h3>
+                <h3 class="font-semibold mb-3">Existing Categories</h3>
                 <div id="categories-list" class="space-y-2">
                     <div class="text-center py-4 text-gray-500">Loading categories...</div>
                 </div>
@@ -294,23 +480,21 @@
     </div>
 
     <!-- Edit Category Modal -->
-    <div id="edit-category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeEditCategoryModal(event)">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4 modal-content" onclick="event.stopPropagation()">
-            <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold dark:text-white">Edit Category</h2>
-                <button onclick="closeEditCategoryModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+    <div id="edit-category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" onclick="closeEditCategoryModal(event)">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4" onclick="event.stopPropagation()">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-xl font-bold">Edit Category</h2>
+                <button onclick="closeEditCategoryModal()" class="text-2xl">&times;</button>
             </div>
             <div class="p-6">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium mb-2 dark:text-gray-300">Category Name</label>
-                    <input type="text" id="edit-category-name" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    <label class="block text-sm font-medium mb-2">Category Name</label>
+                    <input type="text" id="edit-category-name" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700">
                     <p class="text-xs text-gray-500 mt-1">Category names must be between 2-50 characters</p>
                 </div>
                 <div class="flex gap-3 mt-6">
-                    <button onclick="updateCategory()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">
-                        <i class="fas fa-save mr-1"></i> Save Changes
-                    </button>
-                    <button onclick="closeEditCategoryModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
+                    <button onclick="updateCategory()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Save Changes</button>
+                    <button onclick="closeEditCategoryModal()" class="flex-1 border py-2 rounded-lg hover:bg-gray-100 transition">Cancel</button>
                 </div>
             </div>
         </div>
@@ -343,10 +527,9 @@
         let currentEditCategoryId = null;
         const itemsPerPage = 12;
 
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
-        // ========== MOBILE SIDEBAR FUNCTIONS ==========
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -363,7 +546,6 @@
             document.body.style.overflow = '';
         };
 
-        // ========== USER MENU FUNCTIONS ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -384,9 +566,8 @@
             }
         });
 
-        // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
@@ -394,7 +575,6 @@
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
         window.showAddProductModal = () => { window.location.href = 'add-product.html'; };
 
-        // ========== AUTHENTICATION ==========
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -416,12 +596,12 @@
 
         function renderCategoryChips() {
             const container = document.getElementById('category-chips');
-            container.innerHTML = '<button data-category="all" class="category-chip active px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition">All</button>';
+            container.innerHTML = '<button data-category="all" class="category-chip active">All</button>';
             allCategories.forEach(cat => {
                 const btn = document.createElement('button');
                 btn.textContent = cat.name;
                 btn.dataset.category = cat.name;
-                btn.className = 'category-chip px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-purple-500 hover:text-white transition';
+                btn.className = 'category-chip';
                 btn.onclick = () => filterByCategory(cat.name);
                 container.appendChild(btn);
             });
@@ -436,14 +616,14 @@
             container.innerHTML = allCategories.map(cat => `
                 <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
                     <div>
-                        <span class="font-medium dark:text-white">${escapeHtml(cat.name)}</span>
+                        <span class="font-medium">${escapeHtml(cat.name)}</span>
                         <p class="text-xs text-gray-500">Created: ${cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : 'N/A'}</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="openEditCategoryModal('${cat.id}', '${escapeHtml(cat.name)}')" class="action-icon text-blue-500 hover:text-blue-700" title="Edit Category">
+                        <button onclick="openEditCategoryModal('${cat.id}', '${escapeHtml(cat.name)}')" class="text-blue-500 hover:text-blue-700">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteCategory('${cat.id}')" class="action-icon text-red-500 hover:text-red-700" title="Delete Category">
+                        <button onclick="deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -517,14 +697,37 @@
             currentCategory = category;
             document.querySelectorAll('.category-chip').forEach(btn => {
                 if (btn.dataset.category === category || (category === 'all' && btn.dataset.category === 'all')) {
-                    btn.classList.add('active', 'bg-purple-500', 'text-white');
+                    btn.classList.add('active');
                 } else {
-                    btn.classList.remove('active', 'bg-purple-500', 'text-white');
+                    btn.classList.remove('active');
                 }
             });
             currentPage = 1;
             renderProducts();
         }
+
+        // Product card action handlers
+        window.viewProduct = (id) => { window.location.href = `product-view.html?id=${id}`; };
+        window.editProduct = (id) => { window.location.href = `add-product.html?id=${id}`; };
+        window.deleteProduct = async (id) => {
+            if (!confirm('Delete this product? This cannot be undone.')) return;
+            await deleteDoc(doc(db, 'products', id));
+            await loadProducts();
+        };
+
+        // Dropdown menu handlers
+        window.toggleDropdown = (event, id) => {
+            event.stopPropagation();
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== `dropdown-${id}`) menu.classList.remove('show');
+            });
+            const dropdown = document.getElementById(`dropdown-${id}`);
+            if (dropdown) dropdown.classList.toggle('show');
+        };
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
+        });
 
         function renderProducts() {
             let filtered = allProducts;
@@ -549,37 +752,86 @@
             
             if (currentView === 'grid') {
                 container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
-                container.innerHTML = paginated.map(p => `
-                    <div class="product-card bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg cursor-pointer border dark:border-gray-700" onclick="viewProduct('${p.id}')">
-                        <div class="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                            ${p.images && p.images[0] ? `<img src="${p.images[0]}" class="w-full h-full object-cover">` : '<i class="fas fa-box text-6xl text-gray-400"></i>'}
-                        </div>
-                        <div class="p-4">
-                            <div class="text-xs text-purple-500 mb-1">${escapeHtml(p.category || 'Uncategorized')}</div>
-                            <h4 class="font-semibold text-lg mb-1 line-clamp-1">${escapeHtml(p.name || 'Untitled')}</h4>
-                            <div class="flex justify-between items-center mt-3">
-                                <span class="text-xl font-bold text-purple-500">AED ${p.salePrice || p.price || 0}</span>
+                container.innerHTML = paginated.map(p => {
+                    const isInStock = p.stockStatus === 'in-stock';
+                    const mainImage = p.images && p.images[0] ? p.images[0] : null;
+                    const salePrice = p.salePrice || p.price || 0;
+                    const regularPrice = p.regularPrice || 0;
+                    const hasDiscount = regularPrice > salePrice;
+                    
+                    return `
+                        <div class="product-card">
+                            <div class="product-image-container">
+                                ${mainImage ? `<img src="${mainImage}" class="product-image" alt="${escapeHtml(p.name)}">` : '<i class="fas fa-box text-5xl text-gray-400"></i>'}
+                            </div>
+                            <div class="p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="category-badge">${escapeHtml(p.category || 'Uncategorized')}</span>
+                                    <div class="menu-container">
+                                        <button class="menu-btn" onclick="toggleDropdown(event, '${p.id}')">⋮</button>
+                                        <div class="dropdown-menu" id="dropdown-${p.id}">
+                                            <a onclick="viewProduct('${p.id}')"><i class="fas fa-eye"></i> View</a>
+                                            <a onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i> Edit</a>
+                                            <div class="divider"></div>
+                                            <a onclick="deleteProduct('${p.id}')" class="delete-item"><i class="fas fa-trash"></i> Delete</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h3 class="font-bold text-lg mb-1">${escapeHtml(p.name || 'Untitled')}</h3>
+                                <p class="text-sm text-gray-500 mb-3 line-clamp-2">${escapeHtml(p.description?.substring(0, 80) || 'No description')}${p.description?.length > 80 ? '...' : ''}</p>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="current-price">AED ${salePrice.toFixed(2)}</span>
+                                        ${hasDiscount ? `<span class="old-price ml-2">AED ${regularPrice.toFixed(2)}</span>` : ''}
+                                    </div>
+                                    <span class="stock-badge ${isInStock ? 'stock-in' : 'stock-out'}">${isInStock ? 'In Stock' : 'Out of Stock'}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } else {
                 container.className = 'space-y-3';
-                container.innerHTML = paginated.map(p => `
-                    <div class="list-view-item bg-white dark:bg-gray-800 rounded-xl p-4 flex flex-wrap md:flex-nowrap gap-4 items-center justify-between shadow-sm hover:shadow-md cursor-pointer border dark:border-gray-700" onclick="viewProduct('${p.id}')">
-                        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                            ${p.images && p.images[0] ? `<img src="${p.images[0]}" class="w-full h-full object-cover rounded-lg">` : '<i class="fas fa-box text-2xl text-gray-400"></i>'}
+                container.innerHTML = paginated.map(p => {
+                    const isInStock = p.stockStatus === 'in-stock';
+                    const mainImage = p.images && p.images[0] ? p.images[0] : null;
+                    const salePrice = p.salePrice || p.price || 0;
+                    const regularPrice = p.regularPrice || 0;
+                    const hasDiscount = regularPrice > salePrice;
+                    
+                    return `
+                        <div class="product-card flex p-4 gap-4">
+                            <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                                ${mainImage ? `<img src="${mainImage}" class="w-full h-full object-cover rounded-lg">` : '<i class="fas fa-box text-2xl text-gray-400"></i>'}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="category-badge">${escapeHtml(p.category || 'Uncategorized')}</span>
+                                        <h3 class="font-bold text-lg">${escapeHtml(p.name || 'Untitled')}</h3>
+                                    </div>
+                                    <div class="menu-container">
+                                        <button class="menu-btn" onclick="toggleDropdown(event, '${p.id}')">⋮</button>
+                                        <div class="dropdown-menu" id="dropdown-${p.id}">
+                                            <a onclick="viewProduct('${p.id}')"><i class="fas fa-eye"></i> View</a>
+                                            <a onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i> Edit</a>
+                                            <div class="divider"></div>
+                                            <a onclick="deleteProduct('${p.id}')" class="delete-item"><i class="fas fa-trash"></i> Delete</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-500 line-clamp-1">${escapeHtml(p.description?.substring(0, 60) || 'No description')}${p.description?.length > 60 ? '...' : ''}</p>
+                                <div class="flex justify-between items-center mt-2">
+                                    <div>
+                                        <span class="current-price">AED ${salePrice.toFixed(2)}</span>
+                                        ${hasDiscount ? `<span class="old-price ml-2">AED ${regularPrice.toFixed(2)}</span>` : ''}
+                                    </div>
+                                    <span class="stock-badge ${isInStock ? 'stock-in' : 'stock-out'}">${isInStock ? 'In Stock' : 'Out of Stock'}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="text-xs text-purple-500">${escapeHtml(p.category || 'Uncategorized')}</div>
-                            <h4 class="font-semibold text-lg">${escapeHtml(p.name || 'Untitled')}</h4>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xl font-bold text-purple-500">AED ${p.salePrice || p.price || 0}</div>
-                            <button class="mt-2 text-sm text-blue-500 hover:text-blue-700" onclick="event.stopPropagation(); viewProduct('${p.id}')">View Details →</button>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
             renderPagination(total);
         }
@@ -589,16 +841,15 @@
             const container = document.getElementById('pagination-container');
             if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-4 py-2 rounded-lg border hover:bg-purple-500 hover:text-white transition">Prev</button>`;
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-4 py-2 rounded-lg border hover:bg-blue-600 hover:text-white transition">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                html += `<button onclick="goToPage(${i})" class="px-4 py-2 rounded-lg border ${currentPage === i ? 'bg-purple-500 text-white' : 'hover:bg-purple-500 hover:text-white'} transition">${i}</button>`;
+                html += `<button onclick="goToPage(${i})" class="px-4 py-2 rounded-lg border ${currentPage === i ? 'bg-blue-600 text-white' : 'hover:bg-blue-600 hover:text-white'} transition">${i}</button>`;
             }
-            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-4 py-2 rounded-lg border hover:bg-purple-500 hover:text-white transition">Next</button>`;
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-4 py-2 rounded-lg border hover:bg-blue-600 hover:text-white transition">Next</button>`;
             container.innerHTML = html;
         }
 
         window.goToPage = (page) => { currentPage = page; renderProducts(); };
-        window.viewProduct = (id) => { window.location.href = `product-view.html?id=${id}`; };
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -618,14 +869,14 @@
 
         document.getElementById('grid-view-btn').addEventListener('click', () => {
             currentView = 'grid';
-            document.getElementById('grid-view-btn').classList.add('active', 'bg-purple-500', 'text-white');
-            document.getElementById('list-view-btn').classList.remove('active', 'bg-purple-500', 'text-white');
+            document.getElementById('grid-view-btn').classList.add('active');
+            document.getElementById('list-view-btn').classList.remove('active');
             renderProducts();
         });
         document.getElementById('list-view-btn').addEventListener('click', () => {
             currentView = 'list';
-            document.getElementById('list-view-btn').classList.add('active', 'bg-purple-500', 'text-white');
-            document.getElementById('grid-view-btn').classList.remove('active', 'bg-purple-500', 'text-white');
+            document.getElementById('list-view-btn').classList.add('active');
+            document.getElementById('grid-view-btn').classList.remove('active');
             renderProducts();
         });
     </script>
