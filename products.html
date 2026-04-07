@@ -8,66 +8,37 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Import Inter Font */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
-        
-        * {
-            font-family: 'Inter', sans-serif;
+        .category-chip {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
         }
-        
-        /* Theme Variables */
-        :root {
-            --accent-color: #2563eb;
+        .category-chip.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
         }
-        [data-theme="light"] {
-            --bg-primary: #f8fafc;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f1f5f9;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --border-color: #e2e8f0;
-            --card-bg: #ffffff;
-            --hover-bg: #f1f5f9;
-            --active-bg: #2563eb;
-            --input-bg: #ffffff;
-        }
-        [data-theme="dark"] {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #334155;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --card-bg: #1e293b;
-            --hover-bg: #334155;
-            --active-bg: #2563eb;
-            --input-bg: #334155;
-        }
-        
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-        }
-        
-        /* Modern Card Design - Reduced padding */
         .product-card {
             background: var(--card-bg);
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
             transition: all 0.3s ease;
             border: 1px solid var(--border-color);
-            position: relative;
             cursor: pointer;
         }
         .product-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
         }
-        
-        /* Product Image Container - Reduced padding */
         .product-image-container {
             background: #ffffff;
-            padding: 12px;
+            padding: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -86,13 +57,6 @@
         .product-card:hover .product-image {
             transform: scale(1.03);
         }
-        
-        /* Content padding reduced */
-        .product-card .p-4 {
-            padding: 12px !important;
-        }
-        
-        /* Category Badge */
         .category-badge {
             font-size: 10px;
             background: var(--bg-tertiary);
@@ -100,28 +64,21 @@
             border-radius: 16px;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
-            display: inline-block;
         }
         .category-badge:hover {
             background: var(--accent-color);
             color: white;
         }
-        
-        /* Title - Two lines */
         .product-title {
             font-weight: 600;
             font-size: 14px;
-            margin: 6px 0 4px 0;
+            margin: 8px 0 4px 0;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             line-height: 1.4;
-            min-height: 38px;
         }
-        
-        /* Description */
         .product-description {
             font-size: 11px;
             color: var(--text-secondary);
@@ -130,19 +87,11 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            line-height: 1.35;
         }
-        
-        /* Price Section - Sale price below regular price */
         .price-container {
             display: flex;
             flex-direction: column;
             gap: 2px;
-        }
-        .currency {
-            font-size: 11px;
-            font-weight: 400;
-            color: var(--text-secondary);
         }
         .sale-price {
             font-weight: 700;
@@ -154,8 +103,6 @@
             text-decoration: line-through;
             color: var(--text-secondary);
         }
-        
-        /* Stock Badge - Smaller */
         .stock-badge {
             font-size: 10px;
             padding: 3px 8px;
@@ -178,16 +125,21 @@
             background: #7f1d1d;
             color: #f87171;
         }
-        
-        /* 3-Dot Menu - Smaller */
+        .menu-container {
+            position: relative;
+            z-index: 10;
+        }
         .menu-btn {
             background: none;
             border: none;
             font-size: 16px;
             cursor: pointer;
             color: var(--text-secondary);
-            padding: 2px 6px;
-            border-radius: 6px;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+        .menu-btn:hover {
+            background: var(--hover-bg);
         }
         .dropdown-menu {
             position: absolute;
@@ -217,6 +169,7 @@
             font-size: 12px;
             text-decoration: none;
             color: var(--text-primary);
+            cursor: pointer;
         }
         .dropdown-menu a:hover {
             background: var(--hover-bg);
@@ -229,86 +182,6 @@
         .dropdown-menu .delete-item {
             color: #ef4444;
         }
-        
-        /* Sidebar Styles */
-        .sidebar {
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            margin: 0.25rem 0;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text-secondary);
-            text-decoration: none;
-        }
-        .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
-        .nav-item.active { background: var(--active-bg); color: white; }
-        
-        /* Mobile Sidebar */
-        #mobile-sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            overflow-y: auto;
-        }
-        #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            cursor: pointer;
-        }
-        #sidebar-overlay.show { display: block; }
-        #sidebar-overlay:not(.show) { display: none; }
-        
-        @media (max-width: 767px) {
-            .desktop-sidebar { display: none; }
-            .main-content { margin-left: 0 !important; }
-        }
-        @media (min-width: 768px) {
-            #mobile-sidebar, #sidebar-overlay { display: none; }
-            .main-content { margin-left: 16rem; }
-        }
-        
-        /* Category Chip */
-        .category-chip {
-            transition: all 0.2s ease;
-            cursor: pointer;
-            padding: 5px 14px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 500;
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-        .category-chip.active {
-            background-color: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
-        }
-        .category-chip:hover:not(.active) {
-            background: var(--hover-bg);
-        }
-        
-        /* Search Bar */
         .search-input {
             padding: 8px 14px;
             border-radius: 30px;
@@ -319,8 +192,6 @@
             max-width: 280px;
             font-size: 13px;
         }
-        
-        /* View Toggle */
         .view-toggle-btn {
             padding: 6px 10px;
             border-radius: 8px;
@@ -334,8 +205,6 @@
             background-color: var(--accent-color);
             color: white;
         }
-        
-        /* Action Toolbar */
         .action-toolbar {
             display: flex;
             flex-wrap: wrap;
@@ -351,100 +220,30 @@
             gap: 10px;
             flex-wrap: wrap;
         }
-        .toolbar-buttons button {
-            padding: 6px 14px;
-            font-size: 13px;
-            border-radius: 8px;
-        }
-        
-        /* Category Item */
-        .category-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            background: var(--bg-tertiary);
-            border-radius: 10px;
-            margin-bottom: 8px;
-        }
-        .category-actions {
-            display: flex;
-            gap: 14px;
-        }
-        .category-actions button {
-            padding: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        /* Add Category Form */
-        .add-category-form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-        .add-category-form input {
-            flex: 1;
-            min-width: 180px;
-            padding: 8px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: var(--input-bg);
-            color: var(--text-primary);
-            font-size: 13px;
-        }
-        .add-category-form button {
-            padding: 8px 16px;
-            background: var(--accent-color);
-            color: white;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-size: 13px;
-            white-space: nowrap;
-        }
-        
-        /* Categories Modal - Wider */
-        #category-modal .rounded-xl {
-            max-width: 500px !important;
-            width: 90% !important;
-        }
-        
-        @media (max-width: 640px) {
-            .add-category-form {
-                flex-direction: column;
-            }
-            .add-category-form button {
-                width: 100%;
-            }
-            #category-modal .rounded-xl {
-                width: 95% !important;
-                margin: 0 10px;
-            }
-            .product-card .p-4 {
-                padding: 10px !important;
-            }
-            .sale-price {
-                font-size: 14px;
-            }
-        }
-        
-        /* 4 columns grid */
         .products-grid {
             display: grid;
             grid-template-columns: repeat(1, 1fr);
             gap: 16px;
         }
         @media (min-width: 640px) {
-            .products-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .products-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (min-width: 1024px) {
-            .products-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
+            .products-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        .pagination-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover, .pagination-btn.active {
+            background: var(--accent-color);
+            color: white;
         }
     </style>
 </head>
@@ -477,7 +276,10 @@
     <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
         <div class="p-4 border-b">
-            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <div class="flex items-center space-x-2 sidebar-logo">
+                <i class="fas fa-store text-2xl text-purple-500"></i>
+                <span class="text-xl font-bold">Marketplace Pro</span>
+            </div>
             <p class="text-xs opacity-60 mt-2">Admin Panel</p>
         </div>
         <nav class="p-4">
@@ -496,10 +298,13 @@
 
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar -->
+        <!-- Top Bar with Sidebar Toggle -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Products</h1>
                     <p class="text-sm text-gray-500">Browse and manage your products</p>
@@ -555,16 +360,12 @@
                 </div>
             </div>
 
-            <!-- Search and View Toggle Bar -->
+            <!-- Search and View Toggle -->
             <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
                 <input type="text" id="search-products" placeholder="Search products..." class="search-input">
                 <div class="flex items-center gap-2">
-                    <button id="grid-view-btn" class="view-toggle-btn active">
-                        <i class="fas fa-th-large"></i>
-                    </button>
-                    <button id="list-view-btn" class="view-toggle-btn">
-                        <i class="fas fa-list"></i>
-                    </button>
+                    <button id="grid-view-btn" class="view-toggle-btn active"><i class="fas fa-th-large"></i></button>
+                    <button id="list-view-btn" class="view-toggle-btn"><i class="fas fa-list"></i></button>
                 </div>
             </div>
 
@@ -583,7 +384,7 @@
         </div>
     </main>
 
-    <!-- Manage Categories Modal - Wider -->
+    <!-- Manage Categories Modal -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" onclick="closeCategoryModal(event)">
         <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
             <div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
@@ -593,9 +394,9 @@
             <div class="p-5">
                 <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
                     <h3 class="font-semibold mb-3">Add New Category</h3>
-                    <div class="add-category-form">
-                        <input type="text" id="new-category-name" placeholder="Enter category name">
-                        <button onclick="addCategory()">+ Add Category</button>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="new-category-name" placeholder="Enter category name" class="flex-1 px-4 py-2 rounded-xl border dark:border-gray-600 dark:bg-gray-700">
+                        <button onclick="addCategory()" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition">+ Add Category</button>
                     </div>
                     <p class="text-xs text-gray-500 mt-2">Category names must be between 2-50 characters</p>
                 </div>
@@ -658,6 +459,26 @@
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
+        // ========== COLLAPSIBLE SIDEBAR ==========
+        function initCollapsibleSidebar() {
+            const sidebar = document.querySelector('.desktop-sidebar');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            if (!sidebar || !toggleBtn) return;
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            }
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                const collapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', collapsed);
+                toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+            });
+        }
+
+        // ========== MOBILE SIDEBAR ==========
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -674,6 +495,7 @@
             document.body.style.overflow = '';
         };
 
+        // ========== USER MENU ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -694,6 +516,7 @@
             }
         });
 
+        // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', next);
@@ -711,6 +534,7 @@
                 return;
             }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
+            initCollapsibleSidebar();
             await loadCategories();
             await loadProducts();
         });
@@ -742,18 +566,14 @@
                 return;
             }
             container.innerHTML = allCategories.map(cat => `
-                <div class="category-item">
+                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
                     <div>
                         <span class="font-medium">${escapeHtml(cat.name)}</span>
-                        <p class="text-xs text-gray-500 mt-1">Created: ${cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : 'N/A'}</p>
+                        <p class="text-xs text-gray-500">Created: ${cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : 'N/A'}</p>
                     </div>
-                    <div class="category-actions">
-                        <button onclick="openEditCategoryModal('${cat.id}', '${escapeHtml(cat.name)}')" class="text-blue-500 hover:text-blue-700" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                    <div class="flex gap-3">
+                        <button onclick="openEditCategoryModal('${cat.id}', '${escapeHtml(cat.name)}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteCategory('${cat.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -822,13 +642,11 @@
         }
 
         function filterByCategory(category) {
-            // Toggle: if same category is clicked again, reset to 'all'
             if (currentCategory === category && category !== 'all') {
                 currentCategory = 'all';
             } else {
                 currentCategory = category;
             }
-            
             document.querySelectorAll('.category-chip').forEach(btn => {
                 if (btn.dataset.category === currentCategory || (currentCategory === 'all' && btn.dataset.category === 'all')) {
                     btn.classList.add('active');
@@ -848,9 +666,7 @@
             await loadProducts();
         };
         
-        window.filterByCategoryFromBadge = (category) => {
-            filterByCategory(category);
-        };
+        window.filterByCategoryFromBadge = (category) => { filterByCategory(category); };
 
         window.toggleDropdown = (event, id) => {
             event.stopPropagation();
@@ -924,7 +740,7 @@
                                 <p class="product-description">${escapeHtml(plainDescription.substring(0, 70))}${plainDescription.length > 70 ? '...' : ''}</p>
                                 <div class="flex justify-between items-end mt-2">
                                     <div class="price-container">
-                                        <span class="sale-price"><span class="currency">AED</span> ${salePrice.toFixed(2)}</span>
+                                        <span class="sale-price">AED ${salePrice.toFixed(2)}</span>
                                         ${hasDiscount ? `<span class="regular-price">AED ${regularPrice.toFixed(2)}</span>` : ''}
                                     </div>
                                     <span class="stock-badge ${isInStock ? 'stock-in' : 'stock-out'}">${isInStock ? 'In Stock' : 'Out of Stock'}</span>
@@ -966,7 +782,7 @@
                                 <p class="text-xs text-gray-500 line-clamp-1 mt-1">${escapeHtml(plainDescription.substring(0, 50))}${plainDescription.length > 50 ? '...' : ''}</p>
                                 <div class="flex justify-between items-center mt-2">
                                     <div class="price-container">
-                                        <span class="sale-price text-sm"><span class="currency">AED</span> ${salePrice.toFixed(2)}</span>
+                                        <span class="sale-price text-sm">AED ${salePrice.toFixed(2)}</span>
                                         ${hasDiscount ? `<span class="regular-price text-xs">AED ${regularPrice.toFixed(2)}</span>` : ''}
                                     </div>
                                     <span class="stock-badge ${isInStock ? 'stock-in' : 'stock-out'}">${isInStock ? 'In Stock' : 'Out of Stock'}</span>
@@ -984,11 +800,11 @@
             const container = document.getElementById('pagination-container');
             if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1.5 rounded-lg border hover:bg-blue-600 hover:text-white transition text-sm">Prev</button>`;
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                html += `<button onclick="goToPage(${i})" class="px-3 py-1.5 rounded-lg border ${currentPage === i ? 'bg-blue-600 text-white' : 'hover:bg-blue-600 hover:text-white'} transition text-sm">${i}</button>`;
+                html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`;
             }
-            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1.5 rounded-lg border hover:bg-blue-600 hover:text-white transition text-sm">Next</button>`;
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`;
             container.innerHTML = html;
         }
 
