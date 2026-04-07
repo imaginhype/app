@@ -3,171 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Profile - Marketplace Pro</title>
+    <title>My Profile - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        [data-theme="dark"] {
-            --bg-primary: #111827;
-            --bg-secondary: #1f2937;
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --border-color: #374151;
-            --card-bg: #1f2937;
-            --hover-bg: #374151;
+        .sidebar {
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
         }
-        [data-theme="light"] {
-            --bg-primary: #f9fafb;
-            --bg-secondary: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-            --card-bg: #ffffff;
-            --hover-bg: #f3f4f6;
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            text-decoration: none;
         }
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
+        .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
+        .nav-item.active { background: var(--active-bg); color: white; }
+        
+        /* Mobile Sidebar */
+        #mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
         }
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
+        #mobile-sidebar.show { transform: translateX(0); }
+        #sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            cursor: pointer;
         }
-        input, textarea {
-            background-color: var(--bg-primary);
-            border-color: var(--border-color);
-            color: var(--text-primary);
+        #sidebar-overlay.show { display: block; }
+        #sidebar-overlay:not(.show) { display: none; }
+        
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .main-content { margin-left: 0 !important; }
         }
-        .field-label {
-            display: block;
+        @media (min-width: 768px) {
+            #mobile-sidebar, #sidebar-overlay { display: none; }
+            .main-content { margin-left: 16rem; }
+        }
+        
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .profile-row:hover {
+            background-color: var(--hover-bg);
+            padding-left: 0.5rem;
+        }
+        .profile-label {
             font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
             color: var(--text-secondary);
         }
-        .field-input {
-            width: 100%;
-            padding: 0.6rem 0.9rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--border-color);
-            background: var(--bg-primary);
-            color: var(--text-primary);
+        .profile-value {
             font-size: 0.875rem;
-            outline: none;
+            font-weight: 500;
+            color: var(--text-primary);
         }
-        .field-input:focus {
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139,92,246,.15);
+        .edit-mode {
+            background-color: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
         }
-        .avatar-circle {
-            width: 80px;
-            height: 80px;
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+        }
+        .avatar-upload-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #8b5cf6;
             border-radius: 50%;
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            font-weight: bold;
-            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .avatar-upload-btn:hover {
+            transform: scale(1.1);
+        }
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #e2e8f0;
         }
     </style>
 </head>
-<body>
-    <div class="min-h-screen">
-        <!-- Top Bar with Profile Dropdown -->
-        <div class="border-b dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
-            <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <a href="admin-dashboard.html" class="text-purple-500 hover:text-purple-600">
-                        <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
-                    </a>
-                    <h1 class="text-xl font-semibold dark:text-white">My Profile</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
-                        <i class="fas fa-moon dark:block hidden"></i>
-                        <i class="fas fa-sun dark:hidden block"></i>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <!-- Mobile Sidebar -->
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <div class="text-xs opacity-60 mb-4">Admin Panel</div>
+            <nav>
+                <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
+                <a href="products.html" class="nav-item"><i class="fas fa-box w-5"></i><span>Products</span></a>
+                <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
+                <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
+                <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
+                <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
+                <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
+            </nav>
+        </div>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+        </div>
+    </aside>
+
+    <!-- Desktop Sidebar -->
+    <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
+        <div class="p-4 border-b">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <p class="text-xs opacity-60 mt-2">Admin Panel</p>
+        </div>
+        <nav class="p-4">
+            <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
+            <a href="products.html" class="nav-item"><i class="fas fa-box w-5"></i><span>Products</span></a>
+            <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
+            <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
+            <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
+            <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
+            <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
+        </nav>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content flex-1 md:ml-64">
+        <!-- Top Bar -->
+        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                <a href="admin-dashboard.html" class="text-purple-500 hover:text-purple-600">
+                    <i class="fas fa-arrow-left mr-2"></i> Back
+                </a>
+                <h1 class="text-xl font-semibold dark:text-white">My Profile</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition dark:text-white">
+                    <i class="fas fa-moon dark:block hidden"></i>
+                    <i class="fas fa-sun dark:hidden block"></i>
+                </button>
+                <div class="relative">
+                    <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
+                        <i class="fas fa-user-circle text-2xl"></i>
+                        <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
                     </button>
-                    <!-- Profile Dropdown -->
-                    <div class="relative">
-                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
-                            <i class="fas fa-user-circle text-2xl"></i>
-                            <span class="hidden md:inline dark:text-white" id="admin-name">Admin</span>
-                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border dark:border-gray-700">
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                            <i class="fas fa-user-circle w-5 text-gray-500"></i>
+                            <span>My Profile</span>
+                        </a>
+                        <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                            <i class="fas fa-cog w-5 text-gray-500"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="border-t dark:border-gray-700"></div>
+                        <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                            <i class="fas fa-sign-out-alt w-5"></i>
+                            <span>Logout</span>
                         </button>
-                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border dark:border-gray-700">
-                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                <i class="fas fa-user-circle w-5 text-gray-500"></i>
-                                <span>My Profile</span>
-                            </a>
-                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                <i class="fas fa-cog w-5 text-gray-500"></i>
-                                <span>Account Settings</span>
-                            </a>
-                            <div class="border-t dark:border-gray-700"></div>
-                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                                <i class="fas fa-sign-out-alt w-5"></i>
-                                <span>Logout</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="max-w-4xl mx-auto px-4 py-8">
-            <div class="card rounded-xl p-6 md:p-8">
-                <!-- Profile Header with Avatar -->
-                <div class="flex flex-col md:flex-row items-center gap-6 mb-8 pb-6 border-b dark:border-gray-700">
-                    <div id="avatar-initials" class="avatar-circle">A</div>
-                    <div class="text-center md:text-left">
-                        <h2 class="text-2xl font-bold dark:text-white" id="profile-name-display">Admin</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400" id="profile-email-display">admin@example.com</p>
-                        <p class="text-xs text-gray-400 mt-1" id="member-since">Since --</p>
+        <!-- Profile Content -->
+        <div class="max-w-3xl mx-auto px-4 py-8">
+            <div class="card rounded-xl overflow-hidden">
+                <!-- Avatar Section -->
+                <div class="flex flex-col items-center pt-8 pb-4">
+                    <div class="avatar-container">
+                        <img id="avatar-preview" class="avatar-preview" src="https://ui-avatars.com/api/?background=8b5cf6&color=fff&size=100&name=User" alt="Avatar">
+                        <label for="avatar-upload" class="avatar-upload-btn">
+                            <i class="fas fa-camera text-white text-sm"></i>
+                        </label>
+                        <input type="file" id="avatar-upload" accept="image/*" class="hidden">
                     </div>
+                    <h2 class="text-xl font-bold mt-3 dark:text-white" id="display-name">User Name</h2>
+                    <p class="text-sm text-gray-500" id="display-email">user@example.com</p>
                 </div>
 
-                <!-- Profile Form -->
-                <form onsubmit="event.preventDefault(); saveProfile();">
-                    <div class="space-y-6">
-                        <div>
-                            <label class="field-label">Full Name</label>
-                            <input type="text" id="profile-name" class="field-input" placeholder="Your full name">
+                <!-- Profile Fields -->
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold dark:text-white">My Profile</h3>
+                        <button id="edit-toggle" class="text-purple-500 text-sm hover:underline">
+                            <i class="fas fa-edit mr-1"></i> Edit
+                        </button>
+                    </div>
+
+                    <!-- Read Mode View -->
+                    <div id="read-mode">
+                        <div class="profile-row" onclick="editField('name')">
+                            <span class="profile-label">Name</span>
+                            <span class="profile-value" id="view-name">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
                         </div>
-                        <div>
-                            <label class="field-label">Email Address</label>
-                            <input type="email" id="profile-email" class="field-input" disabled style="opacity: 0.6; cursor: not-allowed;">
-                            <p class="text-xs text-gray-500 mt-1">Email cannot be changed. Contact support for assistance.</p>
+                        <div class="profile-row" onclick="editField('email')">
+                            <span class="profile-label">Email account</span>
+                            <span class="profile-value" id="view-email">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
                         </div>
-                        <div>
-                            <label class="field-label">Phone Number</label>
-                            <input type="tel" id="profile-phone" class="field-input" placeholder="+971 5X XXX XXXX">
+                        <div class="profile-row" onclick="editField('phone')">
+                            <span class="profile-label">Mobile number</span>
+                            <span class="profile-value" id="view-phone">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
                         </div>
-                        <div>
-                            <label class="field-label">Bio / About</label>
-                            <textarea id="profile-bio" rows="4" class="field-input" placeholder="Tell us a little about yourself..."></textarea>
+                        <div class="profile-row" onclick="editField('whatsapp')">
+                            <span class="profile-label">WhatsApp</span>
+                            <span class="profile-value" id="view-whatsapp">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
                         </div>
-                        <div class="flex gap-4 pt-4">
-                            <button type="submit" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">
+                        <div class="profile-row" onclick="editField('location')">
+                            <span class="profile-label">Location</span>
+                            <span class="profile-value" id="view-location">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                        </div>
+                        <div class="profile-row" onclick="editField('address')">
+                            <span class="profile-label">Address</span>
+                            <span class="profile-value" id="view-address">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                        </div>
+                        
+                        <div class="mt-4 pt-2">
+                            <h4 class="font-semibold dark:text-white mb-2">Social Media</h4>
+                        </div>
+                        <div class="profile-row" onclick="editField('facebook')">
+                            <span class="profile-label">Facebook</span>
+                            <span class="profile-value" id="view-facebook">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                        </div>
+                        <div class="profile-row" onclick="editField('instagram')">
+                            <span class="profile-label">Instagram</span>
+                            <span class="profile-value" id="view-instagram">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                        </div>
+                        
+                        <div class="mt-4 pt-2">
+                            <h4 class="font-semibold dark:text-white mb-2">Store Links</h4>
+                        </div>
+                        <div class="profile-row" onclick="editField('website')">
+                            <span class="profile-label">Website</span>
+                            <span class="profile-value" id="view-website">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                        </div>
+                        <div class="profile-row" onclick="editField('dubizzle')">
+                            <span class="profile-label">Dubizzle</span>
+                            <span class="profile-value" id="view-dubizzle">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                        </div>
+                        <div class="profile-row" onclick="editField('marketplace')">
+                            <span class="profile-label">Marketplace</span>
+                            <span class="profile-value" id="view-marketplace">-</span>
+                            <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode View (Hidden by default) -->
+                    <div id="edit-mode" class="hidden">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Full Name</label>
+                                <input type="text" id="edit-name" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Email</label>
+                                <input type="email" id="edit-email" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" disabled>
+                                <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Mobile Number</label>
+                                <input type="tel" id="edit-phone" placeholder="+971 XX XXX XXXX" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">WhatsApp Number</label>
+                                <input type="tel" id="edit-whatsapp" placeholder="+971 XX XXX XXXX" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Location (City, Country)</label>
+                                <input type="text" id="edit-location" placeholder="e.g., Dubai, UAE" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Full Address</label>
+                                <textarea id="edit-address" rows="2" placeholder="Street, building, apartment" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
+                            </div>
+                            
+                            <div class="pt-2">
+                                <h4 class="font-semibold dark:text-white mb-3">Social Media</h4>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Facebook Profile</label>
+                                <input type="url" id="edit-facebook" placeholder="https://facebook.com/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Instagram Profile</label>
+                                <input type="url" id="edit-instagram" placeholder="https://instagram.com/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            
+                            <div class="pt-2">
+                                <h4 class="font-semibold dark:text-white mb-3">Store Links</h4>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Website</label>
+                                <input type="url" id="edit-website" placeholder="https://yourwebsite.com" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Dubizzle Profile</label>
+                                <input type="url" id="edit-dubizzle" placeholder="https://dubizzle.com/u/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Marketplace Profile</label>
+                                <input type="url" id="edit-marketplace" placeholder="https://facebook.com/marketplace/username" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3 mt-6">
+                            <button id="save-profile" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">
                                 <i class="fas fa-save mr-1"></i> Save Changes
                             </button>
-                            <a href="admin-dashboard.html" class="flex-1 border border-gray-300 dark:border-gray-600 py-2 rounded-lg text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            <button id="cancel-edit" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                                 Cancel
-                            </a>
+                            </button>
                         </div>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -181,14 +390,33 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         let currentUser = null;
         let currentUserData = null;
+        let isEditMode = false;
 
-        // Profile Dropdown Functions
+        // ========== MOBILE SIDEBAR FUNCTIONS ==========
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.toggle('show');
+            if (overlay) overlay.classList.toggle('show');
+            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
+        };
+
+        window.closeMobileMenu = function() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.remove('show');
+            if (overlay) overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        };
+
+        // ========== USER MENU FUNCTIONS ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
@@ -209,16 +437,14 @@
             }
         });
 
+        // ========== THEME & LOGOUT ==========
         window.toggleTheme = () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         };
 
-        window.logout = async () => {
-            await signOut(auth);
-            window.location.href = '/';
-        };
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -234,44 +460,101 @@
 
         function loadProfileData() {
             const data = currentUserData;
+            const profile = data.profile || {};
+            
             document.getElementById('admin-name').textContent = data.name || 'Admin';
-            document.getElementById('profile-name-display').textContent = data.name || 'Admin';
-            document.getElementById('profile-email-display').textContent = data.email || '';
-            document.getElementById('profile-name').value = data.name || '';
-            document.getElementById('profile-email').value = data.email || '';
-            document.getElementById('profile-phone').value = data.phone || '';
-            document.getElementById('profile-bio').value = data.bio || '';
+            document.getElementById('display-name').textContent = data.name || 'User Name';
+            document.getElementById('display-email').textContent = data.email || '';
             
-            const initials = (data.name || 'A').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-            document.getElementById('avatar-initials').textContent = initials;
+            document.getElementById('view-name').textContent = data.name || '-';
+            document.getElementById('view-email').textContent = data.email || '-';
+            document.getElementById('view-phone').textContent = profile.phone || '-';
+            document.getElementById('view-whatsapp').textContent = profile.whatsapp || '-';
+            document.getElementById('view-location').textContent = profile.location || '-';
+            document.getElementById('view-address').textContent = profile.address || '-';
+            document.getElementById('view-facebook').textContent = profile.facebook || '-';
+            document.getElementById('view-instagram').textContent = profile.instagram || '-';
+            document.getElementById('view-website').textContent = profile.website || '-';
+            document.getElementById('view-dubizzle').textContent = profile.dubizzle || '-';
+            document.getElementById('view-marketplace').textContent = profile.marketplace || '-';
             
-            const joined = data.createdAt ? new Date(data.createdAt).toLocaleDateString('en-AE', { year:'numeric', month:'long', day:'numeric' }) : '—';
-            document.getElementById('member-since').textContent = 'Since ' + joined;
+            document.getElementById('edit-name').value = data.name || '';
+            document.getElementById('edit-email').value = data.email || '';
+            document.getElementById('edit-phone').value = profile.phone || '';
+            document.getElementById('edit-whatsapp').value = profile.whatsapp || '';
+            document.getElementById('edit-location').value = profile.location || '';
+            document.getElementById('edit-address').value = profile.address || '';
+            document.getElementById('edit-facebook').value = profile.facebook || '';
+            document.getElementById('edit-instagram').value = profile.instagram || '';
+            document.getElementById('edit-website').value = profile.website || '';
+            document.getElementById('edit-dubizzle').value = profile.dubizzle || '';
+            document.getElementById('edit-marketplace').value = profile.marketplace || '';
+            
+            if (data.avatarUrl) {
+                document.getElementById('avatar-preview').src = data.avatarUrl;
+            } else {
+                document.getElementById('avatar-preview').src = `https://ui-avatars.com/api/?background=8b5cf6&color=fff&size=100&name=${encodeURIComponent(data.name || 'User')}`;
+            }
         }
 
-        window.saveProfile = async () => {
-            const name = document.getElementById('profile-name').value.trim();
-            const phone = document.getElementById('profile-phone').value.trim();
-            const bio = document.getElementById('profile-bio').value.trim();
+        // Avatar Upload
+        document.getElementById('avatar-upload').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
             
-            if (!name) {
-                alert('Name cannot be empty');
-                return;
-            }
+            const storageRef = ref(storage, `avatars/${currentUser.uid}`);
+            await uploadBytes(storageRef, file);
+            const avatarUrl = await getDownloadURL(storageRef);
+            await updateDoc(doc(db, 'users', currentUser.uid), { avatarUrl });
+            document.getElementById('avatar-preview').src = avatarUrl;
+            alert('Profile picture updated!');
+        });
+
+        // Edit Toggle
+        document.getElementById('edit-toggle').addEventListener('click', () => {
+            isEditMode = !isEditMode;
+            document.getElementById('read-mode').classList.toggle('hidden', isEditMode);
+            document.getElementById('edit-mode').classList.toggle('hidden', !isEditMode);
+            document.getElementById('edit-toggle').textContent = isEditMode ? 'Cancel Edit' : 'Edit';
+        });
+
+        document.getElementById('cancel-edit').addEventListener('click', () => {
+            isEditMode = false;
+            document.getElementById('read-mode').classList.remove('hidden');
+            document.getElementById('edit-mode').classList.add('hidden');
+            document.getElementById('edit-toggle').textContent = 'Edit';
+            loadProfileData(); // Reload original data
+        });
+
+        document.getElementById('save-profile').addEventListener('click', async () => {
+            const profile = {
+                phone: document.getElementById('edit-phone').value,
+                whatsapp: document.getElementById('edit-whatsapp').value,
+                location: document.getElementById('edit-location').value,
+                address: document.getElementById('edit-address').value,
+                facebook: document.getElementById('edit-facebook').value,
+                instagram: document.getElementById('edit-instagram').value,
+                website: document.getElementById('edit-website').value,
+                dubizzle: document.getElementById('edit-dubizzle').value,
+                marketplace: document.getElementById('edit-marketplace').value,
+                updatedAt: new Date().toISOString()
+            };
             
-            try {
-                await updateDoc(doc(db, 'users', currentUser.uid), {
-                    name: name,
-                    phone: phone,
-                    bio: bio,
-                    updatedAt: new Date().toISOString()
-                });
-                alert('Profile updated successfully!');
-                loadProfileData();
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        };
+            const name = document.getElementById('edit-name').value;
+            
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+                name: name,
+                profile: profile,
+                updatedAt: new Date().toISOString()
+            });
+            
+            alert('Profile updated successfully!');
+            isEditMode = false;
+            document.getElementById('read-mode').classList.remove('hidden');
+            document.getElementById('edit-mode').classList.add('hidden');
+            document.getElementById('edit-toggle').textContent = 'Edit';
+            loadProfileData();
+        });
     </script>
 </body>
 </html>
