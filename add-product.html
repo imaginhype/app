@@ -210,25 +210,27 @@
             margin-top: 12px;
         }
         
-        /* Quill Editor */
+        /* Quill Editor - Fixed to be visible */
         .ql-container {
-            min-height: 150px;
+            min-height: 180px !important;
             font-size: 14px;
+            background: var(--input-bg);
+            color: var(--text-primary);
         }
         .ql-toolbar {
             border-top-left-radius: 14px;
             border-top-right-radius: 14px;
-            border-color: var(--border-color);
+            border: 1px solid var(--border-color) !important;
             background: var(--input-bg);
         }
         .ql-container {
             border-bottom-left-radius: 14px;
             border-bottom-right-radius: 14px;
-            border-color: var(--border-color);
-            background: var(--input-bg);
+            border: 1px solid var(--border-color) !important;
+            border-top: none !important;
         }
         .ql-editor {
-            min-height: 150px;
+            min-height: 160px;
             color: var(--text-primary);
         }
         
@@ -426,7 +428,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium mb-1">Description <span class="text-red-500">*</span></label>
-                                        <div id="editor-container" style="height: 180px;"></div>
+                                        <div id="editor-container" style="height: 200px;"></div>
                                         <textarea id="product-description" style="display:none;"></textarea>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -687,7 +689,7 @@
             if (dropdown) {
                 const isHidden = dropdown.classList.contains('hidden');
                 dropdown.classList.toggle('hidden');
-                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg');
+                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
             }
         };
 
