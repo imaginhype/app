@@ -139,17 +139,17 @@ body {
 }
 
 /* ============================================
-   FIX #1, #2, #3, #4: COMPLETE SIDEBAR SYSTEM
+   SIDEBAR SYSTEM - FLEXBOX LAYOUT (FIXED)
    ============================================ */
 
-/* Main app wrapper - Flexbox layout */
+/* Main app wrapper - wraps sidebar and main content */
 .app-wrapper {
     display: flex;
     min-height: 100vh;
     width: 100%;
 }
 
-/* Desktop Sidebar */
+/* Desktop Sidebar - RELATIVE positioning for flexbox */
 .desktop-sidebar {
     width: 16rem;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -160,6 +160,11 @@ body {
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
     z-index: 40;
+}
+
+/* Disable transition on page load to prevent flicker */
+.desktop-sidebar.no-transition {
+    transition: none !important;
 }
 
 .desktop-sidebar.collapsed {
@@ -183,7 +188,7 @@ body {
     font-size: 1.25rem;
 }
 
-/* FIX #3: Logo stays fixed - no vertical movement */
+/* Logo stays fixed - no vertical movement */
 .sidebar-logo {
     display: flex;
     align-items: center;
@@ -201,7 +206,7 @@ body {
     margin-right: 0;
 }
 
-/* Main content - flex takes remaining space */
+/* Main content - flex takes remaining space, NO margin needed */
 .main-content {
     flex: 1;
     min-width: 0;
@@ -239,7 +244,7 @@ body {
 }
 
 /* ============================================
-   FIX MOBILE #1: Back button - icon only on mobile
+   BACK BUTTON - ICON ONLY ON MOBILE (FIXED)
    ============================================ */
 
 @media (max-width: 640px) {
@@ -261,7 +266,7 @@ body {
 }
 
 /* ============================================
-   FIX MOBILE #2: Category Modal - Theme aware
+   CATEGORY MODAL - THEME AWARE (FIXED)
    ============================================ */
 
 #category-modal .modal-header,
