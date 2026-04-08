@@ -18,64 +18,54 @@
             transform: translateY(-2px);
         }
         
-        /* ============================================ */
-        /* NEW NOTIFICATION CARD STYLE - Applied to .notification-item */
-        /* ============================================ */
+        /* Notification Card Style */
         .notification-item {
             background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            border: 1px solid var(--border-color);
             border-radius: 1.2rem;
             padding: 1.25rem;
             transition: all 0.2s;
-            box-shadow: var(--shadow-sm);
             display: flex;
             align-items: flex-start;
             gap: 1rem;
             cursor: pointer;
             margin-bottom: 1rem;
         }
-
-        /* Hover effect */
         .notification-item:hover {
-            background: var(--tag-bg);
-            border-color: var(--badge-unread);
+            background: var(--hover-bg);
+            border-color: var(--accent-color);
             transform: translateY(-1px);
         }
-
-        /* Card Icon */
+        .notification-item.unread {
+            border-left: 3px solid var(--accent-color);
+        }
         .notification-icon {
             flex-shrink: 0;
             width: 42px;
             height: 42px;
-            background: var(--tag-bg);
+            background: var(--bg-tertiary);
             border-radius: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.4rem;
-            color: var(--icon-placeholder);
-            transition: 0.1s;
+            color: var(--text-secondary);
         }
-
-        /* Card Content */
         .notification-content {
             flex: 1;
         }
-
         .notification-title {
             font-size: 1.05rem;
             font-weight: 600;
             margin-bottom: 0.3rem;
             color: var(--text-primary);
         }
-
         .notification-message {
             font-size: 0.9rem;
             color: var(--text-secondary);
             margin-bottom: 0.6rem;
             line-height: 1.4;
         }
-
         .notification-meta {
             display: flex;
             flex-wrap: wrap;
@@ -83,32 +73,26 @@
             gap: 0.75rem;
             font-size: 0.75rem;
         }
-
         .badge-status {
             font-size: 0.7rem;
             font-weight: 600;
             padding: 0.2rem 0.65rem;
             border-radius: 20px;
-            background: var(--tag-bg);
+            background: var(--bg-tertiary);
             color: var(--text-secondary);
         }
-
         .badge-unread {
-            background: var(--badge-unread);
+            background: var(--accent-color);
             color: white;
         }
-
         .timestamp {
             color: var(--text-muted);
         }
-
-        /* Action buttons container */
         .notification-actions {
             display: flex;
             gap: 0.5rem;
             align-items: center;
         }
-
         .action-icon {
             transition: all 0.2s;
             cursor: pointer;
@@ -122,62 +106,6 @@
             color: var(--text-primary);
         }
         
-        /* Theme Variables for new card styles */
-        :root {
-            --card-border: #e9eef3;
-            --tag-bg: #f0f2f5;
-            --icon-placeholder: #8e9eae;
-            --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
-            --badge-unread: #2c6eef;
-        }
-        
-        [data-theme="dark"] {
-            --card-border: #1f2a3e;
-            --tag-bg: #1e293b;
-            --icon-placeholder: #8d9bc0;
-            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
-            --badge-unread: #3b82f6;
-        }
-        
-        /* Dark mode specific overrides for notification cards */
-        [data-theme="dark"] .notification-item {
-            background: #111827;
-            border-color: #1f2a3e;
-        }
-        
-        [data-theme="dark"] .notification-item:hover {
-            background: #1e293b;
-            border-color: #3b82f6;
-        }
-        
-        [data-theme="dark"] .notification-icon {
-            background: #1f2a3c;
-            color: #b9c8ff;
-        }
-        
-        [data-theme="dark"] .notification-title {
-            color: #f0f3fa;
-        }
-        
-        [data-theme="dark"] .notification-message {
-            color: #cbd5e6;
-        }
-        
-        [data-theme="dark"] .timestamp {
-            color: #94a3c0;
-        }
-        
-        [data-theme="dark"] .badge-status:not(.badge-unread) {
-            background: #2d3a4f;
-            color: #e2e8f0;
-        }
-        
-        /* Remove old notification-item styles that conflict */
-        .notification-item.unread {
-            border-left-color: var(--badge-unread);
-        }
-        
-        /* Keep existing styles for other elements */
         .filter-chip {
             cursor: pointer;
             transition: all 0.2s;
@@ -278,36 +206,9 @@
         }
         
         @media (max-width: 640px) {
-            .action-icon i, .action-icon .fa-lg, .action-icon .text-lg {
-                font-size: 14px !important;
-            }
-            .notification-item {
-                padding: 12px !important;
-            }
-            .notification-actions {
-                gap: 4px;
-            }
-        }
-        
-        /* Sidebar Styles */
-        .sidebar {
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 16px;
-            margin: 4px 0;
-            border-radius: 12px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .nav-item:hover, .nav-item.active {
-            background: var(--active-bg);
-            color: white;
+            .notification-item { padding: 12px !important; }
+            .notification-actions { gap: 4px; }
+            .action-icon i { font-size: 14px !important; }
         }
         
         /* Desktop Sidebar - Collapsible */
@@ -340,14 +241,24 @@
         .desktop-sidebar.collapsed .sidebar-logo {
             justify-content: center;
         }
+        
+        /* FIX: Main content stretches when sidebar collapses */
         .main-content {
             transition: margin-left 0.3s ease;
             margin-left: 16rem;
+            width: calc(100% - 16rem);
         }
+        .desktop-sidebar.collapsed ~ .main-content,
+        .desktop-sidebar.collapsed + .main-content {
+            margin-left: 4rem;
+            width: calc(100% - 4rem);
+        }
+        
         @media (max-width: 767px) {
             .desktop-sidebar { display: none; }
-            .main-content { margin-left: 0; }
+            .main-content { margin-left: 0; width: 100%; }
         }
+        
         .sidebar-toggle-btn {
             cursor: pointer;
             padding: 8px 10px;
@@ -361,33 +272,23 @@
             background: var(--hover-bg);
         }
         
-        /* Mobile Sidebar */
-        #mobile-sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            overflow-y: auto;
+        /* Back button style */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
         }
-        #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            cursor: pointer;
+        .back-btn:hover {
+            background: var(--hover-bg);
+            transform: translateX(-2px);
         }
-        #sidebar-overlay.show { display: block; }
-        #sidebar-overlay:not(.show) { display: none; }
     </style>
 </head>
 <body>
@@ -440,14 +341,18 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar with Sidebar Toggle -->
+    <main class="main-content flex-1">
+        <!-- Top Bar with Sidebar Toggle AND Back Button -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
                 <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
                     <i class="fas fa-chevron-left"></i>
                 </button>
+                <!-- Back button to go to Dashboard -->
+                <a href="admin-dashboard.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Notifications</h1>
                     <p class="text-sm text-gray-500">Monitor all system notifications, user activities, and important events</p>
