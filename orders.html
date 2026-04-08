@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // CRITICAL: This runs BEFORE page paints to prevent sidebar flicker
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Orders - Marketplace Pro</title>
@@ -127,17 +138,30 @@
             background-color: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
         }
-        .desktop-sidebar.collapsed { width: 4rem; }
-        .desktop-sidebar.collapsed .nav-item span,
-        .desktop-sidebar.collapsed .sidebar-logo span,
-        .desktop-sidebar.collapsed p.text-xs { display: none; }
-        .desktop-sidebar.collapsed .nav-item { justify-content: center; padding: 0.75rem 0; }
-        .desktop-sidebar.collapsed .nav-item i { margin: 0; font-size: 1.25rem; }
-        .desktop-sidebar.collapsed .sidebar-logo { justify-content: center; }
-        .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
-        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
-        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
-        @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.5rem;
+            transition: none;
+            transform: none;
+        }
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            transition: none;
+            width: auto;
+        }
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .app-wrapper { display: block; }
+            .main-content { margin-left: 0 !important; width: 100% !important; }
+        }
     </style>
 </head>
 <body>
@@ -168,7 +192,7 @@
 
     <div class="app-wrapper">
         <!-- Desktop Sidebar -->
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block" style="transition: none !important;">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
             <div class="p-4 border-b">
                 <div class="flex items-center space-x-2 sidebar-logo">
                     <i class="fas fa-store text-2xl text-purple-500"></i>
@@ -346,7 +370,7 @@
             const paginated = filtered.slice(start, end);
             
             const tbody = document.getElementById('orders-table-body');
-            if (!paginated.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No orders found.</td></tr>'; document.getElementById('pagination-info').textContent = 'Showing 0 - 0 of 0 orders'; document.getElementById('pagination-container').innerHTML = ''; return; }
+            if (!paginated.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No orders found.您</td></tr>'; document.getElementById('pagination-info').textContent = 'Showing 0 - 0 of 0 orders'; document.getElementById('pagination-container').innerHTML = ''; return; }
             
             tbody.innerHTML = paginated.map(order => `<tr class="order-row border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td class="px-4 py-3"><input type="checkbox" class="order-checkbox rounded" data-id="${order.id}" ${selectedOrders.has(order.id) ? 'checked' : ''}></td>
@@ -357,4 +381,44 @@
                 <td class="px-4 py-3 text-sm">${order.paymentMethod || 'COD'}</td>
                 <td class="px-4 py-3 text-sm">${formatDate(order.createdAt)}</td>
                 <td class="px-4 py-3"><div class="flex gap-2"><button onclick="viewOrderDetails('${order.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>${order.status === 'pending' ? `<button onclick="approveOrder('${order.id}', ${order.totalAmount})" class="text-green-500 hover:text-green-700"><i class="fas fa-check-circle"></i></button>` : ''}${order.status === 'approved' ? `<button onclick="markAsCompleted('${order.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-truck"></i></button>` : ''}</div></td>
+            </tr>`).join('');
             
+            document.querySelectorAll('.order-checkbox').forEach(cb => { cb.addEventListener('change', (e) => { if (e.target.checked) selectedOrders.add(e.target.dataset.id); else selectedOrders.delete(e.target.dataset.id); updateBulkActionsBar(); }); });
+            document.getElementById('pagination-info').textContent = `Showing ${start + 1} - ${end} of ${total} orders`;
+            renderPagination(total);
+        }
+
+        function updateBulkActionsBar() { const count = selectedOrders.size; const bulkActions = document.getElementById('bulk-actions'); const selectedCount = document.getElementById('selected-count'); if (count > 0) { bulkActions.classList.remove('hidden'); selectedCount.textContent = `${count} order${count > 1 ? 's' : ''} selected`; } else { bulkActions.classList.add('hidden'); } }
+        function clearSelection() { selectedOrders.clear(); document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false); updateBulkActionsBar(); }
+        window.clearSelection = clearSelection;
+
+        function renderPagination(total) {
+            const totalPages = Math.ceil(total / itemsPerPage);
+            const container = document.getElementById('pagination-container');
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
+            let html = '';
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`;
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) { html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`; }
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`;
+            container.innerHTML = html;
+        }
+
+        window.goToPage = (page) => { currentPage = page; renderOrders(); };
+        window.viewOrderDetails = async (id) => { const orderDoc = await getDoc(doc(db, 'orders', id)); const order = orderDoc.data(); const modal = document.getElementById('order-modal'); const content = document.getElementById('order-modal-content'); document.getElementById('order-modal-title').textContent = `Order #${id.slice(0, 8)}`; content.innerHTML = `<div class="space-y-4"><div class="grid grid-cols-2 gap-4"><div><strong>Order ID:</strong> ${id.slice(0, 8)}</div><div><strong>Status:</strong> <span class="status-badge status-${order.status}">${order.status}</span></div><div><strong>Customer:</strong> ${escapeHtml(order.customerName || 'N/A')}</div><div><strong>Email:</strong> ${escapeHtml(order.customerEmail || 'N/A')}</div><div><strong>Amount:</strong> AED ${order.totalAmount || 0}</div><div><strong>Payment Method:</strong> ${order.paymentMethod || 'COD'}</div><div><strong>Date:</strong> ${formatDateTime(order.createdAt)}</div></div><div><strong>Shipping Address:</strong><br>${order.shippingAddress || 'Not provided'}</div><div><strong>Order Items:</strong></div><div class="border rounded-lg overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-3 py-2 text-left">Product</th><th class="px-3 py-2 text-center">Qty</th><th class="px-3 py-2 text-right">Price</th><th class="px-3 py-2 text-right">Total</th></tr></thead><tbody>${order.items?.map(item => `<tr class="border-t"><td class="px-3 py-2">${escapeHtml(item.name)}</td><td class="px-3 py-2 text-center">${item.quantity}</td><td class="px-3 py-2 text-right">AED ${item.price}</td><td class="px-3 py-2 text-right font-semibold">AED ${item.price * item.quantity}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center py-4">No items</td></tr>'}</tbody><tfoot class="bg-gray-50 dark:bg-gray-700"><tr><td colspan="3" class="px-3 py-2 text-right font-semibold">Total:</td><td class="px-3 py-2 text-right font-bold">AED ${order.totalAmount || 0}</td></tr></tfoot></table></div></div>`; modal.classList.remove('hidden'); };
+        window.closeOrderModal = () => { document.getElementById('order-modal').classList.add('hidden'); };
+        window.approveOrder = async (id, total) => { const commission = total * 0.1; await updateDoc(doc(db, 'orders', id), { status: 'approved', approvedAt: new Date().toISOString(), commissionAmount: commission, sellerEarnings: total - commission }); await loadOrders(); };
+        window.markAsCompleted = async (id) => { await updateDoc(doc(db, 'orders', id), { status: 'completed', completedAt: new Date().toISOString() }); await loadOrders(); };
+        window.bulkApprove = async () => { if (!confirm(`Approve ${selectedOrders.size} orders?`)) return; for (const id of selectedOrders) { const order = allOrders.find(o => o.id === id); if (order && order.status === 'pending') { const commission = order.totalAmount * 0.1; await updateDoc(doc(db, 'orders', id), { status: 'approved', approvedAt: new Date().toISOString(), commissionAmount: commission, sellerEarnings: order.totalAmount - commission }); } } clearSelection(); await loadOrders(); };
+        window.exportToCSV = () => { let filtered = allOrders; if (currentStatus !== 'all') filtered = filtered.filter(o => o.status === currentStatus); const headers = ['Order ID', 'Customer', 'Email', 'Amount', 'Status', 'Payment Method', 'Date']; const rows = filtered.map(o => [o.id.slice(0, 8), o.customerName || 'N/A', o.customerEmail || 'N/A', o.totalAmount || 0, o.status || 'pending', o.paymentMethod || 'COD', formatDate(o.createdAt)]); const csv = [headers, ...rows].map(row => row.join(',')).join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `orders_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url); };
+
+        function formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); return date.toLocaleDateString(); }
+        function formatDateTime(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); return date.toLocaleString(); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+
+        document.getElementById('search-orders').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderOrders(); });
+        document.querySelectorAll('.filter-tab').forEach(tab => { tab.addEventListener('click', () => { document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); currentStatus = tab.dataset.status; currentPage = 1; renderOrders(); }); });
+        document.getElementById('apply-date-filter').addEventListener('click', () => { dateFrom = document.getElementById('date-from').value; dateTo = document.getElementById('date-to').value; currentPage = 1; renderOrders(); });
+        document.getElementById('select-all').addEventListener('change', (e) => { const checkboxes = document.querySelectorAll('.order-checkbox'); checkboxes.forEach(cb => { cb.checked = e.target.checked; if (e.target.checked) selectedOrders.add(cb.dataset.id); else selectedOrders.delete(cb.dataset.id); }); updateBulkActionsBar(); });
+    </script>
+</body>
+</html>
