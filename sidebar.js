@@ -19,11 +19,12 @@
         // Load saved state from localStorage
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         
-        // Apply saved state immediately (no animation on page load)
+        // Apply saved state immediately - NO ANIMATION on page load
         if (isCollapsed) {
             sidebar.classList.add('collapsed');
             toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
         } else {
+            sidebar.classList.remove('collapsed');
             toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
         }
         
@@ -118,6 +119,6 @@ window.toggleTheme = function() {
     }
 };
 
-// Initialize theme on page load
+// Initialize theme on page load - NO FLASH
 const savedTheme = localStorage.getItem('theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
