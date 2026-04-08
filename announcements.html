@@ -6,7 +6,7 @@
     <title>Announcements - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css");
+    <link rel="stylesheet" href="style.css">
     <style>
         .stat-card {
             transition: all 0.2s ease;
@@ -147,7 +147,7 @@
             justify-content: center;
         }
         
-        /* FIX: Main content stretches when sidebar collapses */
+        /* Main content adjustment */
         .main-content {
             transition: margin-left 0.3s ease;
             margin-left: 16rem;
@@ -256,7 +256,7 @@
                 </button>
                 <!-- Back button to go to Dashboard -->
                 <a href="admin-dashboard.html" class="back-btn">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    <i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span>
                 </a>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Announcements</h1>
@@ -428,6 +428,7 @@
         </div>
     </div>
 
+    <script src="sidebar.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -455,73 +456,6 @@
         let currentViewAnnouncement = null;
         const itemsPerPage = 10;
 
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        // ========== COLLAPSIBLE SIDEBAR ==========
-        function initCollapsibleSidebar() {
-            const sidebar = document.querySelector('.desktop-sidebar');
-            const toggleBtn = document.getElementById('sidebarToggleBtn');
-            if (!sidebar || !toggleBtn) return;
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-            }
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                const collapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', collapsed);
-                toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
-                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
-            });
-        }
-
-        // ========== MOBILE SIDEBAR ==========
-        window.toggleMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.toggle('show');
-            if (overlay) overlay.classList.toggle('show');
-            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
-        };
-
-        window.closeMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.remove('show');
-            if (overlay) overlay.classList.remove('show');
-            document.body.style.overflow = '';
-        };
-
-        // ========== USER MENU ==========
-        window.toggleUserMenu = function() {
-            const dropdown = document.getElementById('user-dropdown');
-            const chevron = document.getElementById('user-chevron');
-            if (dropdown) {
-                const isHidden = dropdown.classList.contains('hidden');
-                dropdown.classList.toggle('hidden');
-                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
-        };
-
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('user-dropdown');
-            const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
-            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-                const chevron = document.getElementById('user-chevron');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
-        });
-
-        // ========== THEME & LOGOUT ==========
-        window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        };
-
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
         onAuthStateChanged(auth, async (user) => {
@@ -532,7 +466,6 @@
                 return;
             }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
-            initCollapsibleSidebar();
             await loadAnnouncements();
         });
 
