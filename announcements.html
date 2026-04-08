@@ -503,4 +503,20 @@
             const a = allAnnouncements.find(a => a.id === id);
             if (!a) return;
             document.getElementById('view-modal-title').textContent = a.title;
-            document.getElementById('view-modal-content').innerHTML = `<div class="space-y-4"><div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><div class="text
+            document.getElementById('view-modal-content').innerHTML = `<div class="space-y-4"><div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><div class="text-sm font-medium mb-2">Message:</div><div class="text-sm whitespace-pre-wrap">${escapeHtml(a.message)}</div></div></div>`;
+            document.getElementById('view-modal').classList.remove('hidden');
+            document.getElementById('view-modal-edit').onclick = () => { closeViewModal(); openEditModal(a.id); };
+            document.getElementById('view-modal-delete').onclick = () => { if (confirm('Delete?')) { deleteAnnouncement(a.id); closeViewModal(); } };
+        };
+        window.closeViewModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('view-modal').classList.add('hidden'); };
+        window.deleteAnnouncement = async (id) => { if (!confirm('Delete this announcement?')) return; await deleteDoc(doc(db, 'announcements', id)); await loadAnnouncements(); };
+        function formatTarget(target) { const targets = { all_users: 'All Users', sellers: 'All Sellers', specific: 'Specific Sellers' }; return targets[target] || target; }
+        function formatDate(dateString) { if (!dateString) return 'N/A'; return new Date(dateString).toLocaleDateString(); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+
+        document.getElementById('search-announcements').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderAnnouncements(); });
+        document.getElementById('filter-priority').addEventListener('change', (e) => { currentPriority = e.target.value; currentPage = 1; renderAnnouncements(); });
+        document.getElementById('filter-status').addEventListener('change', (e) => { currentStatusFilter = e.target.value; currentPage = 1; renderAnnouncements(); });
+    </script>
+</body>
+</html>
