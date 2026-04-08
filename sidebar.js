@@ -16,10 +16,13 @@
         
         if (!sidebar || !toggleBtn) return;
         
+        // Disable transitions temporarily to prevent animation on page load
+        sidebar.classList.add('no-transition');
+        
         // Load saved state from localStorage
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         
-        // Apply saved state immediately - NO ANIMATION on page load
+        // Apply saved state immediately - NO ANIMATION
         if (isCollapsed) {
             sidebar.classList.add('collapsed');
             toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
@@ -27,6 +30,11 @@
             sidebar.classList.remove('collapsed');
             toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
         }
+        
+        // Force browser to acknowledge the class change before re-enabling transitions
+        setTimeout(function() {
+            sidebar.classList.remove('no-transition');
+        }, 50);
         
         // Toggle sidebar when button is clicked
         toggleBtn.addEventListener('click', function(e) {
