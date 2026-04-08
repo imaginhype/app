@@ -22,7 +22,6 @@
 }
 
 [data-theme="light"] {
-    /* Backgrounds */
     --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
     --bg-tertiary: #f1f5f9;
@@ -34,49 +33,33 @@
     --bg-table-header: #f8fafc;
     --bg-table-row: #ffffff;
     --bg-table-row-hover: #f1f5f9;
-    
-    /* Text colors */
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #64748b;
     --text-disabled: #94a3b8;
-    
-    /* Border colors */
     --border-color: #e2e8f0;
     --border-light: #f1f5f9;
-    
-    /* Interactive states */
     --hover-bg: #f1f5f9;
     --active-bg: #2563eb;
     --active-text: #ffffff;
-    
-    /* Dropdown specific */
     --dropdown-bg: #ffffff;
     --dropdown-text: #1e293b;
     --dropdown-hover: #f1f5f9;
     --dropdown-border: #e2e8f0;
-    
-    /* Table specific */
     --table-header-bg: #f8fafc;
     --table-row-bg: #ffffff;
     --table-row-alt: #f8fafc;
     --table-text: #0f172a;
     --table-border: #e2e8f0;
-    
-    /* Modal specific */
     --modal-bg: #ffffff;
     --modal-text: #0f172a;
     --modal-border: #e2e8f0;
     --modal-overlay: rgba(0, 0, 0, 0.5);
-    
-    /* Notification specific */
     --notif-bg: #ffffff;
     --notif-border: #e2e8f0;
     --notif-unread-border: #2563eb;
     --notif-icon-bg: #f1f5f9;
     --notif-icon-color: #475569;
-    
-    /* Quill Editor */
     --ql-toolbar-bg: #ffffff;
     --ql-toolbar-border: #e2e8f0;
     --ql-editor-bg: #ffffff;
@@ -85,7 +68,6 @@
 }
 
 [data-theme="dark"] {
-    /* Backgrounds */
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;
     --bg-tertiary: #334155;
@@ -97,49 +79,33 @@
     --bg-table-header: #1e293b;
     --bg-table-row: #1e293b;
     --bg-table-row-hover: #334155;
-    
-    /* Text colors */
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
     --text-disabled: #64748b;
-    
-    /* Border colors */
     --border-color: #334155;
     --border-light: #1e293b;
-    
-    /* Interactive states */
     --hover-bg: #334155;
     --active-bg: #2563eb;
     --active-text: #ffffff;
-    
-    /* Dropdown specific */
     --dropdown-bg: #1e293b;
     --dropdown-text: #f1f5f9;
     --dropdown-hover: #334155;
     --dropdown-border: #334155;
-    
-    /* Table specific */
     --table-header-bg: #1e293b;
     --table-row-bg: #1e293b;
     --table-row-alt: #0f172a;
     --table-text: #f1f5f9;
     --table-border: #334155;
-    
-    /* Modal specific */
     --modal-bg: #1e293b;
     --modal-text: #f1f5f9;
     --modal-border: #334155;
     --modal-overlay: rgba(0, 0, 0, 0.7);
-    
-    /* Notification specific */
     --notif-bg: #1e293b;
     --notif-border: #334155;
     --notif-unread-border: #2563eb;
     --notif-icon-bg: #334155;
     --notif-icon-color: #94a3b8;
-    
-    /* Quill Editor */
     --ql-toolbar-bg: #334155;
     --ql-toolbar-border: #334155;
     --ql-editor-bg: #1e293b;
@@ -157,36 +123,33 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Cards */
 .card, .form-card, .stat-card {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
 }
 
-/* Sidebar */
 .sidebar {
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
 }
 
-/* Top Bar */
 .top-bar {
     background-color: var(--bg-header);
     border-bottom: 1px solid var(--border-color);
 }
 
 /* ============================================
-   FIX #1 & #2: FLEXBOX LAYOUT FOR SIDEBAR
+   FIX #1, #2, #3, #4: COMPLETE SIDEBAR SYSTEM
    ============================================ */
 
-/* Main app wrapper - wraps sidebar and main content */
+/* Main app wrapper - Flexbox layout */
 .app-wrapper {
     display: flex;
     min-height: 100vh;
     width: 100%;
 }
 
-/* Desktop Sidebar - Updated for flex layout */
+/* Desktop Sidebar */
 .desktop-sidebar {
     width: 16rem;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -196,6 +159,7 @@ body {
     flex-shrink: 0;
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
+    z-index: 40;
 }
 
 .desktop-sidebar.collapsed {
@@ -259,66 +223,6 @@ body {
     }
 }
 
-/* ============================================
-   COLLAPSIBLE SIDEBAR (Legacy support)
-   ============================================ */
-
-.desktop-sidebar {
-    width: 16rem;
-    transition: width 0.3s ease;
-    overflow-x: hidden;
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100vh;
-    z-index: 40;
-}
-
-.desktop-sidebar.collapsed {
-    width: 4rem;
-}
-
-.desktop-sidebar.collapsed .nav-item span,
-.desktop-sidebar.collapsed .sidebar-logo span,
-.desktop-sidebar.collapsed .sidebar-footer span,
-.desktop-sidebar.collapsed p.text-xs {
-    display: none;
-}
-
-.desktop-sidebar.collapsed .nav-item {
-    justify-content: center;
-    padding: 0.75rem 0;
-}
-
-.desktop-sidebar.collapsed .nav-item i {
-    margin: 0;
-    font-size: 1.25rem;
-}
-
-.desktop-sidebar.collapsed .sidebar-logo {
-    justify-content: center;
-}
-
-.desktop-sidebar.collapsed .sidebar-logo i {
-    font-size: 1.5rem;
-    margin-right: 0;
-}
-
-/* Main content adjustment */
-.main-content {
-    transition: margin-left 0.3s ease;
-    margin-left: 16rem;
-}
-
-@media (max-width: 767px) {
-    .desktop-sidebar {
-        display: none;
-    }
-    .main-content {
-        margin-left: 0;
-    }
-}
-
 /* Sidebar Toggle Button */
 .sidebar-toggle-btn {
     cursor: pointer;
@@ -354,6 +258,25 @@ body {
         transform: none;
         background: transparent !important;
     }
+}
+
+/* ============================================
+   FIX MOBILE #2: Category Modal - Theme aware
+   ============================================ */
+
+#category-modal .modal-header,
+#category-modal > div > div:first-child {
+    background-color: var(--modal-bg) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#category-modal h2,
+#category-modal .text-xl {
+    color: var(--modal-text) !important;
+}
+
+#category-modal > div {
+    background-color: var(--modal-bg) !important;
 }
 
 /* ============================================
@@ -477,31 +400,6 @@ body {
     color: var(--modal-text) !important;
 }
 
-.modal-content p, .modal-container p,
-#category-modal p, #edit-category-modal p {
-    color: var(--text-secondary) !important;
-}
-
-/* ============================================
-   FIX MOBILE #2: Category Modal - Theme aware background
-   ============================================ */
-
-#category-modal .modal-header,
-#category-modal > div > div:first-child {
-    background-color: var(--modal-bg) !important;
-    border-bottom: 1px solid var(--border-color);
-}
-
-#category-modal h2,
-#category-modal .text-xl {
-    color: var(--modal-text) !important;
-}
-
-/* Ensure category modal content has proper background */
-#category-modal > div {
-    background-color: var(--modal-bg) !important;
-}
-
 /* ============================================
    TABLE FIX & HORIZONTAL SCROLL
    ============================================ */
@@ -530,7 +428,6 @@ body {
     }
 }
 
-/* Table styling */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -555,14 +452,8 @@ tr:hover td {
     background-color: var(--bg-table-row-hover) !important;
 }
 
-.table-container .text-gray-500,
-.table-container .text-gray-600,
-.table-container .opacity-70 {
-    color: var(--text-secondary) !important;
-}
-
 /* ============================================
-   NOTIFICATIONS PAGE FIX
+   NOTIFICATIONS PAGE
    ============================================ */
 
 .notification-item {
@@ -576,39 +467,8 @@ tr:hover td {
     background: linear-gradient(90deg, rgba(37, 99, 235, 0.05) 0%, transparent 100%) !important;
 }
 
-.notification-item .icon-box,
-.notification-item .w-10,
-.notification-item .h-10 {
-    background-color: var(--notif-icon-bg) !important;
-    color: var(--notif-icon-color) !important;
-}
-
-.notification-item h4,
-.notification-item .font-semibold {
-    color: var(--text-primary) !important;
-}
-
-.notification-item p,
-.notification-item .text-sm {
-    color: var(--text-secondary) !important;
-}
-
-@media (max-width: 640px) {
-    .notification-item .action-icon i,
-    .notification-item .fa-lg,
-    .notification-item .text-lg {
-        font-size: 14px !important;
-    }
-    .notification-item .gap-2 {
-        gap: 6px !important;
-    }
-    .notification-item .p-4 {
-        padding: 12px !important;
-    }
-}
-
 /* ============================================
-   QUILL EDITOR FIX
+   QUILL EDITOR
    ============================================ */
 
 .ql-toolbar {
@@ -629,42 +489,6 @@ tr:hover td {
     min-height: 160px;
 }
 
-.ql-toolbar button {
-    color: var(--ql-toolbar-icon) !important;
-}
-
-.ql-toolbar button:hover {
-    color: var(--accent-color) !important;
-}
-
-.ql-toolbar .ql-picker-label {
-    color: var(--ql-toolbar-icon) !important;
-}
-
-.ql-toolbar .ql-stroke {
-    stroke: var(--ql-toolbar-icon) !important;
-}
-
-.ql-toolbar .ql-fill {
-    fill: var(--ql-toolbar-icon) !important;
-}
-
-.ql-toolbar button:hover .ql-stroke {
-    stroke: var(--accent-color) !important;
-}
-
-.ql-toolbar button:hover .ql-fill {
-    fill: var(--accent-color) !important;
-}
-
-.ql-toolbar .ql-active .ql-stroke {
-    stroke: var(--accent-color) !important;
-}
-
-.ql-toolbar .ql-active .ql-fill {
-    fill: var(--accent-color) !important;
-}
-
 /* ============================================
    FORM INPUTS
    ============================================ */
@@ -677,13 +501,6 @@ input, select, textarea, .form-input, .form-select {
 
 input::placeholder, textarea::placeholder {
     color: var(--text-muted) !important;
-}
-
-input:focus, select:focus, textarea:focus,
-.form-input:focus, .form-select:focus {
-    outline: none;
-    border-color: var(--accent-color);
-    ring: 2px solid rgba(37, 99, 235, 0.2);
 }
 
 /* ============================================
@@ -708,11 +525,6 @@ input:focus, select:focus, textarea:focus,
     color: var(--text-secondary) !important;
     background: transparent;
     cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-secondary:hover, .btn-cancel:hover {
-    background: var(--hover-bg) !important;
 }
 
 /* ============================================
@@ -738,8 +550,6 @@ input:focus, select:focus, textarea:focus,
 [data-theme="dark"] .status-approved { background: #10b98130; color: #34d399; }
 [data-theme="dark"] .status-completed { background: #3b82f630; color: #60a5fa; }
 [data-theme="dark"] .status-paid { background: #8b5cf630; color: #a78bfa; }
-[data-theme="dark"] .status-active { background: #10b98130; color: #34d399; }
-[data-theme="dark"] .status-suspended { background: #ef444430; color: #f87171; }
 
 /* ============================================
    PAGINATION BUTTONS
@@ -791,7 +601,7 @@ input:focus, select:focus, textarea:focus,
 }
 
 /* ============================================
-   ANIMATIONS
+   ANIMATIONS & SCROLLBAR
    ============================================ */
 
 @keyframes fadeIn {
@@ -802,10 +612,6 @@ input:focus, select:focus, textarea:focus,
 .fade-in {
     animation: fadeIn 0.2s ease-out;
 }
-
-/* ============================================
-   SCROLLBAR
-   ============================================ */
 
 ::-webkit-scrollbar {
     width: 8px;
