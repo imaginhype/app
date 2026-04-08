@@ -18,21 +18,166 @@
             transform: translateY(-2px);
         }
         
+        /* ============================================ */
+        /* NEW NOTIFICATION CARD STYLE - Applied to .notification-item */
+        /* ============================================ */
         .notification-item {
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
             background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
+            border: 1px solid var(--card-border);
+            border-radius: 1.2rem;
+            padding: 1.25rem;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
         }
-        .notification-item.unread {
-            border-left-color: var(--accent-color);
-            background: linear-gradient(90deg, rgba(37, 99, 235, 0.03) 0%, transparent 100%);
-        }
+
+        /* Hover effect */
         .notification-item:hover {
-            background-color: var(--hover-bg);
+            background: var(--tag-bg);
+            border-color: var(--badge-unread);
+            transform: translateY(-1px);
+        }
+
+        /* Card Icon */
+        .notification-icon {
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            background: var(--tag-bg);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--icon-placeholder);
+            transition: 0.1s;
+        }
+
+        /* Card Content */
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--text-primary);
+        }
+
+        .notification-message {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.6rem;
+            line-height: 1.4;
+        }
+
+        .notification-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .badge-status {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.65rem;
+            border-radius: 20px;
+            background: var(--tag-bg);
+            color: var(--text-secondary);
+        }
+
+        .badge-unread {
+            background: var(--badge-unread);
+            color: white;
+        }
+
+        .timestamp {
+            color: var(--text-muted);
+        }
+
+        /* Action buttons container */
+        .notification-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .action-icon {
+            transition: all 0.2s;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            color: var(--text-muted);
+        }
+        .action-icon:hover {
+            transform: scale(1.1);
+            background: var(--hover-bg);
+            color: var(--text-primary);
         }
         
+        /* Theme Variables for new card styles */
+        :root {
+            --card-border: #e9eef3;
+            --tag-bg: #f0f2f5;
+            --icon-placeholder: #8e9eae;
+            --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+            --badge-unread: #2c6eef;
+        }
+        
+        [data-theme="dark"] {
+            --card-border: #1f2a3e;
+            --tag-bg: #1e293b;
+            --icon-placeholder: #8d9bc0;
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --badge-unread: #3b82f6;
+        }
+        
+        /* Dark mode specific overrides for notification cards */
+        [data-theme="dark"] .notification-item {
+            background: #111827;
+            border-color: #1f2a3e;
+        }
+        
+        [data-theme="dark"] .notification-item:hover {
+            background: #1e293b;
+            border-color: #3b82f6;
+        }
+        
+        [data-theme="dark"] .notification-icon {
+            background: #1f2a3c;
+            color: #b9c8ff;
+        }
+        
+        [data-theme="dark"] .notification-title {
+            color: #f0f3fa;
+        }
+        
+        [data-theme="dark"] .notification-message {
+            color: #cbd5e6;
+        }
+        
+        [data-theme="dark"] .timestamp {
+            color: #94a3c0;
+        }
+        
+        [data-theme="dark"] .badge-status:not(.badge-unread) {
+            background: #2d3a4f;
+            color: #e2e8f0;
+        }
+        
+        /* Remove old notification-item styles that conflict */
+        .notification-item.unread {
+            border-left-color: var(--badge-unread);
+        }
+        
+        /* Keep existing styles for other elements */
         .filter-chip {
             cursor: pointer;
             transition: all 0.2s;
@@ -59,17 +204,6 @@
         .status-tab.active {
             border-bottom: 2px solid var(--accent-color);
             color: var(--accent-color);
-        }
-        
-        .action-icon {
-            transition: all 0.2s;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 8px;
-        }
-        .action-icon:hover {
-            transform: scale(1.1);
-            background: var(--hover-bg);
         }
         
         .action-toolbar {
@@ -147,11 +281,11 @@
             .action-icon i, .action-icon .fa-lg, .action-icon .text-lg {
                 font-size: 14px !important;
             }
-            .notification-item .gap-2 {
-                gap: 6px !important;
-            }
-            .notification-item .p-4 {
+            .notification-item {
                 padding: 12px !important;
+            }
+            .notification-actions {
+                gap: 4px;
             }
         }
         
@@ -558,7 +692,6 @@
         });
 
         async function loadNotifications() {
-            // Sample notifications data
             allNotifications = [
                 { id: '1', title: 'New Order Request', message: 'Order #3572 from John Doe requires approval', type: 'orders', read: false, createdAt: new Date(Date.now() - 3600000).toISOString() },
                 { id: '2', title: 'Payment Received', message: 'Payment of AED 1,299 received for order #2345', type: 'payments', read: false, createdAt: new Date(Date.now() - 7200000).toISOString() },
@@ -586,6 +719,16 @@
             document.getElementById('stat-system').textContent = system;
         }
 
+        function getTypeIcon(type) {
+            const icons = { announcements: '📢', orders: '🛒', payments: '💰', chat: '💬', system: '⚙️' };
+            return icons[type] || '🔔';
+        }
+
+        function getTypeLabel(type) {
+            const labels = { announcements: 'Announcement', orders: 'Order', payments: 'Payment', chat: 'Chat', system: 'System' };
+            return labels[type] || type;
+        }
+
         function renderNotifications() {
             let filtered = allNotifications;
             if (currentType !== 'all') filtered = filtered.filter(n => n.type === currentType);
@@ -610,31 +753,26 @@
             }
             
             container.innerHTML = paginated.map(notif => `
-                <div class="notification-item ${notif.read ? '' : 'unread'} p-4">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1 cursor-pointer" onclick="viewNotificationDetails('${notif.id}')">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700">${getTypeLabel(notif.type)}</span>
-                                <span class="text-xs text-gray-500">${formatDate(notif.createdAt)}</span>
-                                ${!notif.read ? '<span class="text-xs text-purple-500 font-medium">● New</span>' : ''}
-                            </div>
-                            <h4 class="font-semibold dark:text-white">${escapeHtml(notif.title)}</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">${escapeHtml(notif.message)}</p>
+                <div class="notification-item ${notif.read ? '' : 'unread'}" onclick="viewNotificationDetails('${notif.id}')">
+                    <div class="notification-icon">${getTypeIcon(notif.type)}</div>
+                    <div class="notification-content">
+                        <div class="notification-title">${escapeHtml(notif.title)}</div>
+                        <div class="notification-message">${escapeHtml(notif.message)}</div>
+                        <div class="notification-meta">
+                            <span class="badge-status ${!notif.read ? 'badge-unread' : ''}">${!notif.read ? 'Unread' : 'Read'}</span>
+                            <span class="timestamp">${formatDate(notif.createdAt)}</span>
                         </div>
-                        <div class="flex gap-1 ml-4">
-                            <button onclick="event.stopPropagation(); markAsRead('${notif.id}')" class="action-icon text-green-500 hover:text-green-700" title="Mark as Read">
-                                <i class="fas fa-check-circle text-lg"></i>
-                            </button>
-                            <button onclick="event.stopPropagation(); markAsUnread('${notif.id}')" class="action-icon text-gray-500 hover:text-blue-500" title="Mark as Unread">
-                                <i class="fas fa-circle text-lg"></i>
-                            </button>
-                            <button onclick="event.stopPropagation(); deleteNotification('${notif.id}')" class="action-icon text-red-500 hover:text-red-700" title="Delete">
-                                <i class="fas fa-trash-alt text-lg"></i>
-                            </button>
-                            <button onclick="event.stopPropagation(); viewNotificationDetails('${notif.id}')" class="action-icon text-purple-500 hover:text-purple-700" title="View Details">
-                                <i class="fas fa-eye text-lg"></i>
-                            </button>
-                        </div>
+                    </div>
+                    <div class="notification-actions" onclick="event.stopPropagation()">
+                        <button onclick="markAsRead('${notif.id}')" class="action-icon text-green-500 hover:text-green-700" title="Mark as Read">
+                            <i class="fas fa-check-circle"></i>
+                        </button>
+                        <button onclick="markAsUnread('${notif.id}')" class="action-icon text-gray-500 hover:text-blue-500" title="Mark as Unread">
+                            <i class="fas fa-circle"></i>
+                        </button>
+                        <button onclick="deleteNotification('${notif.id}')" class="action-icon text-red-500 hover:text-red-700" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 </div>
             `).join('');
@@ -743,11 +881,6 @@
             document.getElementById('notification-modal').classList.add('hidden');
             currentModalNotification = null;
         };
-        
-        function getTypeLabel(type) {
-            const labels = { announcements: '📢 Announcement', orders: '🛒 Order', payments: '💰 Payment', chat: '💬 Chat', system: '⚙️ System' };
-            return labels[type] || type;
-        }
         
         function formatDate(dateString) {
             const date = new Date(dateString);
