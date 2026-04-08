@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // CRITICAL: This runs BEFORE page paints to prevent sidebar flicker
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Seller Dashboard - Marketplace Pro</title>
@@ -53,14 +64,6 @@
             background-color: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
         }
-        .desktop-sidebar.collapsed { width: 4rem; }
-        .desktop-sidebar.collapsed .nav-item span,
-        .desktop-sidebar.collapsed .sidebar-logo span,
-        .desktop-sidebar.collapsed p.text-xs { display: none; }
-        .desktop-sidebar.collapsed .nav-item { justify-content: center; padding: 0.75rem 0; }
-        .desktop-sidebar.collapsed .nav-item i { margin: 0; font-size: 1.25rem; }
-        .desktop-sidebar.collapsed .sidebar-logo { justify-content: center; }
-        
         .sidebar-logo {
             display: flex;
             align-items: center;
@@ -69,20 +72,17 @@
             transition: none;
             transform: none;
         }
-        
         .main-content {
             flex: 1;
             min-width: 0;
             transition: none;
             width: auto;
         }
-        
         .app-wrapper {
             display: flex;
             min-height: 100vh;
             width: 100%;
         }
-        
         @media (max-width: 767px) {
             .desktop-sidebar { display: none; }
             .app-wrapper { display: block; }
@@ -169,7 +169,7 @@
 
     <div class="app-wrapper">
         <!-- Desktop Sidebar -->
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block" style="transition: none !important;">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
             <div class="p-4 border-b">
                 <div class="flex items-center space-x-2 sidebar-logo">
                     <i class="fas fa-store text-2xl text-purple-500"></i>
@@ -268,7 +268,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -326,7 +326,7 @@
             
             const recentOrders = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentUserId), orderBy('createdAt', 'desc'), limit(5)));
             const tbody = document.getElementById('recent-orders-list');
-            if (recentOrders.empty) tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No orders yet.</td></tr>';
+            if (recentOrders.empty) tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No orders yet.您</tr>';
             else tbody.innerHTML = recentOrders.docs.map(d => `<tr class="border-b"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">AED ${d.data().totalAmount}</td><td class="px-4 py-2"><span class="status-badge status-${d.data().status}">${d.data().status}</span></td></tr>`).join('');
             
             const monthly = { Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0, Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0 };
