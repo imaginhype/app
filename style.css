@@ -120,6 +120,7 @@
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .card, .form-card, .stat-card {
@@ -138,8 +139,7 @@ body {
 }
 
 /* ============================================
-   SIDEBAR SYSTEM - FLEXBOX LAYOUT (FIXED)
-   IMPORTANT: Desktop sidebar uses RELATIVE positioning
+   SIDEBAR SYSTEM - NO FLICKER (HTML CLASS BASED)
    ============================================ */
 
 /* Main app wrapper - wraps sidebar and main content */
@@ -149,7 +149,7 @@ body {
     width: 100%;
 }
 
-/* Desktop Sidebar - RELATIVE positioning (NOT FIXED) */
+/* Desktop Sidebar - Default state (OPEN) */
 .desktop-sidebar {
     width: 16rem;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -163,28 +163,26 @@ body {
     z-index: 40;
 }
 
-/* Disable transition on page load to prevent flicker */
-.desktop-sidebar.no-transition {
-    transition: none !important;
-}
-
-.desktop-sidebar.collapsed {
+/* Desktop Sidebar - COLLAPSED state (using HTML class) */
+html.sidebar-collapsed .desktop-sidebar {
     width: 4rem;
 }
 
-.desktop-sidebar.collapsed .nav-item span,
-.desktop-sidebar.collapsed .sidebar-logo span,
-.desktop-sidebar.collapsed .sidebar-footer span,
-.desktop-sidebar.collapsed p.text-xs {
+/* Hide text when collapsed */
+html.sidebar-collapsed .desktop-sidebar .nav-item span,
+html.sidebar-collapsed .desktop-sidebar .sidebar-logo span,
+html.sidebar-collapsed .desktop-sidebar .sidebar-footer span,
+html.sidebar-collapsed .desktop-sidebar p.text-xs {
     display: none;
 }
 
-.desktop-sidebar.collapsed .nav-item {
+/* Center icons when collapsed */
+html.sidebar-collapsed .desktop-sidebar .nav-item {
     justify-content: center;
     padding: 0.75rem 0;
 }
 
-.desktop-sidebar.collapsed .nav-item i {
+html.sidebar-collapsed .desktop-sidebar .nav-item i {
     margin: 0;
     font-size: 1.25rem;
 }
@@ -199,11 +197,11 @@ body {
     transform: none;
 }
 
-.desktop-sidebar.collapsed .sidebar-logo {
+html.sidebar-collapsed .sidebar-logo {
     justify-content: center;
 }
 
-.desktop-sidebar.collapsed .sidebar-logo i {
+html.sidebar-collapsed .sidebar-logo i {
     margin-right: 0;
 }
 
@@ -213,31 +211,6 @@ body {
     min-width: 0;
     transition: none;
     width: auto;
-    overflow-x: hidden;
-}
-
-/* Fix for top bar - make sure toggle button is visible */
-.top-bar .flex.items-center.space-x-3 {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-#sidebarToggleBtn {
-    cursor: pointer;
-    padding: 8px 10px;
-    border-radius: 8px;
-    transition: all 0.2s;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#sidebarToggleBtn:hover {
-    background: var(--hover-bg);
 }
 
 /* Mobile responsive */
@@ -252,6 +225,21 @@ body {
         margin-left: 0 !important;
         width: 100% !important;
     }
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--hover-bg);
 }
 
 /* ============================================
@@ -274,25 +262,6 @@ body {
         transform: none;
         background: transparent !important;
     }
-}
-
-/* ============================================
-   CATEGORY MODAL - THEME AWARE
-   ============================================ */
-
-#category-modal .modal-header,
-#category-modal > div > div:first-child {
-    background-color: var(--modal-bg) !important;
-    border-bottom: 1px solid var(--border-color);
-}
-
-#category-modal h2,
-#category-modal .text-xl {
-    color: var(--modal-text) !important;
-}
-
-#category-modal > div {
-    background-color: var(--modal-bg) !important;
 }
 
 /* ============================================
@@ -416,6 +385,30 @@ body {
     color: var(--modal-text) !important;
 }
 
+.modal-content p, .modal-container p,
+#category-modal p, #edit-category-modal p {
+    color: var(--text-secondary) !important;
+}
+
+/* ============================================
+   CATEGORY MODAL - THEME AWARE
+   ============================================ */
+
+#category-modal .modal-header,
+#category-modal > div > div:first-child {
+    background-color: var(--modal-bg) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#category-modal h2,
+#category-modal .text-xl {
+    color: var(--modal-text) !important;
+}
+
+#category-modal > div {
+    background-color: var(--modal-bg) !important;
+}
+
 /* ============================================
    TABLE FIX & HORIZONTAL SCROLL
    ============================================ */
@@ -468,8 +461,14 @@ tr:hover td {
     background-color: var(--bg-table-row-hover) !important;
 }
 
+.table-container .text-gray-500,
+.table-container .text-gray-600,
+.table-container .opacity-70 {
+    color: var(--text-secondary) !important;
+}
+
 /* ============================================
-   NOTIFICATIONS PAGE
+   NOTIFICATIONS PAGE FIX
    ============================================ */
 
 .notification-item {
@@ -483,8 +482,39 @@ tr:hover td {
     background: linear-gradient(90deg, rgba(37, 99, 235, 0.05) 0%, transparent 100%) !important;
 }
 
+.notification-item .icon-box,
+.notification-item .w-10,
+.notification-item .h-10 {
+    background-color: var(--notif-icon-bg) !important;
+    color: var(--notif-icon-color) !important;
+}
+
+.notification-item h4,
+.notification-item .font-semibold {
+    color: var(--text-primary) !important;
+}
+
+.notification-item p,
+.notification-item .text-sm {
+    color: var(--text-secondary) !important;
+}
+
+@media (max-width: 640px) {
+    .notification-item .action-icon i,
+    .notification-item .fa-lg,
+    .notification-item .text-lg {
+        font-size: 14px !important;
+    }
+    .notification-item .gap-2 {
+        gap: 6px !important;
+    }
+    .notification-item .p-4 {
+        padding: 12px !important;
+    }
+}
+
 /* ============================================
-   QUILL EDITOR
+   QUILL EDITOR FIX
    ============================================ */
 
 .ql-toolbar {
@@ -505,6 +535,42 @@ tr:hover td {
     min-height: 160px;
 }
 
+.ql-toolbar button {
+    color: var(--ql-toolbar-icon) !important;
+}
+
+.ql-toolbar button:hover {
+    color: var(--accent-color) !important;
+}
+
+.ql-toolbar .ql-picker-label {
+    color: var(--ql-toolbar-icon) !important;
+}
+
+.ql-toolbar .ql-stroke {
+    stroke: var(--ql-toolbar-icon) !important;
+}
+
+.ql-toolbar .ql-fill {
+    fill: var(--ql-toolbar-icon) !important;
+}
+
+.ql-toolbar button:hover .ql-stroke {
+    stroke: var(--accent-color) !important;
+}
+
+.ql-toolbar button:hover .ql-fill {
+    fill: var(--accent-color) !important;
+}
+
+.ql-toolbar .ql-active .ql-stroke {
+    stroke: var(--accent-color) !important;
+}
+
+.ql-toolbar .ql-active .ql-fill {
+    fill: var(--accent-color) !important;
+}
+
 /* ============================================
    FORM INPUTS
    ============================================ */
@@ -517,6 +583,13 @@ input, select, textarea, .form-input, .form-select {
 
 input::placeholder, textarea::placeholder {
     color: var(--text-muted) !important;
+}
+
+input:focus, select:focus, textarea:focus,
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    ring: 2px solid rgba(37, 99, 235, 0.2);
 }
 
 /* ============================================
@@ -541,6 +614,11 @@ input::placeholder, textarea::placeholder {
     color: var(--text-secondary) !important;
     background: transparent;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover, .btn-cancel:hover {
+    background: var(--hover-bg) !important;
 }
 
 /* ============================================
@@ -566,6 +644,8 @@ input::placeholder, textarea::placeholder {
 [data-theme="dark"] .status-approved { background: #10b98130; color: #34d399; }
 [data-theme="dark"] .status-completed { background: #3b82f630; color: #60a5fa; }
 [data-theme="dark"] .status-paid { background: #8b5cf630; color: #a78bfa; }
+[data-theme="dark"] .status-active { background: #10b98130; color: #34d399; }
+[data-theme="dark"] .status-suspended { background: #ef444430; color: #f87171; }
 
 /* ============================================
    PAGINATION BUTTONS
@@ -617,7 +697,7 @@ input::placeholder, textarea::placeholder {
 }
 
 /* ============================================
-   ANIMATIONS & SCROLLBAR
+   ANIMATIONS
    ============================================ */
 
 @keyframes fadeIn {
@@ -628,6 +708,10 @@ input::placeholder, textarea::placeholder {
 .fade-in {
     animation: fadeIn 0.2s ease-out;
 }
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
 
 ::-webkit-scrollbar {
     width: 8px;
