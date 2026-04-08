@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // CRITICAL: This runs BEFORE page paints to prevent sidebar flicker
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Account Settings - Marketplace Pro</title>
@@ -243,7 +254,6 @@
             transform: translateX(-2px);
         }
         
-        /* Desktop Sidebar */
         .desktop-sidebar {
             width: 16rem;
             transition: width 0.3s ease;
@@ -328,7 +338,7 @@
 
     <div class="app-wrapper">
         <!-- Desktop Sidebar -->
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block" style="transition: none !important;">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
             <div class="p-4 border-b">
                 <div class="flex items-center space-x-2 sidebar-logo">
                     <i class="fas fa-store text-2xl text-purple-500"></i>
