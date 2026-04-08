@@ -1,12 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // CRITICAL: This runs BEFORE page paints to prevent sidebar flicker
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Sellers - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css");
     <style>
         .status-badge {
             display: inline-block;
@@ -102,25 +113,6 @@
             background-color: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
         }
-        .desktop-sidebar.collapsed {
-            width: 4rem;
-        }
-        .desktop-sidebar.collapsed .nav-item span,
-        .desktop-sidebar.collapsed .sidebar-logo span,
-        .desktop-sidebar.collapsed p.text-xs {
-            display: none;
-        }
-        .desktop-sidebar.collapsed .nav-item {
-            justify-content: center;
-            padding: 0.75rem 0;
-        }
-        .desktop-sidebar.collapsed .nav-item i {
-            margin: 0;
-            font-size: 1.25rem;
-        }
-        .desktop-sidebar.collapsed .sidebar-logo {
-            justify-content: center;
-        }
         .sidebar-logo {
             display: flex;
             align-items: center;
@@ -175,7 +167,7 @@
 
     <div class="app-wrapper">
         <!-- Desktop Sidebar -->
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block" style="transition: none !important;">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
             <div class="p-4 border-b">
                 <div class="flex items-center space-x-2 sidebar-logo">
                     <i class="fas fa-store text-2xl text-purple-500"></i>
@@ -367,7 +359,7 @@
             
             const tbody = document.getElementById('sellers-table-body');
             if (!paginated.length) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-500">No sellers found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-500">No sellers found.您</td></tr>';
                 document.getElementById('pagination-info').textContent = 'Showing 0 - 0 of 0 sellers';
                 document.getElementById('pagination-container').innerHTML = '';
                 return;
