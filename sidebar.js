@@ -1,8 +1,9 @@
 // ============================================
-// SIDEBAR CONTROLLER - Shared across all pages
+// SIDEBAR CONTROLLER - NO FLICKER VERSION
 // ============================================
 
 (function() {
+    // Wait for DOM to be ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initSidebar);
     } else {
@@ -15,10 +16,13 @@
         
         if (!sidebar || !toggleBtn) return;
         
-        sidebar.classList.add('no-transition');
+        // Remove the inline style that disabled transitions
+        sidebar.style.transition = '';
         
+        // Load saved state from localStorage
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         
+        // Apply saved state - NO ANIMATION
         if (isCollapsed) {
             sidebar.classList.add('collapsed');
             toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
@@ -27,10 +31,12 @@
             toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
         }
         
+        // Re-enable transitions after a tiny delay
         setTimeout(function() {
-            sidebar.classList.remove('no-transition');
+            sidebar.style.transition = '';
         }, 50);
         
+        // Toggle sidebar when button is clicked
         toggleBtn.addEventListener('click', function(e) {
             e.preventDefault();
             sidebar.classList.toggle('collapsed');
@@ -40,6 +46,10 @@
         });
     }
 })();
+
+// ============================================
+// MOBILE MENU FUNCTIONS (Global)
+// ============================================
 
 window.toggleMobileMenu = function() {
     const sidebar = document.getElementById('mobile-sidebar');
@@ -57,6 +67,7 @@ window.closeMobileMenu = function() {
     document.body.style.overflow = '';
 };
 
+// Close mobile menu when clicking overlay
 document.addEventListener('click', function(event) {
     const overlay = document.getElementById('sidebar-overlay');
     const mobileSidebar = document.getElementById('mobile-sidebar');
@@ -64,6 +75,10 @@ document.addEventListener('click', function(event) {
         closeMobileMenu();
     }
 });
+
+// ============================================
+// USER MENU FUNCTIONS (Global)
+// ============================================
 
 window.toggleUserMenu = function() {
     const dropdown = document.getElementById('user-dropdown');
@@ -77,6 +92,7 @@ window.toggleUserMenu = function() {
     }
 };
 
+// Close user menu when clicking outside
 document.addEventListener('click', function(event) {
     const dropdown = document.getElementById('user-dropdown');
     const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
@@ -89,12 +105,17 @@ document.addEventListener('click', function(event) {
     }
 });
 
+// ============================================
+// THEME FUNCTIONS (Global)
+// ============================================
+
 window.toggleTheme = function() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', nextTheme);
     localStorage.setItem('theme', nextTheme);
     
+    // Update moon/sun icons if present
     const moonIcons = document.querySelectorAll('.fa-moon');
     const sunIcons = document.querySelectorAll('.fa-sun');
     if (nextTheme === 'dark') {
@@ -106,5 +127,6 @@ window.toggleTheme = function() {
     }
 };
 
+// Initialize theme on page load - NO FLASH
 const savedTheme = localStorage.getItem('theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
