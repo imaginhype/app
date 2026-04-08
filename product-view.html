@@ -18,10 +18,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Original image style */
         .main-product-image {
             width: 100%;
             height: auto;
-            max-height: 400px;
+            max-height: 450px;
             object-fit: contain;
             background: #ffffff;
             border-radius: 16px;
@@ -31,13 +32,13 @@
             background: #1e293b;
         }
         
-        /* Arrow buttons for main image navigation */
+        /* Arrow buttons - clean style */
         .image-nav-btn {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 50%;
             display: flex;
@@ -53,59 +54,58 @@
         }
         .image-nav-btn i {
             color: white;
-            font-size: 18px;
+            font-size: 16px;
         }
         .nav-left {
-            left: 10px;
+            left: 12px;
         }
         .nav-right {
-            right: 10px;
+            right: 12px;
         }
         
-        /* Compact info row - horizontal layout */
-        .info-row-compact {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .info-item {
-            flex: 1;
-            min-width: 100px;
-            padding: 8px 12px;
+        /* Clean minimal info cards - original style but smaller */
+        .info-card {
             background: var(--bg-tertiary);
-            border-radius: 10px;
-            text-align: center;
+            border-radius: 12px;
+            padding: 10px 14px;
+            transition: all 0.2s;
         }
-        .info-item-label {
+        .info-card-label {
             font-size: 11px;
-            color: var(--text-secondary);
+            color: var(--text-muted);
             margin-bottom: 4px;
         }
-        .info-item-value {
+        .info-card-value {
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 500;
             color: var(--text-primary);
+        }
+        
+        /* Dark mode fix - ensure proper background */
+        .dark .info-card {
+            background: #334155;
+        }
+        .dark .info-card-label {
+            color: #94a3b8;
+        }
+        .dark .info-card-value {
+            color: #f1f5f9;
         }
         
         /* Price section */
         .price-section {
             margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
         }
         .sale-price-large {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
             color: var(--accent-color);
         }
         .regular-price-large {
-            font-size: 18px;
+            font-size: 16px;
             color: var(--text-muted);
             text-decoration: line-through;
-            margin-left: 12px;
+            margin-left: 10px;
         }
         
         /* Stock badge */
@@ -125,7 +125,16 @@
             background: #ef444420;
             color: #ef4444;
         }
+        .dark .stock-in-large {
+            background: #064e3b;
+            color: #34d399;
+        }
+        .dark .stock-out-large {
+            background: #7f1d1d;
+            color: #f87171;
+        }
         
+        /* Back button */
         .back-btn {
             display: inline-flex;
             align-items: center;
@@ -143,6 +152,7 @@
             transform: translateX(-2px);
         }
         
+        /* Sidebar styles */
         .desktop-sidebar {
             width: 16rem;
             transition: width 0.3s ease;
@@ -179,13 +189,13 @@
         }
         
         @media (max-width: 640px) {
-            .info-item { min-width: 80px; padding: 6px 8px; }
-            .info-item-value { font-size: 12px; }
-            .sale-price-large { font-size: 24px; }
+            .sale-price-large { font-size: 22px; }
+            .info-card { padding: 8px 10px; }
+            .info-card-value { font-size: 12px; }
         }
     </style>
 </head>
-<body class="bg-white dark:bg-gray-900">
+<body>
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
     <!-- Mobile Sidebar -->
@@ -237,7 +247,7 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Top Bar - NO product title or category here -->
+            <!-- Top Bar - NO product title or category -->
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
@@ -282,7 +292,7 @@
             <!-- Product Details Content -->
             <div class="max-w-6xl mx-auto px-4 py-8">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Left Column - Main Image with Navigation Arrows -->
+                    <!-- Left Column - Main Image with Navigation Arrows (No thumbnails) -->
                     <div>
                         <div class="relative">
                             <img id="main-product-image" class="main-product-image w-full" src="https://placehold.co/600x400?text=No+Image" alt="Product">
@@ -293,7 +303,6 @@
                                 <i class="fas fa-chevron-right"></i>
                             </button>
                         </div>
-                        <!-- Image counter -->
                         <div class="text-center mt-3">
                             <span id="image-counter" class="text-xs text-gray-500"></span>
                         </div>
@@ -301,7 +310,7 @@
 
                     <!-- Right Column - Product Details -->
                     <div>
-                        <!-- Product Title (only here, not in header) -->
+                        <!-- Product Title (only here) -->
                         <h1 id="product-title" class="text-2xl md:text-3xl font-bold mb-2">Loading...</h1>
                         <p id="product-category" class="text-sm text-purple-500 mb-4">Loading...</p>
 
@@ -312,58 +321,54 @@
                             <span id="stock-badge" class="stock-badge-large stock-in-large">Loading...</span>
                         </div>
 
-                        <!-- Compact Info Row (Brand, Condition, SKU, etc.) -->
-                        <div class="info-row-compact" id="info-row">
-                            <div class="info-item">
-                                <div class="info-item-label">Brand</div>
-                                <div class="info-item-value" id="brand-value">-</div>
+                        <!-- Info Cards - Clean minimal style, 2 columns -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                            <div class="info-card">
+                                <div class="info-card-label">Brand</div>
+                                <div class="info-card-value" id="brand-value">-</div>
                             </div>
-                            <div class="info-item">
-                                <div class="info-item-label">Condition</div>
-                                <div class="info-item-value" id="condition-value">-</div>
+                            <div class="info-card">
+                                <div class="info-card-label">Condition</div>
+                                <div class="info-card-value" id="condition-value">-</div>
                             </div>
-                            <div class="info-item">
-                                <div class="info-item-label">Stock</div>
-                                <div class="info-item-value" id="stock-quantity">-</div>
+                            <div class="info-card">
+                                <div class="info-card-label">Stock</div>
+                                <div class="info-card-value" id="stock-quantity">-</div>
                             </div>
-                            <div class="info-item">
-                                <div class="info-item-label">SKU</div>
-                                <div class="info-item-value" id="sku-value">-</div>
+                            <div class="info-card">
+                                <div class="info-card-label">SKU</div>
+                                <div class="info-card-value" id="sku-value">-</div>
                             </div>
-                            <div class="info-item">
-                                <div class="info-item-label">Warehouse</div>
-                                <div class="info-item-value" id="warehouse-value">-</div>
+                            <div class="info-card">
+                                <div class="info-card-label">Warehouse</div>
+                                <div class="info-card-value" id="warehouse-value">-</div>
                             </div>
-                        </div>
-
-                        <!-- Second Info Row -->
-                        <div class="info-row-compact" id="info-row-2">
-                            <div class="info-item">
-                                <div class="info-item-label">Material</div>
-                                <div class="info-item-value" id="material-value">-</div>
+                            <div class="info-card">
+                                <div class="info-card-label">Material</div>
+                                <div class="info-card-value" id="material-value">-</div>
                             </div>
-                            <div class="info-item">
-                                <div class="info-item-label">Size</div>
-                                <div class="info-item-value" id="size-value">-</div>
+                            <div class="info-card">
+                                <div class="info-card-label">Size</div>
+                                <div class="info-card-value" id="size-value">-</div>
                             </div>
-                            <div class="info-item">
-                                <div class="info-item-label">Weight</div>
-                                <div class="info-item-value" id="weight-value">-</div>
+                            <div class="info-card">
+                                <div class="info-card-label">Weight</div>
+                                <div class="info-card-value" id="weight-value">-</div>
                             </div>
-                            <div class="info-item">
-                                <div class="info-item-label">Warranty</div>
-                                <div class="info-item-value" id="warranty-value">-</div>
+                            <div class="info-card">
+                                <div class="info-card-label">Warranty</div>
+                                <div class="info-card-value" id="warranty-value">-</div>
                             </div>
                         </div>
 
-                        <!-- Description Section (after info cards) -->
-                        <div class="mt-6">
+                        <!-- Description Section -->
+                        <div class="mt-4">
                             <h3 class="font-semibold text-lg mb-3">Description</h3>
                             <div id="product-description" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed"></div>
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex gap-3 mt-8 pt-4 border-t">
+                        <div class="flex gap-3 mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
                             <button onclick="editProduct()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition font-medium">
                                 <i class="fas fa-edit mr-2"></i>Edit Product
                             </button>
@@ -409,12 +414,11 @@
             return params.get('id');
         }
 
-        // Image navigation functions with looping
         window.prevImage = function() {
             if (!currentImages.length) return;
             currentImageIndex--;
             if (currentImageIndex < 0) {
-                currentImageIndex = currentImages.length - 1; // Loop to last
+                currentImageIndex = currentImages.length - 1;
             }
             updateMainImage();
         };
@@ -423,7 +427,7 @@
             if (!currentImages.length) return;
             currentImageIndex++;
             if (currentImageIndex >= currentImages.length) {
-                currentImageIndex = 0; // Loop to first
+                currentImageIndex = 0;
             }
             updateMainImage();
         };
@@ -480,24 +484,20 @@
             const hasDiscount = regularPrice > salePrice;
             const isInStock = p.stockStatus === 'in-stock';
             
-            // Product title and category (only here, not in header)
             document.getElementById('product-title').textContent = p.name || 'Untitled';
             document.getElementById('product-category').textContent = p.category || 'Uncategorized';
-            
-            // Price section
             document.getElementById('sale-price').textContent = `AED ${salePrice.toFixed(2)}`;
+            
             if (hasDiscount) {
                 const regularPriceEl = document.getElementById('regular-price');
                 regularPriceEl.classList.remove('hidden');
                 regularPriceEl.textContent = `AED ${regularPrice.toFixed(2)}`;
             }
             
-            // Stock badge
             const stockBadge = document.getElementById('stock-badge');
             stockBadge.textContent = isInStock ? 'In Stock' : 'Out of Stock';
             stockBadge.className = `stock-badge-large ${isInStock ? 'stock-in-large' : 'stock-out-large'}`;
             
-            // Info row values
             document.getElementById('brand-value').textContent = p.brand || '-';
             document.getElementById('condition-value').textContent = p.condition || 'New';
             document.getElementById('stock-quantity').textContent = p.stockQuantity || p.quantity || '0';
@@ -508,11 +508,9 @@
             document.getElementById('weight-value').textContent = p.weight || '-';
             document.getElementById('warranty-value').textContent = p.warranty || '-';
             
-            // Description
             const descriptionHtml = p.description || 'No description available.';
             document.getElementById('product-description').innerHTML = descriptionHtml;
             
-            // Images
             if (currentImages.length > 0) {
                 document.getElementById('main-product-image').src = currentImages[0];
                 updateImageCounter();
@@ -521,7 +519,6 @@
                 document.getElementById('image-counter').textContent = 'No images';
             }
             
-            // Show/hide navigation buttons based on image count
             const prevBtn = document.getElementById('prev-image-btn');
             const nextBtn = document.getElementById('next-image-btn');
             if (currentImages.length <= 1) {
