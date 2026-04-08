@@ -14,315 +14,103 @@
         /* Import Inter Font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
         
-        * {
-            font-family: 'Inter', sans-serif;
-        }
+        * { font-family: 'Inter', sans-serif; }
         
         /* Theme Variables */
-        :root {
-            --accent-color: #7c3aed;
-        }
+        :root { --accent-color: #2563eb; }
         [data-theme="light"] {
-            --bg-primary: #f3f4f6;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f9fafb;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-            --card-bg: #ffffff;
-            --hover-bg: #f3f4f6;
-            --active-bg: #7c3aed;
-            --input-bg: #f9fafb;
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #64748b;
+            --border-color: #e2e8f0; --card-bg: #ffffff; --hover-bg: #f1f5f9;
+            --active-bg: #2563eb; --input-bg: #ffffff; --dropdown-bg: #ffffff;
+            --dropdown-text: #1e293b; --dropdown-hover: #f1f5f9;
         }
         [data-theme="dark"] {
-            --bg-primary: #111827;
-            --bg-secondary: #1f2937;
-            --bg-tertiary: #374151;
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --border-color: #374151;
-            --card-bg: #1f2937;
-            --hover-bg: #374151;
-            --active-bg: #7c3aed;
-            --input-bg: #374151;
+            --bg-primary: #0f172a; --bg-secondary: #1e293b; --bg-tertiary: #334155;
+            --text-primary: #f1f5f9; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
+            --border-color: #334155; --card-bg: #1e293b; --hover-bg: #334155;
+            --active-bg: #2563eb; --input-bg: #334155; --dropdown-bg: #1e293b;
+            --dropdown-text: #f1f5f9; --dropdown-hover: #334155;
         }
         
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-        }
+        body { background-color: var(--bg-primary); color: var(--text-primary); }
         
-        /* Sidebar Styles */
-        .sidebar {
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 16px;
-            margin: 4px 0;
-            border-radius: 12px;
-            color: var(--text-secondary);
-            transition: all 0.2s;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .nav-item:hover, .nav-item.active {
-            background: var(--active-bg);
-            color: white;
-        }
+        /* Sidebar */
+        .sidebar { background-color: var(--bg-secondary); border-right: 1px solid var(--border-color); transition: width 0.3s ease; width: 16rem; overflow-x: hidden; }
+        .sidebar.collapsed { width: 4rem; }
+        .sidebar.collapsed .nav-item span, .sidebar.collapsed .sidebar-logo span, .sidebar.collapsed p.text-xs { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; padding: 0.75rem 0; }
+        .sidebar.collapsed .nav-item i { margin: 0; font-size: 1.25rem; }
+        .sidebar.collapsed .sidebar-logo { justify-content: center; }
+        
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 0; border-radius: 12px; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+        .nav-item:hover, .nav-item.active { background: var(--active-bg); color: white; }
+        
+        .main-content { transition: margin-left 0.3s ease; }
+        @media (min-width: 768px) { .main-content { margin-left: 16rem; } }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
         
         /* Mobile Sidebar */
-        #mobile-sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            overflow-y: auto;
-        }
+        #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 1000; position: fixed; top: 0; left: 0; height: 100vh; width: 280px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); overflow-y: auto; }
         #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            cursor: pointer;
-        }
+        #sidebar-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; cursor: pointer; }
         #sidebar-overlay.show { display: block; }
         #sidebar-overlay:not(.show) { display: none; }
         
-        @media (max-width: 767px) {
-            .desktop-sidebar { display: none; }
-            .main-content { margin-left: 0 !important; }
-        }
-        @media (min-width: 768px) {
-            #mobile-sidebar, #sidebar-overlay { display: none; }
-            .main-content { margin-left: 16rem; }
-        }
-        
         /* Form Card */
-        .form-card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            border: 1px solid var(--border-color);
-            padding: 20px;
-        }
-        
-        /* Form Inputs */
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 14px;
-            border: 1px solid var(--border-color);
-            background: var(--input-bg);
-            color: var(--text-primary);
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
+        .form-card { background: var(--card-bg); border-radius: 24px; border: 1px solid var(--border-color); padding: 20px; }
+        .form-input, .form-select { width: 100%; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); font-size: 14px; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent-color); }
         
         /* Buttons */
-        .btn-cancel {
-            padding: 8px 20px;
-            border-radius: 40px;
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .btn-cancel:hover {
-            background: var(--hover-bg);
-        }
-        .btn-save {
-            padding: 8px 24px;
-            border-radius: 40px;
-            background: linear-gradient(135deg, #7c3aed, #4f46e5);
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-save:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-        }
-        .btn-save:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        .btn-cancel { padding: 8px 20px; border-radius: 40px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-cancel:hover { background: var(--hover-bg); }
+        .btn-save { padding: 8px 24px; border-radius: 40px; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; }
+        .btn-save:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
+        .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
         
         /* Image Grid */
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 90px));
-            gap: 12px;
-            margin-top: 16px;
-        }
-        .preview-img {
-            width: 100%;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 2px solid transparent;
-        }
-        .preview-img.main {
-            border-color: var(--accent-color);
-        }
-        
-        /* Dropzone */
-        .dropzone {
-            border: 2px dashed var(--border-color);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .dropzone:hover {
-            border-color: var(--accent-color);
-            background: var(--hover-bg);
-        }
+        .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 90px)); gap: 12px; margin-top: 16px; }
+        .preview-img { width: 100%; height: 80px; object-fit: cover; border-radius: 12px; border: 2px solid transparent; }
+        .preview-img.main { border-color: var(--accent-color); }
+        .dropzone { border: 2px dashed var(--border-color); border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .dropzone:hover { border-color: var(--accent-color); background: var(--hover-bg); }
         
         /* Profit Card */
-        .profit-card {
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
-            border-radius: 16px;
-            padding: 12px 16px;
-            margin-top: 12px;
-        }
+        .profit-card { background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%); border-radius: 16px; padding: 12px 16px; margin-top: 12px; }
         
-        /* Quill Editor - Fixed to be visible */
-        .ql-container {
-            min-height: 180px !important;
-            font-size: 14px;
-            background: var(--input-bg);
-            color: var(--text-primary);
-        }
-        .ql-toolbar {
-            border-top-left-radius: 14px;
-            border-top-right-radius: 14px;
-            border: 1px solid var(--border-color) !important;
-            background: var(--input-bg);
-        }
-        .ql-container {
-            border-bottom-left-radius: 14px;
-            border-bottom-right-radius: 14px;
-            border: 1px solid var(--border-color) !important;
-            border-top: none !important;
-        }
-        .ql-editor {
-            min-height: 160px;
-            color: var(--text-primary);
-        }
+        /* Quill Editor */
+        .ql-container { min-height: 150px; font-size: 14px; background: var(--input-bg); color: var(--text-primary); }
+        .ql-toolbar { border-top-left-radius: 14px; border-top-right-radius: 14px; border: 1px solid var(--border-color) !important; background: var(--input-bg); }
+        .ql-container { border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; border: 1px solid var(--border-color) !important; border-top: none !important; }
+        .ql-editor { min-height: 150px; color: var(--text-primary); }
+        .ql-toolbar button { color: var(--text-secondary); }
+        .ql-toolbar .ql-stroke { stroke: var(--text-secondary); }
+        .ql-toolbar .ql-fill { fill: var(--text-secondary); }
         
         /* Product Card Preview */
-        .preview-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-        }
-        .preview-image-container {
-            background: #ffffff;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            aspect-ratio: 4 / 3;
-            width: 100%;
-        }
-        .dark .preview-image-container {
-            background: #1e293b;
-        }
-        .preview-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .preview-category {
-            font-size: 10px;
-            background: var(--bg-tertiary);
-            padding: 3px 8px;
-            border-radius: 16px;
-            color: var(--text-secondary);
-        }
-        .preview-title {
-            font-weight: 600;
-            font-size: 14px;
-            margin: 8px 0 4px 0;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .preview-price {
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--accent-color);
-        }
-        .preview-stock {
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 20px;
-        }
-        .stock-in {
-            background: #d1fae5;
-            color: #059669;
-        }
-        .dark .stock-in {
-            background: #064e3b;
-            color: #34d399;
-        }
-        .stock-out {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-        .dark .stock-out {
-            background: #7f1d1d;
-            color: #f87171;
-        }
+        .preview-card { background: var(--card-bg); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); }
+        .preview-image-container { background: #ffffff; padding: 16px; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; width: 100%; }
+        .dark .preview-image-container { background: #1e293b; }
+        .preview-image { width: 100%; height: 100%; object-fit: contain; }
+        .preview-category { font-size: 10px; background: var(--bg-tertiary); padding: 3px 8px; border-radius: 16px; color: var(--text-secondary); }
+        .preview-title { font-weight: 600; font-size: 14px; margin: 8px 0 4px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .preview-price { font-weight: 700; font-size: 16px; color: var(--accent-color); }
+        .preview-stock { font-size: 10px; padding: 3px 8px; border-radius: 20px; }
+        .stock-in { background: #d1fae5; color: #059669; }
+        .dark .stock-in { background: #064e3b; color: #34d399; }
+        .stock-out { background: #fee2e2; color: #dc2626; }
+        .dark .stock-out { background: #7f1d1d; color: #f87171; }
         
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #10b981;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        .toast.error {
-            background: #ef4444;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+        /* Dropdown Menu */
+        .dropdown-menu, #user-dropdown { background-color: var(--dropdown-bg) !important; border: 1px solid var(--border-color) !important; border-radius: 12px !important; }
+        .dropdown-menu a, #user-dropdown a, .dropdown-menu button, #user-dropdown button { color: var(--dropdown-text) !important; }
+        .dropdown-menu a:hover, #user-dropdown a:hover, .dropdown-menu button:hover, #user-dropdown button:hover { background-color: var(--dropdown-hover) !important; }
+        
+        /* Toast */
+        .toast { position: fixed; bottom: 24px; right: 24px; background: #10b981; color: white; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; z-index: 1000; animation: slideIn 0.3s ease; }
+        .toast.error { background: #ef4444; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -354,7 +142,10 @@
     <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
         <div class="p-4 border-b">
-            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <div class="flex items-center space-x-2 sidebar-logo">
+                <i class="fas fa-store text-2xl text-purple-500"></i>
+                <span class="text-xl font-bold">Marketplace Pro</span>
+            </div>
             <p class="text-xs opacity-60 mt-2">Admin Panel</p>
         </div>
         <nav class="p-4">
@@ -373,10 +164,13 @@
 
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar -->
+        <!-- Top Bar with Sidebar Toggle -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold" id="page-title">Add New Product</h1>
                     <p class="text-sm text-gray-500">Fill in the details to add or edit a product</p>
@@ -394,16 +188,10 @@
                         <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
                     </button>
                     <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-user-circle w-5"></i> My Profile
-                        </a>
-                        <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-cog w-5"></i> Account Settings
-                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a>
+                        <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a>
                         <div class="border-t"></div>
-                        <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-sign-out-alt w-5"></i> Logout
-                        </button>
+                        <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button>
                     </div>
                 </div>
             </div>
@@ -422,47 +210,20 @@
                             <div class="form-card">
                                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-purple-500"></i> Basic Information</h2>
                                 <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Product Name <span class="text-red-500">*</span></label>
-                                        <input type="text" id="product-name" required class="form-input" placeholder="e.g., Ergonomic Mesh Office Chair, Wireless Headphones Pro">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Description <span class="text-red-500">*</span></label>
-                                        <div id="editor-container" style="height: 200px;"></div>
-                                        <textarea id="product-description" style="display:none;"></textarea>
-                                    </div>
+                                    <div><label class="block text-sm font-medium mb-1">Product Name <span class="text-red-500">*</span></label><input type="text" id="product-name" required class="form-input" placeholder="e.g., Ergonomic Mesh Office Chair, Wireless Headphones Pro"></div>
+                                    <div><label class="block text-sm font-medium mb-1">Description <span class="text-red-500">*</span></label><div id="editor-container" style="height: 200px;"></div><textarea id="product-description" style="display:none;"></textarea></div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium mb-1">Category <span class="text-red-500">*</span></label>
-                                            <select id="product-category" required class="form-select">
-                                                <option value="">Select Category</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium mb-1">Brand</label>
-                                            <input type="text" id="product-brand" class="form-input" placeholder="e.g., Nike, Samsung, IKEA">
-                                        </div>
+                                        <div><label class="block text-sm font-medium mb-1">Category <span class="text-red-500">*</span></label><select id="product-category" required class="form-select"><option value="">Select Category</option></select></div>
+                                        <div><label class="block text-sm font-medium mb-1">Brand</label><input type="text" id="product-brand" class="form-input" placeholder="e.g., Nike, Samsung, IKEA"></div>
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Status <span class="text-red-500">*</span></label>
-                                        <select id="product-status" class="form-select">
-                                            <option value="published">Published</option>
-                                            <option value="draft">Draft</option>
-                                            <option value="archived">Archived</option>
-                                        </select>
-                                    </div>
+                                    <div><label class="block text-sm font-medium mb-1">Status <span class="text-red-500">*</span></label><select id="product-status" class="form-select"><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select></div>
                                 </div>
                             </div>
                             
                             <!-- Media Gallery Card -->
                             <div class="form-card">
                                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-images text-purple-500"></i> Media Gallery</h2>
-                                <div id="dropzone" class="dropzone">
-                                    <input type="file" id="product-images" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
-                                    <i class="fas fa-cloud-upload-alt text-3xl text-purple-400 mb-2"></i>
-                                    <p class="text-sm">Click or drag images here to upload</p>
-                                    <p class="text-xs text-gray-400 mt-1">First image becomes main thumbnail</p>
-                                </div>
+                                <div id="dropzone" class="dropzone"><input type="file" id="product-images" accept="image/jpeg,image/png,image/webp" multiple class="hidden"><i class="fas fa-cloud-upload-alt text-3xl text-purple-400 mb-2"></i><p class="text-sm">Click or drag images here to upload</p><p class="text-xs text-gray-400 mt-1">First image becomes main thumbnail</p></div>
                                 <div id="image-preview-grid" class="image-grid"></div>
                             </div>
                             
@@ -470,57 +231,21 @@
                             <div class="form-card">
                                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-tag text-purple-500"></i> Pricing & Profit</h2>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Regular Price (AED) <span class="text-red-500">*</span></label>
-                                        <input type="number" id="product-regular-price" required min="0" step="0.01" class="form-input" placeholder="0.00">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Sale Price (AED)</label>
-                                        <input type="number" id="product-sale-price" min="0" step="0.01" class="form-input" placeholder="Discounted price">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Cost Price (AED)</label>
-                                        <input type="number" id="product-cost-price" min="0" step="0.01" class="form-input" placeholder="Your cost">
-                                    </div>
+                                    <div><label class="block text-sm font-medium mb-1">Regular Price (AED) <span class="text-red-500">*</span></label><input type="number" id="product-regular-price" required min="0" step="0.01" class="form-input" placeholder="0.00"></div>
+                                    <div><label class="block text-sm font-medium mb-1">Sale Price (AED)</label><input type="number" id="product-sale-price" min="0" step="0.01" class="form-input" placeholder="Discounted price"></div>
+                                    <div><label class="block text-sm font-medium mb-1">Cost Price (AED)</label><input type="number" id="product-cost-price" min="0" step="0.01" class="form-input" placeholder="Your cost"></div>
                                 </div>
-                                <div id="profit-display" class="profit-card hidden">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-sm">Your Estimated Profit:</span>
-                                        <span id="profit-amount" class="text-lg font-bold text-purple-600">AED 0.00</span>
-                                    </div>
-                                    <div class="flex justify-between items-center mt-1">
-                                        <span class="text-xs">Profit Margin:</span>
-                                        <span id="profit-margin" class="text-xs font-semibold">0%</span>
-                                    </div>
-                                </div>
+                                <div id="profit-display" class="profit-card hidden"><div class="flex justify-between items-center"><span class="text-sm">Your Estimated Profit:</span><span id="profit-amount" class="text-lg font-bold text-purple-600">AED 0.00</span></div><div class="flex justify-between items-center mt-1"><span class="text-xs">Profit Margin:</span><span id="profit-margin" class="text-xs font-semibold">0%</span></div></div>
                             </div>
                             
                             <!-- Inventory Card -->
                             <div class="form-card">
                                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-warehouse text-purple-500"></i> Inventory</h2>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Stock Status</label>
-                                        <select id="product-stock-status" class="form-select">
-                                            <option value="in-stock">In Stock</option>
-                                            <option value="out-of-stock">Out of Stock</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Stock Quantity</label>
-                                        <input type="number" id="product-stock-quantity" min="0" class="form-input" placeholder="e.g., 100">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Warehouse Location</label>
-                                        <input type="text" id="product-warehouse" class="form-input" placeholder="e.g., Dubai Main Warehouse">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Visibility</label>
-                                        <select id="product-visibility" class="form-select">
-                                            <option value="published">Published</option>
-                                            <option value="hidden">Hidden</option>
-                                        </select>
-                                    </div>
+                                    <div><label class="block text-sm font-medium mb-1">Stock Status</label><select id="product-stock-status" class="form-select"><option value="in-stock">In Stock</option><option value="out-of-stock">Out of Stock</option></select></div>
+                                    <div><label class="block text-sm font-medium mb-1">Stock Quantity</label><input type="number" id="product-stock-quantity" min="0" class="form-input" placeholder="e.g., 100"></div>
+                                    <div><label class="block text-sm font-medium mb-1">Warehouse Location</label><input type="text" id="product-warehouse" class="form-input" placeholder="e.g., Dubai Main Warehouse"></div>
+                                    <div><label class="block text-sm font-medium mb-1">Visibility</label><select id="product-visibility" class="form-select"><option value="published">Published</option><option value="hidden">Hidden</option></select></div>
                                 </div>
                             </div>
                             
@@ -535,32 +260,15 @@
                                     <div><label class="block text-sm font-medium mb-1">Weight</label><input type="text" id="product-weight" class="form-input" placeholder="e.g., 2.5 kg"></div>
                                     <div><label class="block text-sm font-medium mb-1">SKU</label><input type="text" id="product-sku" class="form-input" placeholder="Product code"></div>
                                 </div>
-                                <div class="mt-3">
-                                    <label class="block text-sm font-medium mb-2">Condition</label>
-                                    <div class="flex flex-wrap gap-4">
-                                        <label class="flex items-center gap-2"><input type="radio" name="condition" value="assembled" class="w-4 h-4 text-purple-600"> Assembled</label>
-                                        <label class="flex items-center gap-2"><input type="radio" name="condition" value="packed" class="w-4 h-4 text-purple-600"> Packed in Box</label>
-                                        <label class="flex items-center gap-2"><input type="radio" name="condition" value="both" class="w-4 h-4 text-purple-600"> Both Options</label>
-                                    </div>
-                                </div>
+                                <div class="mt-3"><label class="block text-sm font-medium mb-2">Condition</label><div class="flex flex-wrap gap-4"><label class="flex items-center gap-2"><input type="radio" name="condition" value="assembled" class="w-4 h-4 text-purple-600"> Assembled</label><label class="flex items-center gap-2"><input type="radio" name="condition" value="packed" class="w-4 h-4 text-purple-600"> Packed in Box</label><label class="flex items-center gap-2"><input type="radio" name="condition" value="both" class="w-4 h-4 text-purple-600"> Both Options</label></div></div>
                             </div>
                             
                             <!-- Shipping Card -->
                             <div class="form-card">
                                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fas fa-truck text-purple-500"></i> Shipping</h2>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Shipping Cost (AED)</label>
-                                        <input type="number" id="product-shipping-cost" min="0" step="0.01" class="form-input" placeholder="0.00">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-1">Delivery Method</label>
-                                        <select id="product-delivery-method" class="form-select">
-                                            <option value="cod">Cash on Delivery (COD)</option>
-                                            <option value="pickup">Local Pickup</option>
-                                            <option value="courier">Courier Delivery</option>
-                                        </select>
-                                    </div>
+                                    <div><label class="block text-sm font-medium mb-1">Shipping Cost (AED)</label><input type="number" id="product-shipping-cost" min="0" step="0.01" class="form-input" placeholder="0.00"></div>
+                                    <div><label class="block text-sm font-medium mb-1">Delivery Method</label><select id="product-delivery-method" class="form-select"><option value="cod">Cash on Delivery (COD)</option><option value="pickup">Local Pickup</option><option value="courier">Courier Delivery</option></select></div>
                                 </div>
                             </div>
                             
@@ -575,27 +283,15 @@
                     <!-- RIGHT COLUMN: Product Card Preview -->
                     <div class="space-y-5">
                         <div class="preview-card">
-                            <div class="preview-image-container">
-                                <img id="preview-main-image" class="preview-image" src="https://placehold.co/400x300?text=No+Image" alt="Preview">
-                            </div>
+                            <div class="preview-image-container"><img id="preview-main-image" class="preview-image" src="https://placehold.co/400x300?text=No+Image" alt="Preview"></div>
                             <div class="p-3">
-                                <div class="flex justify-between items-start mb-2">
-                                    <span id="preview-category-badge" class="preview-category">—</span>
-                                </div>
+                                <div class="flex justify-between items-start mb-2"><span id="preview-category-badge" class="preview-category">—</span></div>
                                 <h3 id="preview-product-title" class="preview-title">Product Name</h3>
                                 <p id="preview-product-desc" class="text-xs text-gray-500 mt-1 line-clamp-2">Product description will appear here...</p>
-                                <div class="flex justify-between items-center mt-3">
-                                    <div>
-                                        <span id="preview-product-price" class="preview-price">AED 0</span>
-                                        <span id="preview-old-price" class="text-xs text-gray-400 line-through ml-2 hidden"></span>
-                                    </div>
-                                    <span id="preview-stock-badge" class="preview-stock stock-in">In Stock</span>
-                                </div>
+                                <div class="flex justify-between items-center mt-3"><div><span id="preview-product-price" class="preview-price">AED 0</span><span id="preview-old-price" class="text-xs text-gray-400 line-through ml-2 hidden"></span></div><span id="preview-stock-badge" class="preview-stock stock-in">In Stock</span></div>
                             </div>
                         </div>
-                        <div class="text-center text-xs text-gray-400">
-                            <i class="fas fa-eye"></i> Live preview updates as you type
-                        </div>
+                        <div class="text-center text-xs text-gray-400"><i class="fas fa-eye"></i> Live preview updates as you type</div>
                     </div>
                 </div>
             </div>
@@ -620,9 +316,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // ImgBB API Key
         const IMGBB_API_KEY = "2e32852f127a58951950b565e1975d4b";
-
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -635,7 +329,6 @@
         function showToast(message, isError = false) {
             const existingToast = document.querySelector('.toast');
             if (existingToast) existingToast.remove();
-            
             const toast = document.createElement('div');
             toast.className = `toast ${isError ? 'error' : ''}`;
             toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'} mr-2"></i> ${message}`;
@@ -643,29 +336,33 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // Upload image to ImgBB
         async function uploadToImgBB(file) {
             const formData = new FormData();
             formData.append('image', file);
-            
             try {
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: formData });
                 const data = await response.json();
-                if (data.success) {
-                    return data.data.url;
-                } else {
-                    throw new Error('Upload failed');
-                }
-            } catch (error) {
-                console.error('ImgBB upload error:', error);
-                return null;
-            }
+                if (data.success) return data.data.url;
+                else throw new Error('Upload failed');
+            } catch (error) { console.error('ImgBB upload error:', error); return null; }
         }
 
-        // ========== MOBILE SIDEBAR ==========
+        // Collapsible Sidebar
+        function initCollapsibleSidebar() {
+            const sidebar = document.querySelector('.desktop-sidebar');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            if (!sidebar || !toggleBtn) return;
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) { sidebar.classList.add('collapsed'); toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>'; }
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                const collapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', collapsed);
+                toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+            });
+        }
+
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -673,7 +370,6 @@
             if (overlay) overlay.classList.toggle('show');
             document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
         };
-
         window.closeMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -681,58 +377,22 @@
             if (overlay) overlay.classList.remove('show');
             document.body.style.overflow = '';
         };
-
-        // ========== USER MENU ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
-            if (dropdown) {
-                const isHidden = dropdown.classList.contains('hidden');
-                dropdown.classList.toggle('hidden');
-                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
+            if (dropdown) { const isHidden = dropdown.classList.contains('hidden'); dropdown.classList.toggle('hidden'); if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)'; }
         };
-
         document.addEventListener('click', function(event) {
             const dropdown = document.getElementById('user-dropdown');
             const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
-            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-                const chevron = document.getElementById('user-chevron');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
+            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) { dropdown.classList.add('hidden'); const chevron = document.getElementById('user-chevron'); if (chevron) chevron.style.transform = 'rotate(0deg)'; }
         });
-
-        // ========== THEME & LOGOUT ==========
-        window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        };
-
+        window.toggleTheme = () => { const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); };
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
         function initQuillEditor() {
-            quillEditor = new Quill('#editor-container', {
-                theme: 'snow',
-                placeholder: 'Write a detailed description of your product...',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'color': [] }, { 'background': [] }],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'align': [] }],
-                        ['link', 'image', 'video'],
-                        ['clean']
-                    ]
-                }
-            });
-            quillEditor.on('text-change', function() {
-                const html = quillEditor.root.innerHTML;
-                document.getElementById('product-description').value = html;
-                updatePreview();
-            });
+            quillEditor = new Quill('#editor-container', { theme: 'snow', placeholder: 'Write a detailed description of your product...', modules: { toolbar: [[{ 'header': [1, 2, 3, 4, 5, 6, false] }], ['bold', 'italic', 'underline', 'strike'], [{ 'color': [] }, { 'background': [] }], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'align': [] }], ['link', 'image', 'video'], ['clean']] } });
+            quillEditor.on('text-change', function() { const html = quillEditor.root.innerHTML; document.getElementById('product-description').value = html; updatePreview(); });
         }
 
         function updatePreview() {
@@ -744,45 +404,25 @@
             const stockStatus = document.getElementById('product-stock-status').value;
             const description = quillEditor ? quillEditor.root.textContent.substring(0, 80) : '';
             const mainImage = existingImageUrls.length > 0 ? existingImageUrls[0] : null;
-            
             document.getElementById('preview-product-title').textContent = name;
             document.getElementById('preview-category-badge').textContent = category;
             document.getElementById('preview-product-price').textContent = `AED ${finalPrice.toFixed(2)}`;
             document.getElementById('preview-product-desc').textContent = description || 'Product description will appear here...';
-            
-            if (salePrice > 0 && salePrice < regularPrice) {
-                document.getElementById('preview-old-price').classList.remove('hidden');
-                document.getElementById('preview-old-price').textContent = `AED ${regularPrice.toFixed(2)}`;
-            } else {
-                document.getElementById('preview-old-price').classList.add('hidden');
-            }
-            
+            if (salePrice > 0 && salePrice < regularPrice) { document.getElementById('preview-old-price').classList.remove('hidden'); document.getElementById('preview-old-price').textContent = `AED ${regularPrice.toFixed(2)}`; } else { document.getElementById('preview-old-price').classList.add('hidden'); }
             const stockBadge = document.getElementById('preview-stock-badge');
-            if (stockStatus === 'in-stock') {
-                stockBadge.textContent = 'In Stock';
-                stockBadge.className = 'preview-stock stock-in';
-            } else {
-                stockBadge.textContent = 'Out of Stock';
-                stockBadge.className = 'preview-stock stock-out';
-            }
-            
-            if (mainImage) {
-                document.getElementById('preview-main-image').src = mainImage;
-            }
+            if (stockStatus === 'in-stock') { stockBadge.textContent = 'In Stock'; stockBadge.className = 'preview-stock stock-in'; } else { stockBadge.textContent = 'Out of Stock'; stockBadge.className = 'preview-stock stock-out'; }
+            if (mainImage) document.getElementById('preview-main-image').src = mainImage;
         }
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.data()?.role !== 'admin') {
-                window.location.href = '/seller-dashboard.html';
-                return;
-            }
+            if (userDoc.data()?.role !== 'admin') { window.location.href = '/seller-dashboard.html'; return; }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
+            initCollapsibleSidebar();
             initQuillEditor();
             await loadCategories();
             await checkForEdit();
-            
             document.getElementById('product-name').addEventListener('input', updatePreview);
             document.getElementById('product-category').addEventListener('change', updatePreview);
             document.getElementById('product-brand').addEventListener('input', updatePreview);
@@ -796,9 +436,7 @@
             const snap = await getDocs(collection(db, 'categories'));
             const select = document.getElementById('product-category');
             select.innerHTML = '<option value="">Select Category</option>';
-            snap.docs.forEach(d => {
-                select.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`;
-            });
+            snap.docs.forEach(d => { select.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`; });
         }
 
         async function checkForEdit() {
@@ -816,19 +454,11 @@
 
         async function loadProductData() {
             const productDoc = await getDoc(doc(db, 'products', productId));
-            if (!productDoc.exists()) {
-                showToast('Product not found!', true);
-                window.location.href = 'products.html';
-                return;
-            }
+            if (!productDoc.exists()) { showToast('Product not found!', true); window.location.href = 'products.html'; return; }
             const p = productDoc.data();
-            
             document.getElementById('product-id').value = productId;
             document.getElementById('product-name').value = p.name || '';
-            if (quillEditor && p.description) {
-                quillEditor.root.innerHTML = p.description;
-                document.getElementById('product-description').value = p.description;
-            }
+            if (quillEditor && p.description) { quillEditor.root.innerHTML = p.description; document.getElementById('product-description').value = p.description; }
             document.getElementById('product-category').value = p.category || '';
             document.getElementById('product-brand').value = p.brand || '';
             document.getElementById('product-regular-price').value = p.regularPrice || p.price || '';
@@ -847,10 +477,8 @@
             document.getElementById('product-sku').value = p.sku || '';
             document.getElementById('product-shipping-cost').value = p.shippingCost || p.shippingFee || '';
             document.getElementById('product-delivery-method').value = p.deliveryMethod || p.deliveryType || 'cod';
-            
             const conditionRadio = document.querySelector(`input[name="condition"][value="${p.condition}"]`);
             if (conditionRadio) conditionRadio.checked = true;
-            
             existingImageUrls = p.images || [];
             renderImagePreviews();
             calculateProfit();
@@ -859,24 +487,12 @@
 
         function renderImagePreviews() {
             const container = document.getElementById('image-preview-grid');
-            if (!existingImageUrls.length) {
-                container.innerHTML = '<div class="text-gray-400 text-sm">No images uploaded</div>';
-                return;
-            }
-            container.innerHTML = existingImageUrls.map((url, idx) => `
-                <div class="relative">
-                    <img src="${url}" class="preview-img ${idx === 0 ? 'main' : ''}">
-                    <button type="button" onclick="removeImage(${idx})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs">×</button>
-                    ${idx === 0 ? '<span class="absolute bottom-0 left-0 bg-purple-600 text-[10px] px-1 rounded">Main</span>' : ''}
-                </div>
-            `).join('');
+            if (!existingImageUrls.length) { container.innerHTML = '<div class="text-gray-400 text-sm">No images uploaded</div>'; return; }
+            container.innerHTML = existingImageUrls.map((url, idx) => `<div class="relative"><img src="${url}" class="preview-img ${idx === 0 ? 'main' : ''}"><button type="button" onclick="removeImage(${idx})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs">×</button>${idx === 0 ? '<span class="absolute bottom-0 left-0 bg-purple-600 text-[10px] px-1 rounded">Main</span>' : ''}</div>`).join('');
             updatePreview();
         }
 
-        window.removeImage = (index) => {
-            existingImageUrls.splice(index, 1);
-            renderImagePreviews();
-        };
+        window.removeImage = (index) => { existingImageUrls.splice(index, 1); renderImagePreviews(); };
 
         function calculateProfit() {
             const regularPrice = parseFloat(document.getElementById('product-regular-price').value) || 0;
@@ -888,40 +504,22 @@
             const profitDisplay = document.getElementById('profit-display');
             const profitAmount = document.getElementById('profit-amount');
             const profitMargin = document.getElementById('profit-margin');
-            
-            if (costPrice > 0 && sellingPrice > 0) {
-                profitDisplay.classList.remove('hidden');
-                profitAmount.textContent = `AED ${profit.toFixed(2)}`;
-                profitMargin.textContent = `${margin.toFixed(1)}%`;
-                profitMargin.className = `text-xs font-semibold ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`;
-            } else {
-                profitDisplay.classList.add('hidden');
-            }
+            if (costPrice > 0 && sellingPrice > 0) { profitDisplay.classList.remove('hidden'); profitAmount.textContent = `AED ${profit.toFixed(2)}`; profitMargin.textContent = `${margin.toFixed(1)}%`; profitMargin.className = `text-xs font-semibold ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`; } else { profitDisplay.classList.add('hidden'); }
         }
 
-        // Image Upload with ImgBB
         const dropzone = document.getElementById('dropzone');
         const imageInput = document.getElementById('product-images');
-        
         dropzone.addEventListener('click', () => imageInput.click());
         dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-purple-500'); });
         dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-purple-500'));
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('border-purple-500');
-            handleFiles(e.dataTransfer.files);
-        });
-        
+        dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('border-purple-500'); handleFiles(e.dataTransfer.files); });
         imageInput.addEventListener('change', (e) => handleFiles(e.target.files));
-        
+
         function handleFiles(files) {
             Array.from(files).forEach(file => {
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        existingImageUrls.push(ev.target.result);
-                        renderImagePreviews();
-                    };
+                    reader.onload = (ev) => { existingImageUrls.push(ev.target.result); renderImagePreviews(); };
                     reader.readAsDataURL(file);
                     pendingNewFiles.push(file);
                 }
@@ -930,67 +528,38 @@
 
         async function uploadNewImages(productIdForUpload) {
             const urls = [];
-            for (let i = 0; i < pendingNewFiles.length; i++) {
-                const url = await uploadToImgBB(pendingNewFiles[i]);
-                if (url) {
-                    urls.push(url);
-                }
-            }
+            for (let i = 0; i < pendingNewFiles.length; i++) { const url = await uploadToImgBB(pendingNewFiles[i]); if (url) urls.push(url); }
             pendingNewFiles = [];
             return urls;
         }
 
-        // Save Product Function
         window.saveProduct = async () => {
             if (isSaving) return;
-            
             const name = document.getElementById('product-name').value.trim();
             const description = quillEditor ? quillEditor.root.innerHTML : document.getElementById('product-description').value;
             const category = document.getElementById('product-category').value;
             const regularPrice = parseFloat(document.getElementById('product-regular-price').value);
-            const salePrice = parseFloat(document.getElementById('product-sale-price').value) || 0;
-            const costPrice = parseFloat(document.getElementById('product-cost-price').value) || 0;
-            const status = document.getElementById('product-status').value;
-            
-            if (!name || !description || !category || !regularPrice) {
-                showToast('Please fill all required fields (Name, Description, Category, Regular Price)', true);
-                return;
-            }
-            
+            if (!name || !description || !category || !regularPrice) { showToast('Please fill all required fields', true); return; }
             isSaving = true;
             const saveBtn = document.getElementById('save-button');
             const originalBtnText = saveBtn.innerHTML;
             saveBtn.disabled = true;
             saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Saving...';
-            
             try {
                 const conditionRadio = document.querySelector('input[name="condition"]:checked');
                 const productData = {
-                    name, description, category,
-                    regularPrice: regularPrice,
-                    salePrice: salePrice > 0 && salePrice < regularPrice ? salePrice : 0,
-                    costPrice: costPrice,
-                    price: regularPrice,
-                    brand: document.getElementById('product-brand').value,
-                    stockStatus: document.getElementById('product-stock-status').value,
-                    stockQuantity: parseInt(document.getElementById('product-stock-quantity').value) || 0,
-                    warehouse: document.getElementById('product-warehouse').value,
-                    visibility: document.getElementById('product-visibility').value,
-                    status: status,
-                    color: document.getElementById('product-color').value,
-                    material: document.getElementById('product-material').value,
-                    size: document.getElementById('product-size').value,
-                    warranty: document.getElementById('product-warranty').value,
-                    weight: document.getElementById('product-weight').value,
-                    sku: document.getElementById('product-sku').value,
-                    shippingCost: parseFloat(document.getElementById('product-shipping-cost').value) || 0,
-                    deliveryMethod: document.getElementById('product-delivery-method').value,
-                    condition: conditionRadio ? conditionRadio.value : '',
-                    updatedAt: new Date().toISOString()
+                    name, description, category, regularPrice: regularPrice, salePrice: parseFloat(document.getElementById('product-sale-price').value) || 0,
+                    costPrice: parseFloat(document.getElementById('product-cost-price').value) || 0, price: regularPrice,
+                    brand: document.getElementById('product-brand').value, stockStatus: document.getElementById('product-stock-status').value,
+                    stockQuantity: parseInt(document.getElementById('product-stock-quantity').value) || 0, warehouse: document.getElementById('product-warehouse').value,
+                    visibility: document.getElementById('product-visibility').value, status: document.getElementById('product-status').value,
+                    color: document.getElementById('product-color').value, material: document.getElementById('product-material').value,
+                    size: document.getElementById('product-size').value, warranty: document.getElementById('product-warranty').value,
+                    weight: document.getElementById('product-weight').value, sku: document.getElementById('product-sku').value,
+                    shippingCost: parseFloat(document.getElementById('product-shipping-cost').value) || 0, deliveryMethod: document.getElementById('product-delivery-method').value,
+                    condition: conditionRadio ? conditionRadio.value : '', updatedAt: new Date().toISOString()
                 };
-                
                 let savedProductId;
-                
                 if (productId) {
                     const finalImages = [...existingImageUrls.filter(url => !url.startsWith('blob:') && !url.startsWith('data:'))];
                     const newImageUrls = await uploadNewImages(productId);
@@ -1004,19 +573,14 @@
                     productData.images = [];
                     const newProductRef = await addDoc(collection(db, 'products'), productData);
                     const newImageUrls = await uploadNewImages(newProductRef.id);
-                    if (newImageUrls.length > 0) {
-                        await updateDoc(doc(db, 'products', newProductRef.id), { images: newImageUrls });
-                    }
+                    if (newImageUrls.length > 0) await updateDoc(doc(db, 'products', newProductRef.id), { images: newImageUrls });
                     savedProductId = newProductRef.id;
                     showToast('Product added successfully!');
                 }
-                
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = originalBtnText;
                 isSaving = false;
-                
                 window.location.href = `product-view.html?id=${savedProductId}`;
-                
             } catch (error) {
                 console.error('Save error:', error);
                 showToast('Error saving product: ' + error.message, true);
