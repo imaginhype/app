@@ -115,6 +115,85 @@
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+        
+        /* Desktop Sidebar - Collapsible */
+        .desktop-sidebar {
+            width: 16rem;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 40;
+        }
+        .desktop-sidebar.collapsed {
+            width: 4rem;
+        }
+        .desktop-sidebar.collapsed .nav-item span,
+        .desktop-sidebar.collapsed .sidebar-logo span,
+        .desktop-sidebar.collapsed p.text-xs {
+            display: none;
+        }
+        .desktop-sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.75rem 0;
+        }
+        .desktop-sidebar.collapsed .nav-item i {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .desktop-sidebar.collapsed .sidebar-logo {
+            justify-content: center;
+        }
+        
+        /* FIX: Main content stretches when sidebar collapses */
+        .main-content {
+            transition: margin-left 0.3s ease;
+            margin-left: 16rem;
+            width: calc(100% - 16rem);
+        }
+        .desktop-sidebar.collapsed ~ .main-content,
+        .desktop-sidebar.collapsed + .main-content {
+            margin-left: 4rem;
+            width: calc(100% - 4rem);
+        }
+        
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .main-content { margin-left: 0; width: 100%; }
+        }
+        
+        .sidebar-toggle-btn {
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+        }
+        .sidebar-toggle-btn:hover {
+            background: var(--hover-bg);
+        }
+        
+        /* Back button style */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: var(--hover-bg);
+            transform: translateX(-2px);
+        }
     </style>
 </head>
 <body>
@@ -167,14 +246,18 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar with Sidebar Toggle -->
+    <main class="main-content flex-1">
+        <!-- Top Bar with Sidebar Toggle AND Back Button -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
                     <i class="fas fa-chevron-left"></i>
                 </button>
+                <!-- Back button to go to Dashboard -->
+                <a href="admin-dashboard.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Announcements</h1>
                     <p class="text-sm text-gray-500">Create and manage system-wide announcements for users</p>
@@ -273,346 +356,4 @@
                         </tr>
                     </thead>
                     <tbody id="announcements-table-body">
-                        <tr><td colspan="8" class="text-center py-8">Loading announcements...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="flex justify-center gap-2 mt-6" id="pagination-container"></div>
-        </div>
-    </main>
-
-    <!-- Create Announcement Modal -->
-    <div id="create-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCreateModal(event)">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto modal-content" onclick="event.stopPropagation()">
-            <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold dark:text-white">Create Announcement</h2>
-                <button onclick="closeCreateModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
-            </div>
-            <div class="p-5">
-                <p class="text-sm text-gray-500 mb-4">Create a new announcement to notify users. Notifications will be sent automatically.</p>
-                
-                <div class="space-y-4">
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Title</label><input type="text" id="announcement-title" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="e.g., New Seller Guidelines"></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Message</label><textarea id="announcement-message" rows="4" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="Enter announcement message"></textarea></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Priority</label><select id="announcement-priority" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="high">High</option><option value="low">Low</option></select></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Target Audience</label><select id="announcement-target" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="all_users">All Users</option><option value="sellers">All Sellers</option><option value="specific">Specific Sellers</option></select></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Expiration Date (Optional)</label><input type="date" id="announcement-expiry" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><p class="text-xs text-gray-500 mt-1">Announcement will be hidden after this date</p></div>
-                </div>
-                
-                <div class="flex gap-3 mt-6">
-                    <button onclick="createAnnouncement()" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition"><i class="fas fa-paper-plane mr-1"></i> Send Announcement</button>
-                    <button onclick="closeCreateModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Announcement Modal -->
-    <div id="edit-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeEditModal(event)">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto modal-content" onclick="event.stopPropagation()">
-            <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold dark:text-white">Edit Announcement</h2>
-                <button onclick="closeEditModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
-            </div>
-            <div class="p-5">
-                <div class="space-y-4">
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Title</label><input type="text" id="edit-announcement-title" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Message</label><textarea id="edit-announcement-message" rows="4" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Priority</label><select id="edit-announcement-priority" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="high">High</option><option value="low">Low</option></select></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Target Audience</label><select id="edit-announcement-target" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="all_users">All Users</option><option value="sellers">All Sellers</option><option value="specific">Specific Sellers</option></select></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Expiration Date (Optional)</label><input type="date" id="edit-announcement-expiry" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><p class="text-xs text-gray-500 mt-1">Announcement will be hidden after this date</p></div>
-                </div>
-                <div class="flex gap-3 mt-6"><button onclick="updateAnnouncement()" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition"><i class="fas fa-save mr-1"></i> Save Changes</button><button onclick="closeEditModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- View Announcement Modal -->
-    <div id="view-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeViewModal(event)">
-        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4 modal-content" onclick="event.stopPropagation()">
-            <div class="p-5 border-b dark:border-gray-700 flex justify-between items-center">
-                <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center"><i class="fas fa-bullhorn text-purple-500"></i></div><h2 class="text-xl font-bold dark:text-white" id="view-modal-title">Announcement Details</h2></div>
-                <button onclick="closeViewModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
-            </div>
-            <div class="p-5" id="view-modal-content"></div>
-            <div class="p-5 border-t dark:border-gray-700 flex gap-3">
-                <button id="view-modal-edit" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"><i class="fas fa-edit mr-1"></i> Edit</button>
-                <button id="view-modal-delete" class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition"><i class="fas fa-trash mr-1"></i> Delete</button>
-                <button onclick="closeViewModal()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
-            authDomain: "imaginhype-app.firebaseapp.com",
-            projectId: "imaginhype-app",
-            storageBucket: "imaginhype-app.firebasestorage.app",
-            messagingSenderId: "200919529212",
-            appId: "1:200919529212:web:afa69db5cf256d35f90979"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let allAnnouncements = [];
-        let currentPage = 1;
-        let currentSearch = '';
-        let currentPriority = 'all';
-        let currentStatusFilter = 'all';
-        let currentEditId = null;
-        let currentViewAnnouncement = null;
-        const itemsPerPage = 10;
-
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        // ========== COLLAPSIBLE SIDEBAR ==========
-        function initCollapsibleSidebar() {
-            const sidebar = document.querySelector('.desktop-sidebar');
-            const toggleBtn = document.getElementById('sidebarToggleBtn');
-            if (!sidebar || !toggleBtn) return;
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-            }
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                const collapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', collapsed);
-                toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
-                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
-            });
-        }
-
-        // ========== MOBILE SIDEBAR ==========
-        window.toggleMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.toggle('show');
-            if (overlay) overlay.classList.toggle('show');
-            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
-        };
-
-        window.closeMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.remove('show');
-            if (overlay) overlay.classList.remove('show');
-            document.body.style.overflow = '';
-        };
-
-        // ========== USER MENU ==========
-        window.toggleUserMenu = function() {
-            const dropdown = document.getElementById('user-dropdown');
-            const chevron = document.getElementById('user-chevron');
-            if (dropdown) {
-                const isHidden = dropdown.classList.contains('hidden');
-                dropdown.classList.toggle('hidden');
-                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
-        };
-
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('user-dropdown');
-            const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
-            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-                const chevron = document.getElementById('user-chevron');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
-        });
-
-        // ========== THEME & LOGOUT ==========
-        window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        };
-
-        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = '/'; return; }
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.data()?.role !== 'admin') {
-                window.location.href = '/seller-dashboard.html';
-                return;
-            }
-            document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
-            initCollapsibleSidebar();
-            await loadAnnouncements();
-        });
-
-        async function loadAnnouncements() {
-            const snap = await getDocs(query(collection(db, 'announcements'), orderBy('createdAt', 'desc')));
-            allAnnouncements = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            updateStats();
-            renderAnnouncements();
-        }
-
-        function updateStats() {
-            const total = allAnnouncements.length;
-            const active = allAnnouncements.filter(a => isActive(a)).length;
-            const expired = allAnnouncements.filter(a => !isActive(a)).length;
-            const sent = allAnnouncements.reduce((sum, a) => sum + (a.sentCount || 0), 0);
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-active').textContent = active;
-            document.getElementById('stat-expired').textContent = expired;
-            document.getElementById('stat-sent').textContent = sent;
-        }
-
-        function isActive(announcement) {
-            if (announcement.status === 'expired') return false;
-            if (announcement.expiryDate && new Date(announcement.expiryDate) <= new Date()) return false;
-            return true;
-        }
-
-        function renderAnnouncements() {
-            let filtered = allAnnouncements;
-            if (currentSearch) filtered = filtered.filter(a => a.title?.toLowerCase().includes(currentSearch.toLowerCase()));
-            if (currentPriority !== 'all') filtered = filtered.filter(a => a.priority === currentPriority);
-            if (currentStatusFilter !== 'all') {
-                if (currentStatusFilter === 'active') filtered = filtered.filter(a => isActive(a));
-                else if (currentStatusFilter === 'expired') filtered = filtered.filter(a => !isActive(a));
-            }
-            
-            const total = filtered.length;
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = Math.min(start + itemsPerPage, total);
-            const paginated = filtered.slice(start, end);
-            
-            const tbody = document.getElementById('announcements-table-body');
-            if (!paginated.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No announcements found. Create one!</td></tr>';
-                document.getElementById('pagination-container').innerHTML = '';
-                return;
-            }
-            
-            tbody.innerHTML = paginated.map(a => {
-                const active = isActive(a);
-                const priorityClass = `priority-${a.priority || 'normal'}`;
-                const statusClass = active ? 'status-active' : 'status-expired';
-                const statusText = active ? 'Active' : 'Expired';
-                
-                return `
-                    <tr class="announcement-row border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td class="px-4 py-3"><div class="font-medium dark:text-white">${escapeHtml(a.title || 'Untitled')}</div><div class="text-xs text-gray-500 mt-1 line-clamp-1">${escapeHtml(a.message?.substring(0, 60))}${a.message?.length > 60 ? '...' : ''}</div></td>
-                        <td class="px-4 py-3"><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${priorityClass}">${(a.priority || 'normal').toUpperCase()}</span></td>
-                        <td class="px-4 py-3 text-sm">${formatTarget(a.target)}</td>
-                        <td class="px-4 py-3"><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span></td>
-                        <td class="px-4 py-3 text-sm">${a.sentCount || 0} users</td>
-                        <td class="px-4 py-3 text-sm">${formatDate(a.createdAt)}</td>
-                        <td class="px-4 py-3 text-sm">${a.expiryDate ? formatDate(a.expiryDate) : 'Never'}</td>
-                        <td class="px-4 py-3"><div class="flex gap-2"><button onclick="openEditModal('${a.id}')" class="action-icon text-blue-500 hover:text-blue-700" title="Edit"><i class="fas fa-edit text-lg"></i></button><button onclick="openViewModal('${a.id}')" class="action-icon text-purple-500 hover:text-purple-700" title="View"><i class="fas fa-eye text-lg"></i></button><button onclick="deleteAnnouncement('${a.id}')" class="action-icon text-red-500 hover:text-red-700" title="Delete"><i class="fas fa-trash-alt text-lg"></i></button></div></td>
-                    </tr>
-                `;
-            }).join('');
-            
-            renderPagination(total);
-        }
-
-        function renderPagination(total) {
-            const totalPages = Math.ceil(total / itemsPerPage);
-            const container = document.getElementById('pagination-container');
-            if (totalPages <= 1) { container.innerHTML = ''; return; }
-            let html = '';
-            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`;
-            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`;
-            }
-            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`;
-            container.innerHTML = html;
-        }
-
-        window.goToPage = (page) => { currentPage = page; renderAnnouncements(); };
-
-        window.openCreateModal = () => { document.getElementById('create-modal').classList.remove('hidden'); };
-        window.closeCreateModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('create-modal').classList.add('hidden'); document.getElementById('announcement-title').value = ''; document.getElementById('announcement-message').value = ''; document.getElementById('announcement-expiry').value = ''; };
-
-        window.createAnnouncement = async () => {
-            const title = document.getElementById('announcement-title').value.trim();
-            const message = document.getElementById('announcement-message').value.trim();
-            const priority = document.getElementById('announcement-priority').value;
-            const target = document.getElementById('announcement-target').value;
-            const expiryDate = document.getElementById('announcement-expiry').value;
-            if (!title || !message) { alert('Please enter both title and message.'); return; }
-            await addDoc(collection(db, 'announcements'), { title, message, priority, target, expiryDate: expiryDate || null, status: 'active', sentCount: 0, createdAt: new Date().toISOString() });
-            closeCreateModal();
-            await loadAnnouncements();
-            alert('Announcement created and notifications sent!');
-        };
-
-        window.openEditModal = async (id) => {
-            const announcement = allAnnouncements.find(a => a.id === id);
-            if (!announcement) return;
-            currentEditId = id;
-            document.getElementById('edit-announcement-title').value = announcement.title || '';
-            document.getElementById('edit-announcement-message').value = announcement.message || '';
-            document.getElementById('edit-announcement-priority').value = announcement.priority || 'normal';
-            document.getElementById('edit-announcement-target').value = announcement.target || 'all_users';
-            document.getElementById('edit-announcement-expiry').value = announcement.expiryDate ? announcement.expiryDate.split('T')[0] : '';
-            document.getElementById('edit-modal').classList.remove('hidden');
-        };
-
-        window.closeEditModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('edit-modal').classList.add('hidden'); currentEditId = null; };
-
-        window.updateAnnouncement = async () => {
-            if (!currentEditId) return;
-            const title = document.getElementById('edit-announcement-title').value.trim();
-            const message = document.getElementById('edit-announcement-message').value.trim();
-            const priority = document.getElementById('edit-announcement-priority').value;
-            const target = document.getElementById('edit-announcement-target').value;
-            const expiryDate = document.getElementById('edit-announcement-expiry').value;
-            if (!title || !message) { alert('Please enter both title and message.'); return; }
-            await updateDoc(doc(db, 'announcements', currentEditId), { title, message, priority, target, expiryDate: expiryDate || null, updatedAt: new Date().toISOString() });
-            closeEditModal();
-            await loadAnnouncements();
-            alert('Announcement updated successfully!');
-        };
-
-        window.openViewModal = (id) => {
-            const announcement = allAnnouncements.find(a => a.id === id);
-            if (!announcement) return;
-            currentViewAnnouncement = announcement;
-            const modalContent = document.getElementById('view-modal-content');
-            document.getElementById('view-modal-title').textContent = announcement.title;
-            modalContent.innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Priority:</span><span class="inline-block px-2 py-1 rounded-full text-xs font-medium priority-${announcement.priority || 'normal'}">${(announcement.priority || 'normal').toUpperCase()}</span></div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Target Audience:</span><span class="text-sm">${formatTarget(announcement.target)}</span></div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Status:</span><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${isActive(announcement) ? 'status-active' : 'status-expired'}">${isActive(announcement) ? 'Active' : 'Expired'}</span></div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Sent To:</span><span class="text-sm">${announcement.sentCount || 0} users</span></div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Created:</span><span class="text-sm">${formatDateTime(announcement.createdAt)}</span></div>
-                    ${announcement.expiryDate ? `<div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Expires:</span><span class="text-sm">${formatDateTime(announcement.expiryDate)}</span></div>` : ''}
-                    <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><div class="text-sm font-medium mb-2">Message:</div><div class="text-sm whitespace-pre-wrap">${escapeHtml(announcement.message)}</div></div>
-                </div>
-            `;
-            document.getElementById('view-modal').classList.remove('hidden');
-            document.getElementById('view-modal-edit').onclick = () => { closeViewModal(); openEditModal(announcement.id); };
-            document.getElementById('view-modal-delete').onclick = () => { if (confirm('Delete this announcement?')) { deleteAnnouncement(announcement.id); closeViewModal(); } };
-        };
-
-        window.closeViewModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('view-modal').classList.add('hidden'); currentViewAnnouncement = null; };
-        window.deleteAnnouncement = async (id) => { if (!confirm('Delete this announcement? This cannot be undone.')) return; await deleteDoc(doc(db, 'announcements', id)); await loadAnnouncements(); };
-
-        function formatTarget(target) { const targets = { all_users: 'All Users', sellers: 'All Sellers', specific: 'Specific Sellers' }; return targets[target] || target; }
-        function formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); return date.toLocaleDateString(); }
-        function formatDateTime(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); return date.toLocaleString(); }
-        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
-
-        document.getElementById('search-announcements').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderAnnouncements(); });
-        document.getElementById('filter-priority').addEventListener('change', (e) => { currentPriority = e.target.value; currentPage = 1; renderAnnouncements(); });
-        document.getElementById('filter-status').addEventListener('change', (e) => { currentStatusFilter = e.target.value; currentPage = 1; renderAnnouncements(); });
-    </script>
-</body>
-</html>
+                        <tr><td colspan="8" class="text-center py-8">Loading announcements...
