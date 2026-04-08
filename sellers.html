@@ -80,6 +80,85 @@
             background: var(--accent-color);
             color: white;
         }
+        
+        /* Desktop Sidebar - Collapsible */
+        .desktop-sidebar {
+            width: 16rem;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 40;
+        }
+        .desktop-sidebar.collapsed {
+            width: 4rem;
+        }
+        .desktop-sidebar.collapsed .nav-item span,
+        .desktop-sidebar.collapsed .sidebar-logo span,
+        .desktop-sidebar.collapsed p.text-xs {
+            display: none;
+        }
+        .desktop-sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.75rem 0;
+        }
+        .desktop-sidebar.collapsed .nav-item i {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .desktop-sidebar.collapsed .sidebar-logo {
+            justify-content: center;
+        }
+        
+        /* FIX: Main content stretches when sidebar collapses */
+        .main-content {
+            transition: margin-left 0.3s ease;
+            margin-left: 16rem;
+            width: calc(100% - 16rem);
+        }
+        .desktop-sidebar.collapsed ~ .main-content,
+        .desktop-sidebar.collapsed + .main-content {
+            margin-left: 4rem;
+            width: calc(100% - 4rem);
+        }
+        
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .main-content { margin-left: 0; width: 100%; }
+        }
+        
+        .sidebar-toggle-btn {
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+        }
+        .sidebar-toggle-btn:hover {
+            background: var(--hover-bg);
+        }
+        
+        /* Back button style */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: var(--hover-bg);
+            transform: translateX(-2px);
+        }
     </style>
 </head>
 <body>
@@ -132,14 +211,18 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar with Sidebar Toggle -->
+    <main class="main-content flex-1">
+        <!-- Top Bar with Sidebar Toggle AND Back Button -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
                     <i class="fas fa-chevron-left"></i>
                 </button>
+                <!-- Back button to go to Dashboard -->
+                <a href="admin-dashboard.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold">Sellers</h1>
                     <p class="text-sm text-gray-500">Manage users, roles, and permissions</p>
@@ -418,7 +501,7 @@
                                 <button onclick="deleteUser('${user.id}')" class="text-red-500 hover:text-red-700" title="Delete"><i class="fas fa-trash"></i></button>
                             </div>
                         </td>
-                     </tr>
+                    </tr>
                 `;
             }).join('');
             
