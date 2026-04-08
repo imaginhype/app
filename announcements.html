@@ -14,17 +14,13 @@
             border: 1px solid var(--border-color);
             border-radius: 1rem;
         }
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-        
+        .stat-card:hover { transform: translateY(-2px); }
         .priority-urgent { color: #ef4444; background: rgba(239, 68, 68, 0.125); }
         .priority-high { color: #f59e0b; background: rgba(245, 158, 11, 0.125); }
         .priority-normal { color: #3b82f6; background: rgba(59, 130, 246, 0.125); }
         .priority-low { color: #6b7280; background: rgba(107, 114, 128, 0.125); }
         .status-active { color: #10b981; background: rgba(16, 185, 129, 0.125); }
         .status-expired { color: #ef4444; background: rgba(239, 68, 68, 0.125); }
-        
         .action-toolbar {
             display: flex;
             flex-wrap: wrap;
@@ -35,7 +31,6 @@
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border-color);
         }
-        
         .filters-bar {
             display: flex;
             flex-wrap: wrap;
@@ -71,10 +66,8 @@
             .filters-bar { flex-direction: column; align-items: stretch; }
             .search-wrapper { max-width: 100%; }
         }
-        
         .announcement-row:hover { background-color: var(--hover-bg); }
         .table-container { overflow-x: auto; }
-        
         .action-icon {
             transition: all 0.2s;
             cursor: pointer;
@@ -85,7 +78,6 @@
             transform: scale(1.1);
             background: var(--hover-bg);
         }
-        
         .pagination-btn {
             padding: 6px 12px;
             border-radius: 8px;
@@ -100,13 +92,8 @@
             background: var(--accent-color);
             color: white;
         }
-        
-        .modal-overlay {
-            animation: fadeIn 0.2s ease;
-        }
-        .modal-content {
-            animation: slideUp 0.3s ease;
-        }
+        .modal-overlay { animation: fadeIn 0.2s ease; }
+        .modal-content { animation: slideUp 0.3s ease; }
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -115,69 +102,6 @@
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        
-        /* Desktop Sidebar - Collapsible */
-        .desktop-sidebar {
-            width: 16rem;
-            transition: width 0.3s ease;
-            overflow-x: hidden;
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            z-index: 40;
-        }
-        .desktop-sidebar.collapsed {
-            width: 4rem;
-        }
-        .desktop-sidebar.collapsed .nav-item span,
-        .desktop-sidebar.collapsed .sidebar-logo span,
-        .desktop-sidebar.collapsed p.text-xs {
-            display: none;
-        }
-        .desktop-sidebar.collapsed .nav-item {
-            justify-content: center;
-            padding: 0.75rem 0;
-        }
-        .desktop-sidebar.collapsed .nav-item i {
-            margin: 0;
-            font-size: 1.25rem;
-        }
-        .desktop-sidebar.collapsed .sidebar-logo {
-            justify-content: center;
-        }
-        
-        /* Main content adjustment */
-        .main-content {
-            transition: margin-left 0.3s ease;
-            margin-left: 16rem;
-            width: calc(100% - 16rem);
-        }
-        .desktop-sidebar.collapsed ~ .main-content,
-        .desktop-sidebar.collapsed + .main-content {
-            margin-left: 4rem;
-            width: calc(100% - 4rem);
-        }
-        
-        @media (max-width: 767px) {
-            .desktop-sidebar { display: none; }
-            .main-content { margin-left: 0; width: 100%; }
-        }
-        
-        .sidebar-toggle-btn {
-            cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 8px;
-            transition: all 0.2s;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-        }
-        .sidebar-toggle-btn:hover {
-            background: var(--hover-bg);
-        }
-        
-        /* Back button style */
         .back-btn {
             display: inline-flex;
             align-items: center;
@@ -245,126 +169,122 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="main-content flex-1">
-        <!-- Top Bar with Sidebar Toggle AND Back Button -->
-        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
-            <div class="flex items-center space-x-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <!-- Back button to go to Dashboard -->
-                <a href="admin-dashboard.html" class="back-btn">
-                    <i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span>
-                </a>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold">Announcements</h1>
-                    <p class="text-sm text-gray-500">Create and manage system-wide announcements for users</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
-                    <i class="fas fa-moon dark:block hidden"></i>
-                    <i class="fas fa-sun dark:hidden block"></i>
-                </button>
-                <div class="relative">
-                    <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
-                        <i class="fas fa-user-circle text-2xl"></i>
-                        <span class="hidden md:inline" id="admin-name">Admin</span>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
+    <!-- Main Content wrapped in app-wrapper for flexbox -->
+    <div class="app-wrapper">
+        <main class="main-content flex-1">
+            <!-- Top Bar -->
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
-                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-user-circle w-5"></i> My Profile
-                        </a>
-                        <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-cog w-5"></i> Account Settings
-                        </a>
-                        <div class="border-t"></div>
-                        <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-sign-out-alt w-5"></i> Logout
+                    <a href="admin-dashboard.html" class="back-btn">
+                        <i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span>
+                    </a>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold">Announcements</h1>
+                        <p class="text-sm text-gray-500">Create and manage system-wide announcements for users</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition">
+                        <i class="fas fa-moon dark:block hidden"></i>
+                        <i class="fas fa-sun dark:hidden block"></i>
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <span class="hidden md:inline" id="admin-name">Admin</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
                         </button>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-user-circle w-5"></i> My Profile
+                            </a>
+                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-cog w-5"></i> Account Settings
+                            </a>
+                            <div class="border-t"></div>
+                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-sign-out-alt w-5"></i> Logout
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Main Content -->
-        <div class="p-4 md:p-6">
-            <!-- Action Toolbar -->
-            <div class="action-toolbar">
-                <button onclick="openCreateModal()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
-                    <i class="fas fa-plus"></i> Create Announcement
-                </button>
+            <!-- Main Content Area -->
+            <div class="p-4 md:p-6">
+                <div class="action-toolbar">
+                    <button onclick="openCreateModal()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Create Announcement
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="stat-card p-4">
+                        <div class="text-2xl font-bold text-purple-500" id="stat-total">0</div>
+                        <div class="text-sm text-gray-500">Total Announcements</div>
+                    </div>
+                    <div class="stat-card p-4">
+                        <div class="text-2xl font-bold text-green-500" id="stat-active">0</div>
+                        <div class="text-sm text-gray-500">Active</div>
+                    </div>
+                    <div class="stat-card p-4">
+                        <div class="text-2xl font-bold text-red-500" id="stat-expired">0</div>
+                        <div class="text-sm text-gray-500">Expired</div>
+                    </div>
+                    <div class="stat-card p-4">
+                        <div class="text-2xl font-bold text-blue-500" id="stat-sent">0</div>
+                        <div class="text-sm text-gray-500">Notifications Sent</div>
+                    </div>
+                </div>
+
+                <div class="filters-bar">
+                    <div class="search-wrapper">
+                        <input type="text" id="search-announcements" placeholder="Search announcements..." class="search-input">
+                    </div>
+                    <div class="flex gap-3">
+                        <select id="filter-priority" class="filter-select">
+                            <option value="all">All Priorities</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="high">High</option>
+                            <option value="normal">Normal</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <select id="filter-status" class="filter-select">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full min-w-[900px]">
+                        <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Title</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Priority</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Target</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Sent To</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Created</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Expires</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="announcements-table-body">
+                            <tr><td colspan="8" class="text-center py-8">Loading announcements...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-center gap-2 mt-6" id="pagination-container"></div>
             </div>
-
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="stat-card p-4">
-                    <div class="text-2xl font-bold text-purple-500" id="stat-total">0</div>
-                    <div class="text-sm text-gray-500">Total Announcements</div>
-                </div>
-                <div class="stat-card p-4">
-                    <div class="text-2xl font-bold text-green-500" id="stat-active">0</div>
-                    <div class="text-sm text-gray-500">Active</div>
-                </div>
-                <div class="stat-card p-4">
-                    <div class="text-2xl font-bold text-red-500" id="stat-expired">0</div>
-                    <div class="text-sm text-gray-500">Expired</div>
-                </div>
-                <div class="stat-card p-4">
-                    <div class="text-2xl font-bold text-blue-500" id="stat-sent">0</div>
-                    <div class="text-sm text-gray-500">Notifications Sent</div>
-                </div>
-            </div>
-
-            <!-- Filters Bar -->
-            <div class="filters-bar">
-                <div class="search-wrapper">
-                    <input type="text" id="search-announcements" placeholder="Search announcements..." class="search-input">
-                </div>
-                <div class="flex gap-3">
-                    <select id="filter-priority" class="filter-select">
-                        <option value="all">All Priorities</option>
-                        <option value="urgent">Urgent</option>
-                        <option value="high">High</option>
-                        <option value="normal">Normal</option>
-                        <option value="low">Low</option>
-                    </select>
-                    <select id="filter-status" class="filter-select">
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="expired">Expired</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Announcements Table -->
-            <div class="table-container bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-                <table class="w-full min-w-[900px]">
-                    <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Title</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Priority</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Target</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Sent To</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Created</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Expires</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="announcements-table-body">
-                        <tr><td colspan="8" class="text-center py-8">Loading announcements...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="flex justify-center gap-2 mt-6" id="pagination-container"></div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <!-- Create Announcement Modal -->
     <div id="create-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden modal-overlay" onclick="closeCreateModal(event)">
@@ -375,7 +295,6 @@
             </div>
             <div class="p-5">
                 <p class="text-sm text-gray-500 mb-4">Create a new announcement to notify users. Notifications will be sent automatically.</p>
-                
                 <div class="space-y-4">
                     <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Title</label><input type="text" id="announcement-title" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="e.g., New Seller Guidelines"></div>
                     <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Message</label><textarea id="announcement-message" rows="4" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="Enter announcement message"></textarea></div>
@@ -383,7 +302,6 @@
                     <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Target Audience</label><select id="announcement-target" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="all_users">All Users</option><option value="sellers">All Sellers</option><option value="specific">Specific Sellers</option></select></div>
                     <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Expiration Date (Optional)</label><input type="date" id="announcement-expiry" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><p class="text-xs text-gray-500 mt-1">Announcement will be hidden after this date</p></div>
                 </div>
-                
                 <div class="flex gap-3 mt-6">
                     <button onclick="createAnnouncement()" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition"><i class="fas fa-paper-plane mr-1"></i> Send Announcement</button>
                     <button onclick="closeCreateModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button>
@@ -405,7 +323,7 @@
                     <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Message</label><textarea id="edit-announcement-message" rows="4" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea></div>
                     <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Priority</label><select id="edit-announcement-priority" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="high">High</option><option value="low">Low</option></select></div>
                     <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Target Audience</label><select id="edit-announcement-target" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><option value="all_users">All Users</option><option value="sellers">All Sellers</option><option value="specific">Specific Sellers</option></select></div>
-                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Expiration Date (Optional)</label><input type="date" id="edit-announcement-expiry" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><p class="text-xs text-gray-500 mt-1">Announcement will be hidden after this date</p></div>
+                    <div><label class="block text-sm font-medium mb-1 dark:text-gray-300">Expiration Date (Optional)</label><input type="date" id="edit-announcement-expiry" class="w-full px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white"></div>
                 </div>
                 <div class="flex gap-3 mt-6"><button onclick="updateAnnouncement()" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition"><i class="fas fa-save mr-1"></i> Save Changes</button><button onclick="closeEditModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button></div>
             </div>
@@ -453,7 +371,6 @@
         let currentPriority = 'all';
         let currentStatusFilter = 'all';
         let currentEditId = null;
-        let currentViewAnnouncement = null;
         const itemsPerPage = 10;
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
@@ -522,7 +439,7 @@
                 
                 return `
                     <tr class="announcement-row border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td class="px-4 py-3"><div class="font-medium dark:text-white">${escapeHtml(a.title || 'Untitled')}</div><div class="text-xs text-gray-500 mt-1 line-clamp-1">${escapeHtml(a.message?.substring(0, 60))}${a.message?.length > 60 ? '...' : ''}</div></td>
+                        <td class="px-4 py-3"><div class="font-medium dark:text-white">${escapeHtml(a.title || 'Untitled')}</div><div class="text-xs text-gray-500 mt-1">${escapeHtml(a.message?.substring(0, 60))}${a.message?.length > 60 ? '...' : ''}</div></td>
                         <td class="px-4 py-3"><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${priorityClass}">${(a.priority || 'normal').toUpperCase()}</span></td>
                         <td class="px-4 py-3 text-sm">${formatTarget(a.target)}</td>
                         <td class="px-4 py-3"><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${statusText}</span></td>
@@ -551,23 +468,17 @@
         }
 
         window.goToPage = (page) => { currentPage = page; renderAnnouncements(); };
-
         window.openCreateModal = () => { document.getElementById('create-modal').classList.remove('hidden'); };
-        window.closeCreateModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('create-modal').classList.add('hidden'); document.getElementById('announcement-title').value = ''; document.getElementById('announcement-message').value = ''; document.getElementById('announcement-expiry').value = ''; };
-
+        window.closeCreateModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('create-modal').classList.add('hidden'); };
         window.createAnnouncement = async () => {
             const title = document.getElementById('announcement-title').value.trim();
             const message = document.getElementById('announcement-message').value.trim();
-            const priority = document.getElementById('announcement-priority').value;
-            const target = document.getElementById('announcement-target').value;
-            const expiryDate = document.getElementById('announcement-expiry').value;
             if (!title || !message) { alert('Please enter both title and message.'); return; }
-            await addDoc(collection(db, 'announcements'), { title, message, priority, target, expiryDate: expiryDate || null, status: 'active', sentCount: 0, createdAt: new Date().toISOString() });
+            await addDoc(collection(db, 'announcements'), { title, message, priority: document.getElementById('announcement-priority').value, target: document.getElementById('announcement-target').value, expiryDate: document.getElementById('announcement-expiry').value || null, status: 'active', sentCount: 0, createdAt: new Date().toISOString() });
             closeCreateModal();
             await loadAnnouncements();
-            alert('Announcement created and notifications sent!');
+            alert('Announcement created!');
         };
-
         window.openEditModal = async (id) => {
             const announcement = allAnnouncements.find(a => a.id === id);
             if (!announcement) return;
@@ -579,51 +490,27 @@
             document.getElementById('edit-announcement-expiry').value = announcement.expiryDate ? announcement.expiryDate.split('T')[0] : '';
             document.getElementById('edit-modal').classList.remove('hidden');
         };
-
         window.closeEditModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('edit-modal').classList.add('hidden'); currentEditId = null; };
-
         window.updateAnnouncement = async () => {
             if (!currentEditId) return;
-            const title = document.getElementById('edit-announcement-title').value.trim();
-            const message = document.getElementById('edit-announcement-message').value.trim();
-            const priority = document.getElementById('edit-announcement-priority').value;
-            const target = document.getElementById('edit-announcement-target').value;
-            const expiryDate = document.getElementById('edit-announcement-expiry').value;
-            if (!title || !message) { alert('Please enter both title and message.'); return; }
-            await updateDoc(doc(db, 'announcements', currentEditId), { title, message, priority, target, expiryDate: expiryDate || null, updatedAt: new Date().toISOString() });
+            await updateDoc(doc(db, 'announcements', currentEditId), { title: document.getElementById('edit-announcement-title').value.trim(), message: document.getElementById('edit-announcement-message').value.trim(), priority: document.getElementById('edit-announcement-priority').value, target: document.getElementById('edit-announcement-target').value, expiryDate: document.getElementById('edit-announcement-expiry').value || null, updatedAt: new Date().toISOString() });
             closeEditModal();
             await loadAnnouncements();
-            alert('Announcement updated successfully!');
+            alert('Announcement updated!');
         };
-
         window.openViewModal = (id) => {
-            const announcement = allAnnouncements.find(a => a.id === id);
-            if (!announcement) return;
-            currentViewAnnouncement = announcement;
-            const modalContent = document.getElementById('view-modal-content');
-            document.getElementById('view-modal-title').textContent = announcement.title;
-            modalContent.innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Priority:</span><span class="inline-block px-2 py-1 rounded-full text-xs font-medium priority-${announcement.priority || 'normal'}">${(announcement.priority || 'normal').toUpperCase()}</span></div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Target Audience:</span><span class="text-sm">${formatTarget(announcement.target)}</span></div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Status:</span><span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${isActive(announcement) ? 'status-active' : 'status-expired'}">${isActive(announcement) ? 'Active' : 'Expired'}</span></div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Sent To:</span><span class="text-sm">${announcement.sentCount || 0} users</span></div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Created:</span><span class="text-sm">${formatDateTime(announcement.createdAt)}</span></div>
-                    ${announcement.expiryDate ? `<div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><span class="text-sm font-medium">Expires:</span><span class="text-sm">${formatDateTime(announcement.expiryDate)}</span></div>` : ''}
-                    <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><div class="text-sm font-medium mb-2">Message:</div><div class="text-sm whitespace-pre-wrap">${escapeHtml(announcement.message)}</div></div>
-                </div>
-            `;
+            const a = allAnnouncements.find(a => a.id === id);
+            if (!a) return;
+            document.getElementById('view-modal-title').textContent = a.title;
+            document.getElementById('view-modal-content').innerHTML = `<div class="space-y-4"><div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><div class="text-sm font-medium mb-2">Message:</div><div class="text-sm whitespace-pre-wrap">${escapeHtml(a.message)}</div></div></div>`;
             document.getElementById('view-modal').classList.remove('hidden');
-            document.getElementById('view-modal-edit').onclick = () => { closeViewModal(); openEditModal(announcement.id); };
-            document.getElementById('view-modal-delete').onclick = () => { if (confirm('Delete this announcement?')) { deleteAnnouncement(announcement.id); closeViewModal(); } };
+            document.getElementById('view-modal-edit').onclick = () => { closeViewModal(); openEditModal(a.id); };
+            document.getElementById('view-modal-delete').onclick = () => { if (confirm('Delete?')) { deleteAnnouncement(a.id); closeViewModal(); } };
         };
-
-        window.closeViewModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('view-modal').classList.add('hidden'); currentViewAnnouncement = null; };
-        window.deleteAnnouncement = async (id) => { if (!confirm('Delete this announcement? This cannot be undone.')) return; await deleteDoc(doc(db, 'announcements', id)); await loadAnnouncements(); };
-
+        window.closeViewModal = (event) => { if (event && event.target !== event.currentTarget) return; document.getElementById('view-modal').classList.add('hidden'); };
+        window.deleteAnnouncement = async (id) => { if (!confirm('Delete this announcement?')) return; await deleteDoc(doc(db, 'announcements', id)); await loadAnnouncements(); };
         function formatTarget(target) { const targets = { all_users: 'All Users', sellers: 'All Sellers', specific: 'Specific Sellers' }; return targets[target] || target; }
-        function formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); return date.toLocaleDateString(); }
-        function formatDateTime(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); return date.toLocaleString(); }
+        function formatDate(dateString) { if (!dateString) return 'N/A'; return new Date(dateString).toLocaleDateString(); }
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 
         document.getElementById('search-announcements').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderAnnouncements(); });
