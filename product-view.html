@@ -8,291 +8,81 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Import Inter Font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
         
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        /* Theme Variables */
-        :root {
-            --accent-color: #2563eb;
-        }
+        :root { --accent-color: #2563eb; }
         [data-theme="light"] {
-            --bg-primary: #f8fafc;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f1f5f9;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --border-color: #e2e8f0;
-            --card-bg: #ffffff;
-            --hover-bg: #f1f5f9;
-            --active-bg: #2563eb;
-            --input-bg: #ffffff;
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a; --text-secondary: #475569; --border-color: #e2e8f0;
+            --card-bg: #ffffff; --hover-bg: #f1f5f9; --active-bg: #2563eb; --input-bg: #ffffff;
+            --dropdown-bg: #ffffff; --dropdown-text: #1e293b; --dropdown-hover: #f1f5f9;
         }
         [data-theme="dark"] {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #334155;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --card-bg: #1e293b;
-            --hover-bg: #334155;
-            --active-bg: #2563eb;
-            --input-bg: #334155;
+            --bg-primary: #0f172a; --bg-secondary: #1e293b; --bg-tertiary: #334155;
+            --text-primary: #f1f5f9; --text-secondary: #cbd5e1; --border-color: #334155;
+            --card-bg: #1e293b; --hover-bg: #334155; --active-bg: #2563eb; --input-bg: #334155;
+            --dropdown-bg: #1e293b; --dropdown-text: #f1f5f9; --dropdown-hover: #334155;
         }
+        body { background-color: var(--bg-primary); color: var(--text-primary); }
         
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-        }
+        .sidebar { background-color: var(--bg-secondary); border-right: 1px solid var(--border-color); transition: width 0.3s ease; width: 16rem; overflow-x: hidden; }
+        .sidebar.collapsed { width: 4rem; }
+        .sidebar.collapsed .nav-item span, .sidebar.collapsed .sidebar-logo span, .sidebar.collapsed p.text-xs { display: none; }
+        .sidebar.collapsed .nav-item { justify-content: center; padding: 0.75rem 0; }
+        .sidebar.collapsed .nav-item i { margin: 0; font-size: 1.25rem; }
         
-        /* Sidebar Styles */
-        .sidebar {
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 16px;
-            margin: 4px 0;
-            border-radius: 12px;
-            color: var(--text-secondary);
-            transition: all 0.2s;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .nav-item:hover, .nav-item.active {
-            background: var(--active-bg);
-            color: white;
-        }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin: 4px 0; border-radius: 12px; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+        .nav-item:hover, .nav-item.active { background: var(--active-bg); color: white; }
         
-        /* Mobile Sidebar */
-        #mobile-sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            overflow-y: auto;
-        }
+        .main-content { transition: margin-left 0.3s ease; }
+        @media (min-width: 768px) { .main-content { margin-left: 16rem; } }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .main-content { margin-left: 0 !important; } }
+        
+        #mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 1000; position: fixed; top: 0; left: 0; height: 100vh; width: 280px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); overflow-y: auto; }
         #mobile-sidebar.show { transform: translateX(0); }
-        #sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            cursor: pointer;
-        }
+        #sidebar-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; cursor: pointer; }
         #sidebar-overlay.show { display: block; }
         #sidebar-overlay:not(.show) { display: none; }
         
-        @media (max-width: 767px) {
-            .desktop-sidebar { display: none; }
-            .main-content { margin-left: 0 !important; }
-        }
-        @media (min-width: 768px) {
-            #mobile-sidebar, #sidebar-overlay { display: none; }
-            .main-content { margin-left: 16rem; }
-        }
-        
-        /* Product Image */
-        .thumbnail-scroll {
-            display: flex;
-            overflow-x: auto;
-            gap: 12px;
-            scroll-behavior: smooth;
-            padding-bottom: 8px;
-        }
-        .thumbnail-scroll::-webkit-scrollbar {
-            height: 4px;
-        }
-        .thumbnail-scroll::-webkit-scrollbar-track {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-        .thumbnail-scroll::-webkit-scrollbar-thumb {
-            background: var(--accent-color);
-            border-radius: 10px;
-        }
-        .thumbnail-item {
-            flex-shrink: 0;
-            width: 70px;
-            height: 70px;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.2s ease;
-        }
-        .thumbnail-item.active {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
-        }
-        .thumbnail-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .scroll-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 28px;
-            height: 28px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            z-index: 10;
-        }
-        .scroll-btn:hover {
-            background: var(--accent-color);
-            color: white;
-        }
+        .thumbnail-scroll { display: flex; overflow-x: auto; gap: 12px; scroll-behavior: smooth; padding-bottom: 8px; }
+        .thumbnail-scroll::-webkit-scrollbar { height: 4px; }
+        .thumbnail-scroll::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+        .thumbnail-scroll::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
+        .thumbnail-item { flex-shrink: 0; width: 70px; height: 70px; border-radius: 12px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: all 0.2s ease; }
+        .thumbnail-item.active { border-color: var(--accent-color); }
+        .thumbnail-item img { width: 100%; height: 100%; object-fit: cover; }
+        .scroll-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 10; }
+        .scroll-btn:hover { background: var(--accent-color); color: white; }
         .scroll-left { left: -12px; }
         .scroll-right { right: -12px; }
         
-        .main-product-image {
-            width: 100%;
-            height: auto;
-            max-height: 400px;
-            object-fit: contain;
-            background: #f3f4f6;
-            border-radius: 16px;
-        }
-        .dark .main-product-image {
-            background: #1e293b;
-        }
+        .main-product-image { width: 100%; height: auto; max-height: 400px; object-fit: contain; background: #f3f4f6; border-radius: 16px; }
+        .dark .main-product-image { background: #1e293b; }
         
-        /* Info Card */
-        .info-card {
-            background: var(--bg-tertiary);
-            border-radius: 12px;
-            padding: 12px;
-            transition: all 0.2s;
-        }
-        .info-card:hover {
-            transform: translateY(-2px);
-        }
+        .info-card { background: var(--bg-tertiary); border-radius: 12px; padding: 12px; transition: all 0.2s; }
+        .info-card:hover { transform: translateY(-2px); }
         
-        /* Action Toolbar */
-        .action-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
+        .action-toolbar { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .menu-container { position: relative; }
+        .menu-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary); padding: 6px 10px; border-radius: 8px; }
+        .menu-btn:hover { background: var(--hover-bg); }
+        .dropdown-menu { position: absolute; right: 0; top: 32px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); min-width: 140px; z-index: 20; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.2s ease; border: 1px solid var(--border-color); }
+        .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-menu button { display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 13px; text-decoration: none; color: var(--text-primary); transition: background 0.2s; cursor: pointer; width: 100%; background: none; border: none; text-align: left; }
+        .dropdown-menu button:hover { background: var(--hover-bg); }
+        .dropdown-menu .divider { height: 1px; background: var(--border-color); margin: 4px 0; }
+        .dropdown-menu .delete-item { color: #ef4444; }
         
-        /* 3-Dot Menu */
-        .menu-container {
-            position: relative;
-        }
-        .menu-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            padding: 6px 10px;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-        .menu-btn:hover {
-            background: var(--hover-bg);
-        }
-        .dropdown-menu {
-            position: absolute;
-            right: 0;
-            top: 32px;
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
-            min-width: 140px;
-            z-index: 20;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-8px);
-            transition: all 0.2s ease;
-            border: 1px solid var(--border-color);
-        }
-        .dropdown-menu.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-        .dropdown-menu a, .dropdown-menu button {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            font-size: 13px;
-            text-decoration: none;
-            color: var(--text-primary);
-            transition: background 0.2s;
-            cursor: pointer;
-            width: 100%;
-            background: none;
-            border: none;
-            text-align: left;
-        }
-        .dropdown-menu a:hover, .dropdown-menu button:hover {
-            background: var(--hover-bg);
-        }
-        .dropdown-menu .divider {
-            height: 1px;
-            background: var(--border-color);
-            margin: 4px 0;
-        }
-        .dropdown-menu .delete-item {
-            color: #ef4444;
-        }
+        .dropdown-menu, #user-dropdown { background-color: var(--dropdown-bg) !important; border: 1px solid var(--border-color) !important; border-radius: 12px !important; }
+        .dropdown-menu a, #user-dropdown a, .dropdown-menu button, #user-dropdown button { color: var(--dropdown-text) !important; }
+        .dropdown-menu a:hover, #user-dropdown a:hover, .dropdown-menu button:hover, #user-dropdown button:hover { background-color: var(--dropdown-hover) !important; }
         
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #10b981;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
-        }
-        .toast.error {
-            background: #ef4444;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+        .toast { position: fixed; bottom: 24px; right: 24px; background: #10b981; color: white; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; z-index: 1000; animation: slideIn 0.3s ease; }
+        .toast.error { background: #ef4444; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-        @media (max-width: 768px) {
-            .thumbnail-item { width: 55px; height: 55px; }
-            .main-product-image { max-height: 250px; }
-        }
+        @media (max-width: 768px) { .thumbnail-item { width: 55px; height: 55px; } .main-product-image { max-height: 250px; } }
     </style>
 </head>
 <body>
@@ -324,7 +114,7 @@
     <!-- Desktop Sidebar -->
     <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
         <div class="p-4 border-b">
-            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
             <p class="text-xs opacity-60 mt-2">Admin Panel</p>
         </div>
         <nav class="p-4">
@@ -343,37 +133,23 @@
 
     <!-- Main Content -->
     <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar - No action buttons, only back button -->
+        <!-- Top Bar with Sidebar Toggle -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <a href="products.html" id="back-button" class="text-purple-500 hover:text-purple-600 transition">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Products
-                </a>
+                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-chevron-left"></i></button>
+                <a href="products.html" class="text-purple-500 hover:text-purple-600 transition"><i class="fas fa-arrow-left mr-2"></i> Back to Products</a>
                 <h1 class="text-xl font-semibold">Product Details</h1>
             </div>
             <div class="flex items-center space-x-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
-                    <i class="fas fa-moon dark:block hidden"></i>
-                    <i class="fas fa-sun dark:hidden block"></i>
-                </button>
+                <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
                 <div class="relative">
-                    <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
-                        <i class="fas fa-user-circle text-2xl"></i>
-                        <span class="hidden md:inline" id="admin-name">Admin</span>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
-                    </button>
+                    <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="admin-name">Admin</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
                     <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-user-circle w-5"></i> My Profile
-                        </a>
-                        <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-cog w-5"></i> Account Settings
-                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a>
+                        <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a>
                         <div class="border-t"></div>
-                        <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-sign-out-alt w-5"></i> Logout
-                        </button>
+                        <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button>
                     </div>
                 </div>
             </div>
@@ -382,12 +158,10 @@
         <!-- Main Content -->
         <div class="p-4 md:p-6">
             <div class="max-w-7xl mx-auto">
-                <!-- Action Toolbar with 3-dot menu (Edit/Delete moved here) -->
+                <!-- Action Toolbar with 3-dot menu -->
                 <div class="action-toolbar">
                     <div class="menu-container">
-                        <button class="menu-btn" onclick="toggleDropdown(event)">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
+                        <button class="menu-btn" onclick="toggleDropdown(event)"><i class="fas fa-ellipsis-v"></i></button>
                         <div class="dropdown-menu" id="action-dropdown">
                             <button onclick="editProduct()"><i class="fas fa-edit"></i> Edit Product</button>
                             <div class="divider"></div>
@@ -398,85 +172,31 @@
 
                 <!-- Product Content -->
                 <div class="flex flex-col lg:flex-row gap-8">
-                    <!-- Left Column - Product Images -->
                     <div class="lg:w-1/2">
-                        <div id="main-image" class="bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-[400px]">
-                            <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
-                        </div>
-                        
-                        <!-- Thumbnail Strip -->
+                        <div id="main-image" class="bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden flex items-center justify-center min-h-[300px] md:min-h-[400px]"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i></div>
                         <div id="thumbnail-strip-container" class="relative mt-4 hidden">
-                            <button onclick="scrollThumbnails('left')" class="scroll-btn scroll-left bg-white dark:bg-gray-800 shadow-md">
-                                <i class="fas fa-chevron-left text-sm"></i>
-                            </button>
+                            <button onclick="scrollThumbnails('left')" class="scroll-btn scroll-left bg-white dark:bg-gray-800 shadow-md"><i class="fas fa-chevron-left text-sm"></i></button>
                             <div id="thumbnail-strip" class="thumbnail-scroll"></div>
-                            <button onclick="scrollThumbnails('right')" class="scroll-btn scroll-right bg-white dark:bg-gray-800 shadow-md">
-                                <i class="fas fa-chevron-right text-sm"></i>
-                            </button>
+                            <button onclick="scrollThumbnails('right')" class="scroll-btn scroll-right bg-white dark:bg-gray-800 shadow-md"><i class="fas fa-chevron-right text-sm"></i></button>
                         </div>
                     </div>
-
-                    <!-- Right Column - Product Info -->
                     <div class="lg:w-1/2">
                         <h1 id="product-name" class="text-2xl md:text-3xl font-bold dark:text-white mb-3">Loading...</h1>
-
-                        <!-- Price -->
                         <div id="product-price" class="text-2xl font-bold dark:text-white mb-2">Loading...</div>
-
-                        <!-- Stock Status -->
                         <div class="mb-5" id="stock-status"></div>
-
-                        <!-- Details Grid -->
                         <div class="grid grid-cols-2 gap-3 mb-6">
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">BRAND</div>
-                                <div id="product-brand" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">SKU</div>
-                                <div id="product-sku" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">CATEGORY</div>
-                                <div id="product-category" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">CONDITION</div>
-                                <div id="product-condition" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">COLOR</div>
-                                <div id="product-color" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">MATERIAL</div>
-                                <div id="product-material" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">SIZE</div>
-                                <div id="product-size" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">WARRANTY</div>
-                                <div id="product-warranty" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">WEIGHT</div>
-                                <div id="product-weight" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="text-xs text-gray-500 uppercase tracking-wide">QUANTITY</div>
-                                <div id="product-quantity" class="font-medium dark:text-white text-sm mt-1">-</div>
-                            </div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">BRAND</div><div id="product-brand" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">SKU</div><div id="product-sku" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">CATEGORY</div><div id="product-category" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">CONDITION</div><div id="product-condition" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">COLOR</div><div id="product-color" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">MATERIAL</div><div id="product-material" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">SIZE</div><div id="product-size" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">WARRANTY</div><div id="product-warranty" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">WEIGHT</div><div id="product-weight" class="font-medium dark:text-white text-sm mt-1">-</div></div>
+                            <div class="info-card"><div class="text-xs text-gray-500 uppercase tracking-wide">QUANTITY</div><div id="product-quantity" class="font-medium dark:text-white text-sm mt-1">-</div></div>
                         </div>
-
-                        <!-- Description -->
-                        <div class="mt-5 pt-3 border-t dark:border-gray-700">
-                            <h4 class="font-semibold mb-2 dark:text-white">Description</h4>
-                            <div id="product-description" class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                                Loading...
-                            </div>
-                        </div>
+                        <div class="mt-5 pt-3 border-t dark:border-gray-700"><h4 class="font-semibold mb-2 dark:text-white">Description</h4><div id="product-description" class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Loading...</div></div>
                     </div>
                 </div>
             </div>
@@ -517,7 +237,21 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // ========== MOBILE SIDEBAR ==========
+        function initCollapsibleSidebar() {
+            const sidebar = document.querySelector('.desktop-sidebar');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            if (!sidebar || !toggleBtn) return;
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) { sidebar.classList.add('collapsed'); toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>'; }
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                const collapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', collapsed);
+                toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+            });
+        }
+
         window.toggleMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -525,7 +259,6 @@
             if (overlay) overlay.classList.toggle('show');
             document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
         };
-
         window.closeMobileMenu = function() {
             const sidebar = document.getElementById('mobile-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -533,75 +266,36 @@
             if (overlay) overlay.classList.remove('show');
             document.body.style.overflow = '';
         };
-
-        // ========== USER MENU ==========
         window.toggleUserMenu = function() {
             const dropdown = document.getElementById('user-dropdown');
             const chevron = document.getElementById('user-chevron');
-            if (dropdown) {
-                const isHidden = dropdown.classList.contains('hidden');
-                dropdown.classList.toggle('hidden');
-                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
+            if (dropdown) { const isHidden = dropdown.classList.contains('hidden'); dropdown.classList.toggle('hidden'); if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)'; }
         };
-
         document.addEventListener('click', function(event) {
             const dropdown = document.getElementById('user-dropdown');
             const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
-            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-                const chevron = document.getElementById('user-chevron');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
+            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) { dropdown.classList.add('hidden'); const chevron = document.getElementById('user-chevron'); if (chevron) chevron.style.transform = 'rotate(0deg)'; }
         });
-
-        // ========== 3-DOT MENU ==========
-        window.toggleDropdown = function(event) {
-            event.stopPropagation();
-            const dropdown = document.getElementById('action-dropdown');
-            if (dropdown) dropdown.classList.toggle('show');
-        };
-
-        document.addEventListener('click', function() {
-            const dropdown = document.getElementById('action-dropdown');
-            if (dropdown) dropdown.classList.remove('show');
-        });
-
-        // ========== THEME & LOGOUT ==========
-        window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        };
-
+        window.toggleDropdown = function(event) { event.stopPropagation(); const dropdown = document.getElementById('action-dropdown'); if (dropdown) dropdown.classList.toggle('show'); };
+        document.addEventListener('click', function() { const dropdown = document.getElementById('action-dropdown'); if (dropdown) dropdown.classList.remove('show'); });
+        window.toggleTheme = () => { const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); };
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.data()?.role !== 'admin') {
-                window.location.href = '/seller-dashboard.html';
-                return;
-            }
+            if (userDoc.data()?.role !== 'admin') { window.location.href = '/seller-dashboard.html'; return; }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
+            initCollapsibleSidebar();
             await loadProduct();
         });
 
         async function loadProduct() {
             const urlParams = new URLSearchParams(window.location.search);
             productId = urlParams.get('id');
-            if (!productId) {
-                window.location.href = 'products.html';
-                return;
-            }
-
+            if (!productId) { window.location.href = 'products.html'; return; }
             const productDoc = await getDoc(doc(db, 'products', productId));
-            if (!productDoc.exists()) {
-                showToast('Product not found!', true);
-                setTimeout(() => { window.location.href = 'products.html'; }, 1500);
-                return;
-            }
-
+            if (!productDoc.exists()) { showToast('Product not found!', true); setTimeout(() => { window.location.href = 'products.html'; }, 1500); return; }
             product = { id: productDoc.id, ...productDoc.data() };
             displayProduct();
         }
@@ -610,158 +304,32 @@
             const isOnSale = product.salePrice && product.salePrice > 0 && product.salePrice < product.regularPrice;
             const salePriceValue = product.salePrice || product.price || 0;
             const regularPriceValue = product.regularPrice || product.price || 0;
-            
             document.getElementById('product-name').textContent = product.name || 'Untitled';
-            
-            const brandEl = document.getElementById('product-brand');
-            if (product.brand && product.brand.trim() !== '') {
-                brandEl.textContent = product.brand;
-                brandEl.classList.remove('hidden');
-            } else {
-                brandEl.parentElement.classList.add('hidden');
-            }
-            
-            const skuEl = document.getElementById('product-sku');
-            if (product.sku && product.sku.trim() !== '') {
-                skuEl.textContent = product.sku;
-                skuEl.parentElement.classList.remove('hidden');
-            } else {
-                skuEl.parentElement.classList.add('hidden');
-            }
-            
-            const categoryEl = document.getElementById('product-category');
-            if (product.category && product.category.trim() !== '') {
-                categoryEl.textContent = product.category;
-                categoryEl.parentElement.classList.remove('hidden');
-            } else {
-                categoryEl.parentElement.classList.add('hidden');
-            }
-            
-            const conditionEl = document.getElementById('product-condition');
-            if (product.condition && product.condition.trim() !== '') {
-                let conditionDisplay = product.condition;
-                if (conditionDisplay === 'assembled') conditionDisplay = 'Assembled';
-                if (conditionDisplay === 'packed') conditionDisplay = 'Packed in Box';
-                if (conditionDisplay === 'both') conditionDisplay = 'Both Options';
-                conditionEl.textContent = conditionDisplay;
-                conditionEl.parentElement.classList.remove('hidden');
-            } else {
-                conditionEl.parentElement.classList.add('hidden');
-            }
-            
-            const priceEl = document.getElementById('product-price');
-            if (isOnSale) {
-                priceEl.innerHTML = `<span class="text-2xl font-bold">AED ${product.salePrice}</span><span class="text-lg text-gray-400 line-through ml-2">AED ${product.regularPrice}</span>`;
-            } else {
-                priceEl.innerHTML = `<span class="text-2xl font-bold">AED ${regularPriceValue}</span>`;
-            }
-            
-            const colorEl = document.getElementById('product-color');
-            if (product.color && product.color.trim() !== '') {
-                colorEl.textContent = product.color;
-                colorEl.parentElement.classList.remove('hidden');
-            } else {
-                colorEl.parentElement.classList.add('hidden');
-            }
-            
-            const materialEl = document.getElementById('product-material');
-            if (product.material && product.material.trim() !== '') {
-                materialEl.textContent = product.material;
-                materialEl.parentElement.classList.remove('hidden');
-            } else {
-                materialEl.parentElement.classList.add('hidden');
-            }
-            
-            const sizeEl = document.getElementById('product-size');
-            if (product.size && product.size.trim() !== '') {
-                sizeEl.textContent = product.size;
-                sizeEl.parentElement.classList.remove('hidden');
-            } else {
-                sizeEl.parentElement.classList.add('hidden');
-            }
-            
-            const warrantyEl = document.getElementById('product-warranty');
-            if (product.warranty && product.warranty.trim() !== '') {
-                warrantyEl.textContent = product.warranty;
-                warrantyEl.parentElement.classList.remove('hidden');
-            } else {
-                warrantyEl.parentElement.classList.add('hidden');
-            }
-            
-            const weightEl = document.getElementById('product-weight');
-            if (product.weight && product.weight.trim() !== '') {
-                weightEl.textContent = product.weight;
-                weightEl.parentElement.classList.remove('hidden');
-            } else {
-                weightEl.parentElement.classList.add('hidden');
-            }
-            
+            const brandEl = document.getElementById('product-brand'); if (product.brand && product.brand.trim() !== '') { brandEl.textContent = product.brand; brandEl.parentElement.classList.remove('hidden'); } else { brandEl.parentElement.classList.add('hidden'); }
+            const skuEl = document.getElementById('product-sku'); if (product.sku && product.sku.trim() !== '') { skuEl.textContent = product.sku; skuEl.parentElement.classList.remove('hidden'); } else { skuEl.parentElement.classList.add('hidden'); }
+            const categoryEl = document.getElementById('product-category'); if (product.category && product.category.trim() !== '') { categoryEl.textContent = product.category; categoryEl.parentElement.classList.remove('hidden'); } else { categoryEl.parentElement.classList.add('hidden'); }
+            const conditionEl = document.getElementById('product-condition'); if (product.condition && product.condition.trim() !== '') { let conditionDisplay = product.condition; if (conditionDisplay === 'assembled') conditionDisplay = 'Assembled'; if (conditionDisplay === 'packed') conditionDisplay = 'Packed in Box'; if (conditionDisplay === 'both') conditionDisplay = 'Both Options'; conditionEl.textContent = conditionDisplay; conditionEl.parentElement.classList.remove('hidden'); } else { conditionEl.parentElement.classList.add('hidden'); }
+            const priceEl = document.getElementById('product-price'); if (isOnSale) { priceEl.innerHTML = `<span class="text-2xl font-bold">AED ${product.salePrice}</span><span class="text-lg text-gray-400 line-through ml-2">AED ${product.regularPrice}</span>`; } else { priceEl.innerHTML = `<span class="text-2xl font-bold">AED ${regularPriceValue}</span>`; }
+            const colorEl = document.getElementById('product-color'); if (product.color && product.color.trim() !== '') { colorEl.textContent = product.color; colorEl.parentElement.classList.remove('hidden'); } else { colorEl.parentElement.classList.add('hidden'); }
+            const materialEl = document.getElementById('product-material'); if (product.material && product.material.trim() !== '') { materialEl.textContent = product.material; materialEl.parentElement.classList.remove('hidden'); } else { materialEl.parentElement.classList.add('hidden'); }
+            const sizeEl = document.getElementById('product-size'); if (product.size && product.size.trim() !== '') { sizeEl.textContent = product.size; sizeEl.parentElement.classList.remove('hidden'); } else { sizeEl.parentElement.classList.add('hidden'); }
+            const warrantyEl = document.getElementById('product-warranty'); if (product.warranty && product.warranty.trim() !== '') { warrantyEl.textContent = product.warranty; warrantyEl.parentElement.classList.remove('hidden'); } else { warrantyEl.parentElement.classList.add('hidden'); }
+            const weightEl = document.getElementById('product-weight'); if (product.weight && product.weight.trim() !== '') { weightEl.textContent = product.weight; weightEl.parentElement.classList.remove('hidden'); } else { weightEl.parentElement.classList.add('hidden'); }
             document.getElementById('product-quantity').textContent = product.stockQuantity || product.quantity || 1;
-            
-            const stockEl = document.getElementById('stock-status');
-            const stockStatus = product.stockStatus || (product.inStock ? 'in-stock' : 'out-of-stock');
-            if (stockStatus === 'in-stock') {
-                stockEl.innerHTML = '<span class="text-green-600 dark:text-green-400 text-sm"><i class="fas fa-check-circle mr-1"></i> In Stock</span>';
-            } else {
-                stockEl.innerHTML = '<span class="text-red-600 dark:text-red-400 text-sm"><i class="fas fa-times-circle mr-1"></i> Out of Stock</span>';
-            }
-            
+            const stockEl = document.getElementById('stock-status'); const stockStatus = product.stockStatus || (product.inStock ? 'in-stock' : 'out-of-stock');
+            if (stockStatus === 'in-stock') { stockEl.innerHTML = '<span class="text-green-600 dark:text-green-400 text-sm"><i class="fas fa-check-circle mr-1"></i> In Stock</span>'; } else { stockEl.innerHTML = '<span class="text-red-600 dark:text-red-400 text-sm"><i class="fas fa-times-circle mr-1"></i> Out of Stock</span>'; }
             document.getElementById('product-description').innerHTML = product.description || 'No description available.';
-            
             const images = product.images && product.images.length > 0 ? product.images : (product.imageUrl ? [product.imageUrl] : []);
             const mainImageContainer = document.getElementById('main-image');
-            
-            if (images.length > 0) {
-                mainImageContainer.innerHTML = `<img src="${images[0]}" class="main-product-image" alt="${product.name}">`;
-            } else {
-                mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl"><i class="fas fa-box text-6xl text-gray-400"></i></div>';
-            }
-            
-            const thumbnailStrip = document.getElementById('thumbnail-strip');
-            const thumbnailContainer = document.getElementById('thumbnail-strip-container');
-            
-            if (images.length > 1) {
-                thumbnailContainer.classList.remove('hidden');
-                thumbnailStrip.innerHTML = images.map((img, index) => `
-                    <div class="thumbnail-item ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img}', this)">
-                        <img src="${img}" alt="Thumbnail ${index + 1}">
-                    </div>
-                `).join('');
-            } else {
-                thumbnailContainer.classList.add('hidden');
-            }
+            if (images.length > 0) { mainImageContainer.innerHTML = `<img src="${images[0]}" class="main-product-image" alt="${product.name}">`; } else { mainImageContainer.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl"><i class="fas fa-box text-6xl text-gray-400"></i></div>'; }
+            const thumbnailStrip = document.getElementById('thumbnail-strip'); const thumbnailContainer = document.getElementById('thumbnail-strip-container');
+            if (images.length > 1) { thumbnailContainer.classList.remove('hidden'); thumbnailStrip.innerHTML = images.map((img, index) => `<div class="thumbnail-item ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img}', this)"><img src="${img}" alt="Thumbnail ${index + 1}"></div>`).join(''); } else { thumbnailContainer.classList.add('hidden'); }
         }
 
-        window.changeMainImage = function(imgUrl, element) {
-            document.getElementById('main-image').innerHTML = `<img src="${imgUrl}" class="main-product-image" alt="Product">`;
-            document.querySelectorAll('.thumbnail-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            element.classList.add('active');
-        };
-
-        window.scrollThumbnails = function(direction) {
-            const container = document.getElementById('thumbnail-strip');
-            if (container) {
-                const scrollAmount = 120;
-                container.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-            }
-        };
-
-        window.editProduct = function() {
-            window.location.href = `add-product.html?id=${productId}`;
-        };
-
-        window.deleteProduct = async function() {
-            if (!confirm('Delete this product? This cannot be undone.')) return;
-            try {
-                await deleteDoc(doc(db, 'products', productId));
-                showToast('Product deleted successfully!');
-                setTimeout(() => { window.location.href = 'products.html'; }, 1500);
-            } catch (error) {
-                showToast('Error deleting product: ' + error.message, true);
-            }
-        };
+        window.changeMainImage = function(imgUrl, element) { document.getElementById('main-image').innerHTML = `<img src="${imgUrl}" class="main-product-image" alt="Product">`; document.querySelectorAll('.thumbnail-item').forEach(item => { item.classList.remove('active'); }); element.classList.add('active'); };
+        window.scrollThumbnails = function(direction) { const container = document.getElementById('thumbnail-strip'); if (container) { const scrollAmount = 120; container.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' }); } };
+        window.editProduct = function() { window.location.href = `add-product.html?id=${productId}`; };
+        window.deleteProduct = async function() { if (!confirm('Delete this product? This cannot be undone.')) return; try { await deleteDoc(doc(db, 'products', productId)); showToast('Product deleted successfully!'); setTimeout(() => { window.location.href = 'products.html'; }, 1500); } catch (error) { showToast('Error deleting product: ' + error.message, true); } };
     </script>
 </body>
 </html>
