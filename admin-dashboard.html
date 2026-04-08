@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Additional styles for dashboard */
         .stat-card {
             transition: all 0.2s ease;
             position: relative;
@@ -38,7 +37,6 @@
         .status-completed { background: #3b82f620; color: #3b82f6; }
         .status-paid { background: #8b5cf620; color: #8b5cf6; }
         
-        /* Date Range Picker - Responsive */
         .date-filter-container {
             display: flex;
             flex-wrap: wrap;
@@ -121,7 +119,6 @@
             gap: 0.5rem;
         }
         
-        /* Chart container */
         .chart-container {
             height: 300px;
             position: relative;
@@ -131,73 +128,7 @@
             max-height: 100%;
             width: 100%;
         }
-        .card {
-            overflow: hidden;
-        }
         
-        /* Desktop Sidebar - Collapsible */
-        .desktop-sidebar {
-            width: 16rem;
-            transition: width 0.3s ease;
-            overflow-x: hidden;
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            z-index: 40;
-        }
-        .desktop-sidebar.collapsed {
-            width: 4rem;
-        }
-        .desktop-sidebar.collapsed .nav-item span,
-        .desktop-sidebar.collapsed .sidebar-logo span,
-        .desktop-sidebar.collapsed .sidebar-footer span,
-        .desktop-sidebar.collapsed p.text-xs {
-            display: none;
-        }
-        .desktop-sidebar.collapsed .nav-item {
-            justify-content: center;
-            padding: 0.75rem 0;
-        }
-        .desktop-sidebar.collapsed .nav-item i {
-            margin: 0;
-            font-size: 1.25rem;
-        }
-        .desktop-sidebar.collapsed .sidebar-logo {
-            justify-content: center;
-        }
-        
-        /* FIX: Main content stretches when sidebar collapses */
-        .main-content {
-            transition: margin-left 0.3s ease;
-            margin-left: 16rem;
-            width: calc(100% - 16rem);
-        }
-        .desktop-sidebar.collapsed ~ .main-content,
-        .desktop-sidebar.collapsed + .main-content {
-            margin-left: 4rem;
-            width: calc(100% - 4rem);
-        }
-        
-        @media (max-width: 767px) {
-            .desktop-sidebar { display: none; }
-            .main-content { margin-left: 0; width: 100%; }
-        }
-        
-        .sidebar-toggle-btn {
-            cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 8px;
-            transition: all 0.2s;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-        }
-        .sidebar-toggle-btn:hover {
-            background: var(--hover-bg);
-        }
-        
-        /* Back button style */
         .back-btn {
             display: inline-flex;
             align-items: center;
@@ -242,203 +173,207 @@
         </div>
     </aside>
 
-    <!-- Desktop Sidebar -->
-    <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
-        <div class="p-4 border-b">
-            <div class="flex items-center space-x-2 sidebar-logo">
-                <i class="fas fa-store text-2xl text-purple-500"></i>
-                <span class="text-xl font-bold">Marketplace Pro</span>
-            </div>
-            <p class="text-xs opacity-60 mt-2">Admin Panel</p>
-        </div>
-        <nav class="p-4">
-            <a href="admin-dashboard.html" class="nav-item active"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
-            <a href="products.html" class="nav-item"><i class="fas fa-box w-5"></i><span>Products</span></a>
-            <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
-            <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
-            <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
-            <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
-            <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
-        </nav>
-        <div class="absolute bottom-0 w-full p-4 border-t">
-            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content flex-1">
-        <!-- Top Bar with Sidebar Toggle (No Back button on Dashboard) -->
-        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
-            <div class="flex items-center space-x-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold">Dashboard</h1>
-                    <p class="text-sm text-gray-500">Welcome back, Admin</p>
+    <!-- FIXED: app-wrapper wraps sidebar + main content -->
+    <div class="app-wrapper">
+        <!-- Desktop Sidebar -->
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b">
+                <div class="flex items-center space-x-2 sidebar-logo">
+                    <i class="fas fa-store text-2xl text-purple-500"></i>
+                    <span class="text-xl font-bold">Marketplace Pro</span>
                 </div>
+                <p class="text-xs opacity-60 mt-2">Admin Panel</p>
             </div>
-            <div class="flex items-center space-x-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
-                    <i class="fas fa-moon dark:block hidden"></i>
-                    <i class="fas fa-sun dark:hidden block"></i>
-                </button>
-                <div class="relative">
-                    <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
-                        <i class="fas fa-user-circle text-2xl"></i>
-                        <span class="hidden md:inline" id="admin-name">Admin</span>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
+            <nav class="p-4">
+                <a href="admin-dashboard.html" class="nav-item active"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
+                <a href="products.html" class="nav-item"><i class="fas fa-box w-5"></i><span>Products</span></a>
+                <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
+                <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
+                <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
+                <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
+                <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4 border-t">
+                <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
-                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-user-circle w-5"></i> My Profile
-                        </a>
-                        <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-cog w-5"></i> Account Settings
-                        </a>
-                        <div class="border-t"></div>
-                        <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-sign-out-alt w-5"></i> Logout
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold">Dashboard</h1>
+                        <p class="text-sm text-gray-500">Welcome back, Admin</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition">
+                        <i class="fas fa-moon dark:block hidden"></i>
+                        <i class="fas fa-sun dark:hidden block"></i>
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <span class="hidden md:inline" id="admin-name">Admin</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
                         </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dashboard Content -->
-        <div class="p-4 md:p-6">
-            <!-- Date Range Filter -->
-            <div class="date-filter-container">
-                <div class="date-presets">
-                    <button class="date-preset" data-days="1">Today</button>
-                    <button class="date-preset" data-days="7">Last 7 Days</button>
-                    <button class="date-preset" data-days="14">Last 14 Days</button>
-                    <button class="date-preset" data-days="30">Last 30 Days</button>
-                    <button class="date-preset active" data-days="365">This Year</button>
-                </div>
-                <div class="custom-date-range">
-                    <input type="date" id="custom-start">
-                    <span>to</span>
-                    <input type="date" id="custom-end">
-                    <button id="apply-custom" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm">Apply</button>
-                </div>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-users"></i>
-                    <div class="text-2xl font-bold" id="stat-registered-users">0</div>
-                    <div class="text-sm opacity-70">Registered Users</div>
-                </div>
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-shopping-cart"></i>
-                    <div class="text-2xl font-bold" id="stat-total-orders">0</div>
-                    <div class="text-sm opacity-70">Total Orders</div>
-                </div>
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-clock"></i>
-                    <div class="text-2xl font-bold" id="stat-pending-orders">0</div>
-                    <div class="text-sm opacity-70">Pending Orders</div>
-                </div>
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-chart-line"></i>
-                    <div class="text-2xl font-bold" id="stat-revenue">AED 0</div>
-                    <div class="text-sm opacity-70">Revenue</div>
-                </div>
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-coins"></i>
-                    <div class="text-2xl font-bold" id="stat-profit">AED 0</div>
-                    <div class="text-sm opacity-70">Profit</div>
-                </div>
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-percent"></i>
-                    <div class="text-2xl font-bold" id="stat-success-rate">0%</div>
-                    <div class="text-sm opacity-70">Success Rate</div>
-                </div>
-            </div>
-
-            <!-- Secondary Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-calendar-day"></i>
-                    <div class="text-2xl font-bold" id="stat-orders-today">0</div>
-                    <div class="text-sm opacity-70">Orders Today</div>
-                </div>
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-hourglass-half"></i>
-                    <div class="text-2xl font-bold" id="stat-pending-payments">AED 0</div>
-                    <div class="text-sm opacity-70">Pending Payments</div>
-                </div>
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-chart-simple"></i>
-                    <div class="text-2xl font-bold" id="stat-admin-commission">AED 0</div>
-                    <div class="text-sm opacity-70">Admin Commission</div>
-                </div>
-                <div class="stat-card p-4 rounded-xl">
-                    <i class="stat-icon fas fa-truck"></i>
-                    <div class="text-2xl font-bold" id="stat-next-deliveries">0</div>
-                    <div class="text-sm opacity-70">Next Deliveries</div>
-                </div>
-            </div>
-
-            <!-- Next & Recent Deliveries -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="card p-5 rounded-xl">
-                    <h3 class="section-title"><i class="fas fa-truck text-blue-500"></i> Next Deliveries</h3>
-                    <div id="next-deliveries-list" class="space-y-2">
-                        <div class="text-center py-4 text-gray-500">Loading deliveries...</div>
-                    </div>
-                </div>
-                <div class="card p-5 rounded-xl">
-                    <h3 class="section-title"><i class="fas fa-check-circle text-green-500"></i> Recently Delivered</h3>
-                    <div id="recently-delivered-list" class="space-y-2">
-                        <div class="text-center py-4 text-gray-500">Loading deliveries...</div>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-user-circle w-5"></i> My Profile
+                            </a>
+                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-cog w-5"></i> Account Settings
+                            </a>
+                            <div class="border-t"></div>
+                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-sign-out-alt w-5"></i> Logout
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Revenue Trend Chart -->
-            <div class="card p-5 rounded-xl mb-8">
-                <h3 class="section-title"><i class="fas fa-chart-line text-purple-500"></i> Revenue Trend</h3>
-                <div class="chart-container">
-                    <canvas id="revenueChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Order Status Chart -->
-            <div class="card p-5 rounded-xl mb-8">
-                <h3 class="section-title"><i class="fas fa-chart-pie text-orange-500"></i> Order by Status</h3>
-                <div class="chart-container">
-                    <canvas id="statusChart"></canvas>
-                </div>
-                <div class="flex justify-center gap-6 mt-4 text-sm flex-wrap">
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span><span id="pending-count">Pending: 0</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#10b981]"></span><span id="approved-count">Approved: 0</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#3b82f6]"></span><span id="completed-count">Completed: 0</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#8b5cf6]"></span><span id="paid-count">Paid: 0</span></div>
-                </div>
-            </div>
-
-            <!-- Top Sellers & Top Items -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="card p-5 rounded-xl">
-                    <h3 class="section-title"><i class="fas fa-trophy text-yellow-500"></i> Top 10 Sellers</h3>
-                    <div id="top-sellers-list" class="space-y-2">
-                        <div class="text-center py-4 text-gray-500">Loading sellers...</div>
+            <!-- Dashboard Content -->
+            <div class="p-4 md:p-6">
+                <!-- Date Range Filter -->
+                <div class="date-filter-container">
+                    <div class="date-presets">
+                        <button class="date-preset" data-days="1">Today</button>
+                        <button class="date-preset" data-days="7">Last 7 Days</button>
+                        <button class="date-preset" data-days="14">Last 14 Days</button>
+                        <button class="date-preset" data-days="30">Last 30 Days</button>
+                        <button class="date-preset active" data-days="365">This Year</button>
+                    </div>
+                    <div class="custom-date-range">
+                        <input type="date" id="custom-start">
+                        <span>to</span>
+                        <input type="date" id="custom-end">
+                        <button id="apply-custom" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm">Apply</button>
                     </div>
                 </div>
-                <div class="card p-5 rounded-xl">
-                    <h3 class="section-title"><i class="fas fa-box text-purple-500"></i> Top 10 Items</h3>
-                    <div id="top-items-list" class="space-y-2">
-                        <div class="text-center py-4 text-gray-500">Loading items...</div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-users"></i>
+                        <div class="text-2xl font-bold" id="stat-registered-users">0</div>
+                        <div class="text-sm opacity-70">Registered Users</div>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-shopping-cart"></i>
+                        <div class="text-2xl font-bold" id="stat-total-orders">0</div>
+                        <div class="text-sm opacity-70">Total Orders</div>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-clock"></i>
+                        <div class="text-2xl font-bold" id="stat-pending-orders">0</div>
+                        <div class="text-sm opacity-70">Pending Orders</div>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-chart-line"></i>
+                        <div class="text-2xl font-bold" id="stat-revenue">AED 0</div>
+                        <div class="text-sm opacity-70">Revenue</div>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-coins"></i>
+                        <div class="text-2xl font-bold" id="stat-profit">AED 0</div>
+                        <div class="text-sm opacity-70">Profit</div>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-percent"></i>
+                        <div class="text-2xl font-bold" id="stat-success-rate">0%</div>
+                        <div class="text-sm opacity-70">Success Rate</div>
+                    </div>
+                </div>
+
+                <!-- Secondary Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-calendar-day"></i>
+                        <div class="text-2xl font-bold" id="stat-orders-today">0</div>
+                        <div class="text-sm opacity-70">Orders Today</div>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-hourglass-half"></i>
+                        <div class="text-2xl font-bold" id="stat-pending-payments">AED 0</div>
+                        <div class="text-sm opacity-70">Pending Payments</div>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-chart-simple"></i>
+                        <div class="text-2xl font-bold" id="stat-admin-commission">AED 0</div>
+                        <div class="text-sm opacity-70">Admin Commission</div>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl">
+                        <i class="stat-icon fas fa-truck"></i>
+                        <div class="text-2xl font-bold" id="stat-next-deliveries">0</div>
+                        <div class="text-sm opacity-70">Next Deliveries</div>
+                    </div>
+                </div>
+
+                <!-- Next & Recent Deliveries -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="card p-5 rounded-xl">
+                        <h3 class="section-title"><i class="fas fa-truck text-blue-500"></i> Next Deliveries</h3>
+                        <div id="next-deliveries-list" class="space-y-2">
+                            <div class="text-center py-4 text-gray-500">Loading deliveries...</div>
+                        </div>
+                    </div>
+                    <div class="card p-5 rounded-xl">
+                        <h3 class="section-title"><i class="fas fa-check-circle text-green-500"></i> Recently Delivered</h3>
+                        <div id="recently-delivered-list" class="space-y-2">
+                            <div class="text-center py-4 text-gray-500">Loading deliveries...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Revenue Trend Chart -->
+                <div class="card p-5 rounded-xl mb-8">
+                    <h3 class="section-title"><i class="fas fa-chart-line text-purple-500"></i> Revenue Trend</h3>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Order Status Chart -->
+                <div class="card p-5 rounded-xl mb-8">
+                    <h3 class="section-title"><i class="fas fa-chart-pie text-orange-500"></i> Order by Status</h3>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="flex justify-center gap-6 mt-4 text-sm flex-wrap">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span><span id="pending-count">Pending: 0</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#10b981]"></span><span id="approved-count">Approved: 0</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#3b82f6]"></span><span id="completed-count">Completed: 0</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#8b5cf6]"></span><span id="paid-count">Paid: 0</span></div>
+                    </div>
+                </div>
+
+                <!-- Top Sellers & Top Items -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card p-5 rounded-xl">
+                        <h3 class="section-title"><i class="fas fa-trophy text-yellow-500"></i> Top 10 Sellers</h3>
+                        <div id="top-sellers-list" class="space-y-2">
+                            <div class="text-center py-4 text-gray-500">Loading sellers...</div>
+                        </div>
+                    </div>
+                    <div class="card p-5 rounded-xl">
+                        <h3 class="section-title"><i class="fas fa-box text-purple-500"></i> Top 10 Items</h3>
+                        <div id="top-items-list" class="space-y-2">
+                            <div class="text-center py-4 text-gray-500">Loading items...</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
+    <script src="sidebar.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -457,80 +392,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
         let revenueChartInstance = null;
         let statusChartInstance = null;
-        let currentDateRange = { days: 365, start: null, end: null };
-
-        // ========== COLLAPSIBLE SIDEBAR ==========
-        function initCollapsibleSidebar() {
-            const sidebar = document.querySelector('.desktop-sidebar');
-            const toggleBtn = document.getElementById('sidebarToggleBtn');
-            if (!sidebar || !toggleBtn) return;
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-            } else {
-                sidebar.classList.remove('collapsed');
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
-            }
-            toggleBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                sidebar.classList.toggle('collapsed');
-                const collapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', collapsed);
-                toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
-                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
-            });
-        }
-
-        // ========== MOBILE SIDEBAR ==========
-        window.toggleMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.toggle('show');
-            if (overlay) overlay.classList.toggle('show');
-            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
-        };
-
-        window.closeMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.remove('show');
-            if (overlay) overlay.classList.remove('show');
-            document.body.style.overflow = '';
-        };
-
-        // ========== USER MENU ==========
-        window.toggleUserMenu = function() {
-            const dropdown = document.getElementById('user-dropdown');
-            const chevron = document.getElementById('user-chevron');
-            if (dropdown) {
-                const isHidden = dropdown.classList.contains('hidden');
-                dropdown.classList.toggle('hidden');
-                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
-        };
-
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('user-dropdown');
-            const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
-            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-                const chevron = document.getElementById('user-chevron');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
-        });
-
-        // ========== THEME & LOGOUT ==========
-        window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        };
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
@@ -542,19 +405,8 @@
                 return;
             }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
-            initCollapsibleSidebar();
             await loadDashboardData();
         });
-
-        function getDateFilter() {
-            const now = new Date();
-            if (currentDateRange.start && currentDateRange.end) {
-                return { start: currentDateRange.start, end: currentDateRange.end };
-            }
-            const start = new Date();
-            start.setDate(now.getDate() - currentDateRange.days);
-            return { start, end: now };
-        }
 
         async function loadDashboardData() {
             await loadStats();
@@ -774,16 +626,11 @@
             });
         }
 
-        // Date Preset Handlers
         document.querySelectorAll('.date-preset').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.date-preset').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                const days = parseInt(btn.dataset.days);
-                if (!isNaN(days)) {
-                    currentDateRange = { days, start: null, end: null };
-                    loadDashboardData();
-                }
+                loadDashboardData();
             });
         });
         
@@ -791,7 +638,6 @@
             const start = document.getElementById('custom-start').value;
             const end = document.getElementById('custom-end').value;
             if (start && end) {
-                currentDateRange = { days: null, start: new Date(start), end: new Date(end) };
                 document.querySelectorAll('.date-preset').forEach(b => b.classList.remove('active'));
                 loadDashboardData();
             }
