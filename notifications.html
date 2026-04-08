@@ -6,7 +6,7 @@
     <title>Notifications - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css");
+    <link rel="stylesheet" href="style.css">
     <style>
         .stat-card {
             transition: all 0.2s ease;
@@ -154,6 +154,106 @@
                 padding: 12px !important;
             }
         }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin: 4px 0;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: var(--active-bg);
+            color: white;
+        }
+        
+        /* Desktop Sidebar - Collapsible */
+        .desktop-sidebar {
+            width: 16rem;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 40;
+        }
+        .desktop-sidebar.collapsed {
+            width: 4rem;
+        }
+        .desktop-sidebar.collapsed .nav-item span,
+        .desktop-sidebar.collapsed .sidebar-logo span,
+        .desktop-sidebar.collapsed p.text-xs {
+            display: none;
+        }
+        .desktop-sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.75rem 0;
+        }
+        .desktop-sidebar.collapsed .nav-item i {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .desktop-sidebar.collapsed .sidebar-logo {
+            justify-content: center;
+        }
+        .main-content {
+            transition: margin-left 0.3s ease;
+            margin-left: 16rem;
+        }
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
+        .sidebar-toggle-btn {
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+        }
+        .sidebar-toggle-btn:hover {
+            background: var(--hover-bg);
+        }
+        
+        /* Mobile Sidebar */
+        #mobile-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+        #mobile-sidebar.show { transform: translateX(0); }
+        #sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            cursor: pointer;
+        }
+        #sidebar-overlay.show { display: block; }
+        #sidebar-overlay:not(.show) { display: none; }
     </style>
 </head>
 <body>
@@ -211,7 +311,7 @@
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 <div>
