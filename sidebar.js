@@ -1,48 +1,54 @@
 // ============================================
-// SIDEBAR CONTROLLER - NO FLICKER VERSION
+// SIDEBAR CONTROLLER - SIMPLE NO-FLICKER VERSION
 // ============================================
 
 (function() {
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initSidebar);
-    } else {
-        initSidebar();
+    // Function to get sidebar state from localStorage
+    function getSidebarState() {
+        return localStorage.getItem('sidebarCollapsed') === 'true';
     }
 
-    function initSidebar() {
-        const sidebar = document.querySelector('.desktop-sidebar');
-        const toggleBtn = document.getElementById('sidebarToggleBtn');
-        
-        if (!sidebar || !toggleBtn) return;
-        
-        // Remove the inline style that disabled transitions
-        sidebar.style.transition = '';
-        
-        // Load saved state from localStorage
-        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        
-        // Apply saved state - NO ANIMATION
-        if (isCollapsed) {
-            sidebar.classList.add('collapsed');
-            toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    // Function to apply sidebar state to HTML class
+    function applySidebarStateToHtml() {
+        if (getSidebarState()) {
+            document.documentElement.classList.add('sidebar-collapsed');
         } else {
-            sidebar.classList.remove('collapsed');
-            toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            document.documentElement.classList.remove('sidebar-collapsed');
         }
-        
-        // Re-enable transitions after a tiny delay
-        setTimeout(function() {
-            sidebar.style.transition = '';
-        }, 50);
-        
+    }
+
+    // Apply state to HTML element IMMEDIATELY
+    applySidebarStateToHtml();
+
+    // Wait for DOM to be ready for toggle button
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initToggleButton);
+    } else {
+        initToggleButton();
+    }
+
+    function initToggleButton() {
+        const toggleBtn = document.getElementById('sidebarToggleBtn');
+        if (!toggleBtn) return;
+
+        // Set button icon based on current state
+        const isCollapsed = getSidebarState();
+        toggleBtn.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+
         // Toggle sidebar when button is clicked
         toggleBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            sidebar.classList.toggle('collapsed');
-            const collapsed = sidebar.classList.contains('collapsed');
-            localStorage.setItem('sidebarCollapsed', collapsed);
-            toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+            const currentState = getSidebarState();
+            const newState = !currentState;
+            localStorage.setItem('sidebarCollapsed', newState);
+            
+            if (newState) {
+                document.documentElement.classList.add('sidebar-collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            } else {
+                document.documentElement.classList.remove('sidebar-collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            }
         });
     }
 })();
@@ -67,7 +73,6 @@ window.closeMobileMenu = function() {
     document.body.style.overflow = '';
 };
 
-// Close mobile menu when clicking overlay
 document.addEventListener('click', function(event) {
     const overlay = document.getElementById('sidebar-overlay');
     const mobileSidebar = document.getElementById('mobile-sidebar');
@@ -92,7 +97,6 @@ window.toggleUserMenu = function() {
     }
 };
 
-// Close user menu when clicking outside
 document.addEventListener('click', function(event) {
     const dropdown = document.getElementById('user-dropdown');
     const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
@@ -115,7 +119,6 @@ window.toggleTheme = function() {
     document.documentElement.setAttribute('data-theme', nextTheme);
     localStorage.setItem('theme', nextTheme);
     
-    // Update moon/sun icons if present
     const moonIcons = document.querySelectorAll('.fa-moon');
     const sunIcons = document.querySelectorAll('.fa-sun');
     if (nextTheme === 'dark') {
@@ -127,6 +130,5 @@ window.toggleTheme = function() {
     }
 };
 
-// Initialize theme on page load - NO FLASH
 const savedTheme = localStorage.getItem('theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
