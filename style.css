@@ -120,7 +120,6 @@
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .card, .form-card, .stat-card {
@@ -140,6 +139,7 @@ body {
 
 /* ============================================
    SIDEBAR SYSTEM - FLEXBOX LAYOUT (FIXED)
+   IMPORTANT: Desktop sidebar uses RELATIVE positioning
    ============================================ */
 
 /* Main app wrapper - wraps sidebar and main content */
@@ -149,11 +149,12 @@ body {
     width: 100%;
 }
 
-/* Desktop Sidebar - RELATIVE positioning for flexbox */
+/* Desktop Sidebar - RELATIVE positioning (NOT FIXED) */
 .desktop-sidebar {
     width: 16rem;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-x: hidden;
+    overflow-y: auto;
     position: relative;
     height: 100vh;
     flex-shrink: 0;
@@ -206,12 +207,37 @@ body {
     margin-right: 0;
 }
 
-/* Main content - flex takes remaining space, NO margin needed */
+/* Main content - flex takes remaining space */
 .main-content {
     flex: 1;
     min-width: 0;
     transition: none;
     width: auto;
+    overflow-x: hidden;
+}
+
+/* Fix for top bar - make sure toggle button is visible */
+.top-bar .flex.items-center.space-x-3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#sidebarToggleBtn {
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#sidebarToggleBtn:hover {
+    background: var(--hover-bg);
 }
 
 /* Mobile responsive */
@@ -228,23 +254,8 @@ body {
     }
 }
 
-/* Sidebar Toggle Button */
-.sidebar-toggle-btn {
-    cursor: pointer;
-    padding: 8px 10px;
-    border-radius: 8px;
-    transition: all 0.2s;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-}
-
-.sidebar-toggle-btn:hover {
-    background: var(--hover-bg);
-}
-
 /* ============================================
-   BACK BUTTON - ICON ONLY ON MOBILE (FIXED)
+   BACK BUTTON - ICON ONLY ON MOBILE
    ============================================ */
 
 @media (max-width: 640px) {
@@ -266,7 +277,7 @@ body {
 }
 
 /* ============================================
-   CATEGORY MODAL - THEME AWARE (FIXED)
+   CATEGORY MODAL - THEME AWARE
    ============================================ */
 
 #category-modal .modal-header,
