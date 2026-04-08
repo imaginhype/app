@@ -8,9 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Additional styles for product-view */
-        
-        /* Fix #7: Image placeholder background - white in light mode */
         .main-product-image {
             width: 100%;
             height: auto;
@@ -22,8 +19,6 @@
         .dark .main-product-image {
             background: #1e293b;
         }
-        
-        /* Fix #8: Scroll buttons - icon white, circle stays */
         .scroll-btn {
             position: absolute;
             top: 50%;
@@ -50,27 +45,6 @@
         }
         .scroll-left { left: -12px; }
         .scroll-right { right: -12px; }
-        
-        /* Fix #9: Light mode text colors - dark text for readability */
-        [data-theme="light"] .info-card {
-            background: #f1f5f9;
-        }
-        [data-theme="light"] .info-card .text-xs {
-            color: #475569 !important;
-        }
-        [data-theme="light"] .info-card .font-medium {
-            color: #0f172a !important;
-        }
-        [data-theme="light"] #product-name,
-        [data-theme="light"] #product-price,
-        [data-theme="light"] .dark\\:text-white {
-            color: #0f172a !important;
-        }
-        [data-theme="light"] .text-gray-600 {
-            color: #475569 !important;
-        }
-        
-        /* Thumbnail styles */
         .thumbnail-scroll {
             display: flex;
             overflow-x: auto;
@@ -96,21 +70,363 @@
             height: 100%;
             object-fit: cover;
         }
-        
         .info-card {
             background: var(--bg-tertiary);
             border-radius: 12px;
             padding: 12px;
             transition: all 0.2s;
         }
-        
         @media (max-width: 768px) {
             .thumbnail-item { width: 55px; height: 55px; }
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: var(--hover-bg);
+            transform: translateX(-2px);
+        }
+        
+        .desktop-sidebar {
+            width: 16rem;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+            position: relative;
+            height: 100vh;
+            flex-shrink: 0;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+        }
+        .desktop-sidebar.collapsed {
+            width: 4rem;
+        }
+        .desktop-sidebar.collapsed .nav-item span,
+        .desktop-sidebar.collapsed .sidebar-logo span,
+        .desktop-sidebar.collapsed .sidebar-footer span,
+        .desktop-sidebar.collapsed p.text-xs {
+            display: none;
+        }
+        .desktop-sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.75rem 0;
+        }
+        .desktop-sidebar.collapsed .nav-item i {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .desktop-sidebar.collapsed .sidebar-logo {
+            justify-content: center;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.5rem;
+            transition: none;
+            transform: none;
+        }
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            transition: none;
+            width: auto;
+        }
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .app-wrapper { display: block; }
+            .main-content { margin-left: 0 !important; width: 100% !important; }
         }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900">
-    <!-- Rest of your product-view.html content remains the same -->
-    <!-- Make sure to add the theme attribute to html -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <!-- Mobile Sidebar -->
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <div class="text-xs opacity-60 mb-4">Admin Panel</div>
+            <nav>
+                <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
+                <a href="products.html" class="nav-item"><i class="fas fa-box w-5"></i><span>Products</span></a>
+                <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
+                <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
+                <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
+                <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
+                <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
+            </nav>
+        </div>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+        </div>
+    </aside>
+
+    <div class="app-wrapper">
+        <!-- Desktop Sidebar -->
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b">
+                <div class="flex items-center space-x-2 sidebar-logo">
+                    <i class="fas fa-store text-2xl text-purple-500"></i>
+                    <span class="text-xl font-bold">Marketplace Pro</span>
+                </div>
+                <p class="text-xs opacity-60 mt-2">Admin Panel</p>
+            </div>
+            <nav class="p-4">
+                <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
+                <a href="products.html" class="nav-item"><i class="fas fa-box w-5"></i><span>Products</span></a>
+                <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
+                <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
+                <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
+                <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
+                <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4 border-t">
+                <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <a href="products.html" class="back-btn">
+                        <i class="fas fa-arrow-left"></i> <span>Back to Products</span>
+                    </a>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold" id="product-name">Product Details</h1>
+                        <p class="text-sm text-gray-500" id="product-category-display">Loading...</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition">
+                        <i class="fas fa-moon dark:block hidden"></i>
+                        <i class="fas fa-sun dark:hidden block"></i>
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <span class="hidden md:inline" id="admin-name">Admin</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
+                        </button>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-user-circle w-5"></i> My Profile
+                            </a>
+                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-cog w-5"></i> Account Settings
+                            </a>
+                            <div class="border-t"></div>
+                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-sign-out-alt w-5"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Details Content -->
+            <div class="max-w-6xl mx-auto px-4 py-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left Column - Images -->
+                    <div>
+                        <div class="relative">
+                            <img id="main-product-image" class="main-product-image w-full" src="https://placehold.co/600x400?text=No+Image" alt="Product">
+                            <button class="scroll-btn scroll-left" onclick="scrollThumbnails(-1)"><i class="fas fa-chevron-left"></i></button>
+                            <button class="scroll-btn scroll-right" onclick="scrollThumbnails(1)"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="relative mt-4">
+                            <div id="thumbnail-container" class="thumbnail-scroll"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Details -->
+                    <div>
+                        <div class="mb-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span id="stock-badge" class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Loading...</span>
+                                <span id="sku-display" class="text-xs text-gray-500">SKU: -</span>
+                            </div>
+                            <h1 id="product-title" class="text-2xl md:text-3xl font-bold mb-2">Loading...</h1>
+                            <div class="flex items-baseline gap-2 mb-4">
+                                <span id="sale-price" class="text-3xl font-bold text-purple-600">AED 0</span>
+                                <span id="regular-price" class="text-lg text-gray-400 line-through hidden">AED 0</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <div class="info-card"><p class="text-xs text-gray-500">Brand</p><p id="brand-value" class="font-medium">-</p></div>
+                            <div class="info-card"><p class="text-xs text-gray-500">Condition</p><p id="condition-value" class="font-medium">-</p></div>
+                            <div class="info-card"><p class="text-xs text-gray-500">Stock Quantity</p><p id="stock-quantity" class="font-medium">-</p></div>
+                            <div class="info-card"><p class="text-xs text-gray-500">Warehouse</p><p id="warehouse-value" class="font-medium">-</p></div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h3 class="font-semibold mb-2">Description</h3>
+                            <div id="product-description" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <div class="info-card"><p class="text-xs text-gray-500">Material</p><p id="material-value" class="font-medium">-</p></div>
+                            <div class="info-card"><p class="text-xs text-gray-500">Size</p><p id="size-value" class="font-medium">-</p></div>
+                            <div class="info-card"><p class="text-xs text-gray-500">Weight</p><p id="weight-value" class="font-medium">-</p></div>
+                            <div class="info-card"><p class="text-xs text-gray-500">Warranty</p><p id="warranty-value" class="font-medium">-</p></div>
+                        </div>
+
+                        <div class="flex gap-3 pt-4 border-t">
+                            <button onclick="editProduct()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition font-medium"><i class="fas fa-edit mr-2"></i>Edit Product</button>
+                            <button onclick="goBack()" class="flex-1 border border-gray-300 dark:border-gray-600 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="sidebar.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
+            authDomain: "imaginhype-app.firebaseapp.com",
+            projectId: "imaginhype-app",
+            storageBucket: "imaginhype-app.firebasestorage.app",
+            messagingSenderId: "200919529212",
+            appId: "1:200919529212:web:afa69db5cf256d35f90979"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentProduct = null;
+        let currentImages = [];
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+        window.editProduct = () => { window.location.href = `add-product.html?id=${getProductId()}`; };
+        window.goBack = () => { window.location.href = 'products.html'; };
+        window.scrollThumbnails = (direction) => {
+            const container = document.getElementById('thumbnail-container');
+            if (container) {
+                const scrollAmount = direction * 120;
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        };
+
+        function getProductId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id');
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.data()?.role !== 'admin') {
+                window.location.href = '/seller-dashboard.html';
+                return;
+            }
+            document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
+            await loadProduct();
+        });
+
+        async function loadProduct() {
+            const productId = getProductId();
+            if (!productId) { window.location.href = 'products.html'; return; }
+            
+            const productDoc = await getDoc(doc(db, 'products', productId));
+            if (!productDoc.exists()) { window.location.href = 'products.html'; return; }
+            
+            currentProduct = { id: productDoc.id, ...productDoc.data() };
+            currentImages = currentProduct.images || [];
+            renderProductDetails();
+        }
+
+        function renderProductDetails() {
+            const p = currentProduct;
+            const salePrice = p.salePrice || p.price || 0;
+            const regularPrice = p.regularPrice || 0;
+            const hasDiscount = regularPrice > salePrice;
+            const isInStock = p.stockStatus === 'in-stock';
+            
+            document.getElementById('product-name').textContent = p.name || 'Product Details';
+            document.getElementById('product-title').textContent = p.name || 'Untitled';
+            document.getElementById('product-category-display').textContent = p.category || 'Uncategorized';
+            document.getElementById('sale-price').textContent = `AED ${salePrice.toFixed(2)}`;
+            if (hasDiscount) {
+                document.getElementById('regular-price').classList.remove('hidden');
+                document.getElementById('regular-price').textContent = `AED ${regularPrice.toFixed(2)}`;
+            }
+            document.getElementById('stock-badge').textContent = isInStock ? 'In Stock' : 'Out of Stock';
+            document.getElementById('stock-badge').className = `px-3 py-1 rounded-full text-xs font-medium ${isInStock ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`;
+            document.getElementById('sku-display').textContent = `SKU: ${p.sku || 'N/A'}`;
+            document.getElementById('brand-value').textContent = p.brand || '-';
+            document.getElementById('condition-value').textContent = p.condition || 'New';
+            document.getElementById('stock-quantity').textContent = p.stockQuantity || p.quantity || '0';
+            document.getElementById('warehouse-value').textContent = p.warehouse || '-';
+            document.getElementById('material-value').textContent = p.material || '-';
+            document.getElementById('size-value').textContent = p.size || '-';
+            document.getElementById('weight-value').textContent = p.weight || '-';
+            document.getElementById('warranty-value').textContent = p.warranty || '-';
+            
+            const descriptionHtml = p.description || 'No description available.';
+            document.getElementById('product-description').innerHTML = descriptionHtml;
+            
+            renderImages();
+        }
+
+        function renderImages() {
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+            const mainImage = document.getElementById('main-product-image');
+            
+            if (!currentImages.length) {
+                thumbnailContainer.innerHTML = '<div class="text-center py-4 text-gray-500 w-full">No images</div>';
+                mainImage.src = 'https://placehold.co/600x400?text=No+Image';
+                return;
+            }
+            
+            thumbnailContainer.innerHTML = currentImages.map((img, idx) => `
+                <div class="thumbnail-item ${idx === 0 ? 'active' : ''}" onclick="changeMainImage(${idx})">
+                    <img src="${img}" alt="Thumbnail ${idx + 1}">
+                </div>
+            `).join('');
+            
+            mainImage.src = currentImages[0];
+        }
+
+        window.changeMainImage = (index) => {
+            if (currentImages[index]) {
+                document.getElementById('main-product-image').src = currentImages[index];
+                document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
+                    if (i === index) item.classList.add('active');
+                    else item.classList.remove('active');
+                });
+            }
+        };
+    </script>
 </body>
 </html>
