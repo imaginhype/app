@@ -231,7 +231,6 @@
         @media (min-width: 1024px) {
             .products-grid { grid-template-columns: repeat(4, 1fr); }
         }
-        /* FIX #1: List View - Full width cards */
         .list-view-container {
             display: flex;
             flex-direction: column;
@@ -334,30 +333,21 @@
             color: white;
         }
         
-        /* FIX #2: Categories Modal - Dark mode text visibility */
-        [data-theme="dark"] #category-modal h2,
-        [data-theme="dark"] #category-modal h3,
-        [data-theme="dark"] #category-modal .font-semibold,
-        [data-theme="dark"] #category-modal .font-medium {
-            color: #ffffff !important;
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
         }
-        [data-theme="dark"] #category-modal .text-gray-500,
-        [data-theme="dark"] #category-modal .text-xs {
-            color: #94a3b8 !important;
-        }
-        [data-theme="dark"] #category-modal .bg-gray-50 {
-            background: #1e293b !important;
-        }
-        [data-theme="dark"] #category-modal input {
-            background: #334155 !important;
-            color: #f1f5f9 !important;
-            border-color: #4b5563 !important;
-        }
-        [data-theme="dark"] #category-modal input::placeholder {
-            color: #94a3b8 !important;
-        }
-        [data-theme="dark"] #category-modal button.border {
-            border-color: #4b5563 !important;
+        .back-btn:hover {
+            background: var(--hover-bg);
+            transform: translateX(-2px);
         }
     </style>
 </head>
@@ -387,121 +377,121 @@
         </div>
     </aside>
 
-    <!-- Desktop Sidebar -->
-    <aside class="desktop-sidebar sidebar w-64 fixed h-full overflow-y-auto hidden md:block">
-        <div class="p-4 border-b">
-            <div class="flex items-center space-x-2 sidebar-logo">
-                <i class="fas fa-store text-2xl text-purple-500"></i>
-                <span class="text-xl font-bold">Marketplace Pro</span>
+    <!-- FIXED: app-wrapper wraps sidebar + main content -->
+    <div class="app-wrapper">
+        <!-- Desktop Sidebar -->
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b">
+                <div class="flex items-center space-x-2 sidebar-logo">
+                    <i class="fas fa-store text-2xl text-purple-500"></i>
+                    <span class="text-xl font-bold">Marketplace Pro</span>
+                </div>
+                <p class="text-xs opacity-60 mt-2">Admin Panel</p>
             </div>
-            <p class="text-xs opacity-60 mt-2">Admin Panel</p>
-        </div>
-        <nav class="p-4">
-            <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
-            <a href="products.html" class="nav-item active"><i class="fas fa-box w-5"></i><span>Products</span></a>
-            <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
-            <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
-            <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
-            <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
-            <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
-        </nav>
-        <div class="absolute bottom-0 w-full p-4 border-t">
-            <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
-        </div>
-    </aside>
+            <nav class="p-4">
+                <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt w-5"></i><span>Dashboard</span></a>
+                <a href="products.html" class="nav-item active"><i class="fas fa-box w-5"></i><span>Products</span></a>
+                <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart w-5"></i><span>Orders</span></a>
+                <a href="sellers.html" class="nav-item"><i class="fas fa-users w-5"></i><span>Sellers</span></a>
+                <a href="notifications.html" class="nav-item"><i class="fas fa-bell w-5"></i><span>Notifications</span></a>
+                <a href="announcements.html" class="nav-item"><i class="fas fa-bullhorn w-5"></i><span>Announcements</span></a>
+                <a href="admin-dashboard.html?section=settings" class="nav-item"><i class="fas fa-cog w-5"></i><span>Settings</span></a>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4 border-t">
+                <button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button>
+            </div>
+        </aside>
 
-    <!-- Main Content -->
-    <main class="main-content flex-1 md:ml-64">
-        <!-- Top Bar -->
-        <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
-            <div class="flex items-center space-x-3">
-                <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold">Products</h1>
-                    <p class="text-sm text-gray-500">Browse and manage your products</p>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <a href="admin-dashboard.html" class="back-btn">
+                        <i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span>
+                    </a>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold">Products</h1>
+                        <p class="text-sm text-gray-500">Browse and manage your products</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition">
+                        <i class="fas fa-moon dark:block hidden"></i>
+                        <i class="fas fa-sun dark:hidden block"></i>
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <span class="hidden md:inline" id="admin-name">Admin</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
+                        </button>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-user-circle w-5"></i> My Profile
+                            </a>
+                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-cog w-5"></i> Account Settings
+                            </a>
+                            <div class="border-t"></div>
+                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                <i class="fas fa-sign-out-alt w-5"></i> Logout
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-full transition">
-                    <i class="fas fa-moon dark:block hidden"></i>
-                    <i class="fas fa-sun dark:hidden block"></i>
-                </button>
-                <div class="relative">
-                    <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none">
-                        <i class="fas fa-user-circle text-2xl"></i>
-                        <span class="hidden md:inline" id="admin-name">Admin</span>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i>
-                    </button>
-                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-user-circle w-5"></i> My Profile
-                        </a>
-                        <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-cog w-5"></i> Account Settings
-                        </a>
-                        <div class="border-t"></div>
-                        <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            <i class="fas fa-sign-out-alt w-5"></i> Logout
+
+            <!-- Main Content Area -->
+            <div class="p-4 md:p-6">
+                <div class="action-toolbar">
+                    <div class="toolbar-buttons">
+                        <button onclick="openCategoryModal()" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-blue-600 hover:text-white transition flex items-center gap-2">
+                            <i class="fas fa-tags"></i> Categories
+                        </button>
+                        <button onclick="showAddProductModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Add Product
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Main Content -->
-        <div class="p-4 md:p-6">
-            <!-- Action Toolbar -->
-            <div class="action-toolbar">
-                <div class="toolbar-buttons">
-                    <button onclick="openCategoryModal()" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-blue-600 hover:text-white transition flex items-center gap-2">
-                        <i class="fas fa-tags"></i> Categories
-                    </button>
-                    <button onclick="showAddProductModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                        <i class="fas fa-plus"></i> Add Product
-                    </button>
-                </div>
-            </div>
-
-            <!-- Category Chips -->
-            <div class="mb-6">
-                <div class="flex flex-wrap gap-2">
-                    <div id="category-chips" class="flex flex-wrap gap-2">
-                        <button data-category="all" class="category-chip active">All</button>
+                <div class="mb-6">
+                    <div class="flex flex-wrap gap-2">
+                        <div id="category-chips" class="flex flex-wrap gap-2">
+                            <button data-category="all" class="category-chip active">All</button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Search and View Toggle -->
-            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <input type="text" id="search-products" placeholder="Search products..." class="search-input">
-                <div class="flex items-center gap-2">
-                    <button id="grid-view-btn" class="view-toggle-btn active"><i class="fas fa-th-large"></i></button>
-                    <button id="list-view-btn" class="view-toggle-btn"><i class="fas fa-list"></i></button>
+                <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                    <input type="text" id="search-products" placeholder="Search products..." class="search-input">
+                    <div class="flex items-center gap-2">
+                        <button id="grid-view-btn" class="view-toggle-btn active"><i class="fas fa-th-large"></i></button>
+                        <button id="list-view-btn" class="view-toggle-btn"><i class="fas fa-list"></i></button>
+                    </div>
                 </div>
+
+                <div class="mb-4 text-sm text-gray-500">
+                    Showing <span id="product-count-start">0</span> - <span id="product-count-end">0</span> of <span id="product-total">0</span> products
+                </div>
+
+                <div id="products-container" class="products-grid">
+                    <div class="text-center py-8 col-span-full">Loading products...</div>
+                </div>
+
+                <div class="flex justify-center gap-2 mt-8" id="pagination-container"></div>
             </div>
+        </main>
+    </div>
 
-            <!-- Product Count -->
-            <div class="mb-4 text-sm text-gray-500">
-                Showing <span id="product-count-start">0</span> - <span id="product-count-end">0</span> of <span id="product-total">0</span> products
-            </div>
-
-            <!-- Products Container -->
-            <div id="products-container" class="products-grid">
-                <div class="text-center py-8 col-span-full">Loading products...</div>
-            </div>
-
-            <!-- Pagination -->
-            <div class="flex justify-center gap-2 mt-8" id="pagination-container"></div>
-        </div>
-    </main>
-
-    <!-- Manage Categories Modal - FIX #2: Dark mode text visibility -->
+    <!-- Manage Categories Modal -->
     <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" onclick="closeCategoryModal(event)">
         <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
-            <div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
+            <div class="p-5 border-b flex justify-between items-center sticky top-0 dark:bg-gray-800 z-10">
                 <h2 class="text-xl font-bold dark:text-white text-gray-900">Manage Categories</h2>
                 <button onclick="closeCategoryModal()" class="text-2xl hover:text-gray-500 dark:text-gray-400">&times;</button>
             </div>
@@ -543,6 +533,7 @@
         </div>
     </div>
 
+    <script src="sidebar.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -570,73 +561,6 @@
         let currentEditCategoryId = null;
         const itemsPerPage = 12;
 
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        // ========== COLLAPSIBLE SIDEBAR ==========
-        function initCollapsibleSidebar() {
-            const sidebar = document.querySelector('.desktop-sidebar');
-            const toggleBtn = document.getElementById('sidebarToggleBtn');
-            if (!sidebar || !toggleBtn) return;
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-            }
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                const collapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', collapsed);
-                toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
-                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
-            });
-        }
-
-        // ========== MOBILE SIDEBAR ==========
-        window.toggleMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.toggle('show');
-            if (overlay) overlay.classList.toggle('show');
-            document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
-        };
-
-        window.closeMobileMenu = function() {
-            const sidebar = document.getElementById('mobile-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar) sidebar.classList.remove('show');
-            if (overlay) overlay.classList.remove('show');
-            document.body.style.overflow = '';
-        };
-
-        // ========== USER MENU ==========
-        window.toggleUserMenu = function() {
-            const dropdown = document.getElementById('user-dropdown');
-            const chevron = document.getElementById('user-chevron');
-            if (dropdown) {
-                const isHidden = dropdown.classList.contains('hidden');
-                dropdown.classList.toggle('hidden');
-                if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
-        };
-
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('user-dropdown');
-            const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
-            if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-                const chevron = document.getElementById('user-chevron');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
-        });
-
-        // ========== THEME & LOGOUT ==========
-        window.toggleTheme = () => {
-            const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        };
-
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
         window.showAddProductModal = () => { window.location.href = 'add-product.html'; };
 
@@ -648,7 +572,6 @@
                 return;
             }
             document.getElementById('admin-name').textContent = userDoc.data()?.name || 'Admin';
-            initCollapsibleSidebar();
             await loadCategories();
             await loadProducts();
         });
@@ -865,7 +788,6 @@
                     `;
                 }).join('');
             } else {
-                // FIX #1: List View - Full width cards
                 container.className = 'list-view-container';
                 container.innerHTML = paginated.map(p => {
                     const isInStock = p.stockStatus === 'in-stock';
