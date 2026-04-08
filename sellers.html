@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <script>
-        // CRITICAL: This runs BEFORE page paints to prevent sidebar flicker
         (function() {
             try {
                 const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -17,127 +16,7 @@
     <title>Sellers - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css");
-    <style>
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        .status-active { background: #10b98120; color: #10b981; }
-        .status-suspended { background: #ef444420; color: #ef4444; }
-        .status-pending { background: #f59e0b20; color: #f59e0b; }
-        .seller-row:hover { background-color: var(--hover-bg); }
-        .table-container { overflow-x: auto; }
-        .search-input {
-            padding: 8px 14px;
-            border-radius: 30px;
-            border: 1px solid var(--border-color);
-            background: var(--input-bg);
-            color: var(--text-primary);
-            width: 100%;
-            max-width: 280px;
-            font-size: 13px;
-        }
-        .filter-select {
-            padding: 8px 14px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: var(--input-bg);
-            color: var(--text-primary);
-            font-size: 13px;
-            cursor: pointer;
-        }
-        .action-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .filters-bar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        @media (max-width: 640px) {
-            .filters-bar { flex-direction: column; align-items: stretch; }
-            .search-input { max-width: 100%; }
-        }
-        .pagination-btn {
-            padding: 6px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-        .pagination-btn:hover, .pagination-btn.active {
-            background: var(--accent-color);
-            color: white;
-        }
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        .back-btn:hover {
-            background: var(--hover-bg);
-            transform: translateX(-2px);
-        }
-        
-        .desktop-sidebar {
-            width: 16rem;
-            transition: width 0.3s ease;
-            overflow-x: hidden;
-            position: relative;
-            height: 100vh;
-            flex-shrink: 0;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-        }
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 0.5rem;
-            transition: none;
-            transform: none;
-        }
-        .main-content {
-            flex: 1;
-            min-width: 0;
-            transition: none;
-            width: auto;
-        }
-        .app-wrapper {
-            display: flex;
-            min-height: 100vh;
-            width: 100%;
-        }
-        @media (max-width: 767px) {
-            .desktop-sidebar { display: none; }
-            .app-wrapper { display: block; }
-            .main-content { margin-left: 0 !important; width: 100% !important; }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
@@ -235,32 +114,28 @@
 
             <!-- Main Content Area -->
             <div class="p-4 md:p-6">
-                <div class="action-toolbar">
+                <div class="flex justify-end mb-4">
                     <button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">
                         <i class="fas fa-download"></i> Export
                     </button>
                 </div>
 
-                <div class="filters-bar">
-                    <div class="flex-1 min-w-[180px] max-w-sm">
-                        <input type="text" id="search-sellers" placeholder="Search by name, email, or phone..." class="search-input w-full">
-                    </div>
-                    <div class="flex gap-3">
-                        <select id="role-filter" class="filter-select">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                    <input type="text" id="search-sellers" placeholder="Search by name, email, or phone..." class="px-4 py-2 rounded-full border dark:bg-gray-800 dark:border-gray-700 w-full md:w-64">
+                    <div class="flex gap-2">
+                        <select id="role-filter" class="px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700">
                             <option value="all">All Roles</option>
                             <option value="admin">Admin</option>
                             <option value="seller">Seller</option>
                             <option value="user">User</option>
                         </select>
-                        <button id="filter-btn" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-blue-600 hover:text-white transition text-sm">
-                            <i class="fas fa-filter mr-1"></i> Apply Filter
-                        </button>
+                        <button id="filter-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Apply</button>
                     </div>
                 </div>
 
-                <div class="table-container bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow">
                     <table class="w-full min-w-[900px]">
-                        <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                        <thead class="bg-gray-50 dark:bg-gray-700 border-b">
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">ID</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Name</th>
@@ -288,7 +163,8 @@
     </div>
 
     <script src="sidebar.js"></script>
-    <script type="module">
+    <script>
+        // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -327,7 +203,13 @@
 
         async function loadUsers() {
             const usersSnap = await getDocs(collection(db, 'users'));
-            allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), ordersCount: 0, totalRevenue: 0, lastLogin: doc.data().lastLogin || doc.data().createdAt || new Date().toISOString() }));
+            allUsers = usersSnap.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data(), 
+                ordersCount: 0, 
+                totalRevenue: 0, 
+                lastLogin: doc.data().lastLogin || doc.data().createdAt || new Date().toISOString() 
+            }));
             
             const ordersSnap = await getDocs(collection(db, 'orders'));
             ordersSnap.docs.forEach(orderDoc => {
@@ -348,9 +230,11 @@
             let filtered = allUsers;
             if (currentSearch) {
                 const search = currentSearch.toLowerCase();
-                filtered = filtered.filter(u => u.name?.toLowerCase().includes(search) || u.email?.toLowerCase().includes(search) || u.phone?.toLowerCase().includes(search));
+                filtered = filtered.filter(u => u.name?.toLowerCase().includes(search) || u.email?.toLowerCase().includes(search));
             }
-            if (currentRole !== 'all') filtered = filtered.filter(u => u.role === currentRole);
+            if (currentRole !== 'all') {
+                filtered = filtered.filter(u => u.role === currentRole);
+            }
             
             const total = filtered.length;
             const start = (currentPage - 1) * itemsPerPage;
@@ -359,26 +243,37 @@
             
             const tbody = document.getElementById('sellers-table-body');
             if (!paginated.length) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-500">No sellers found.您</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-500">No sellers found.</td></tr>';
                 document.getElementById('pagination-info').textContent = 'Showing 0 - 0 of 0 sellers';
                 document.getElementById('pagination-container').innerHTML = '';
                 return;
             }
             
             tbody.innerHTML = paginated.map(user => {
-                const statusClass = user.status === 'suspended' ? 'status-suspended' : 'status-active';
-                const verifiedIcon = user.emailVerified ? '<i class="fas fa-check-circle text-green-500" title="Verified"></i>' : '<i class="fas fa-times-circle text-red-500" title="Not Verified"></i>';
-                return `<tr class="seller-row border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td class="px-4 py-3 text-sm">#${user.id.slice(0, 6)}</td>
-                    <td class="px-4 py-3"><div class="font-medium dark:text-white">${escapeHtml(user.name || 'N/A')}</div><div class="text-xs text-gray-500">${escapeHtml(user.email || '')}</div></td>
-                    <td class="px-4 py-3"><span class="status-badge ${statusClass}">${user.role || 'user'}</span></td>
-                    <td class="px-4 py-3 text-center">${verifiedIcon}</td>
-                    <td class="px-4 py-3 text-sm">${user.ordersCount || 0}</td>
-                    <td class="px-4 py-3 text-sm font-semibold">AED ${(user.totalRevenue || 0).toLocaleString()}</td>
-                    <td class="px-4 py-3 text-sm">${formatDate(user.createdAt)}</td>
-                    <td class="px-4 py-3 text-sm">${formatDate(user.lastLogin)}</td>
-                    <td class="px-4 py-3"><div class="flex gap-2"><button onclick="viewSellerDetails('${user.id}')" class="text-blue-500 hover:text-blue-700" title="View Details"><i class="fas fa-eye"></i></button><button onclick="toggleUserStatus('${user.id}', '${user.status}')" class="text-${user.status === 'suspended' ? 'green' : 'orange'}-500 hover:text-${user.status === 'suspended' ? 'green' : 'orange'}-700"><i class="fas fa-${user.status === 'suspended' ? 'play' : 'pause'}"></i></button><button onclick="deleteUser('${user.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></div></td>
-                </tr>`;
+                const statusClass = user.status === 'suspended' ? 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400' : 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400';
+                const verifiedIcon = user.emailVerified ? '<i class="fas fa-check-circle text-green-500"></i>' : '<i class="fas fa-times-circle text-red-500"></i>';
+                return `
+                    <tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td class="px-4 py-3 text-sm">#${user.id.slice(0, 6)}</td>
+                        <td class="px-4 py-3">
+                            <div class="font-medium dark:text-white">${escapeHtml(user.name || 'N/A')}</div>
+                            <div class="text-xs text-gray-500">${escapeHtml(user.email || '')}</div>
+                        </td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">${user.role || 'user'}</span></td>
+                        <td class="px-4 py-3 text-center">${verifiedIcon}</td>
+                        <td class="px-4 py-3 text-sm">${user.ordersCount || 0}</td>
+                        <td class="px-4 py-3 text-sm font-semibold">AED ${(user.totalRevenue || 0).toLocaleString()}</td>
+                        <td class="px-4 py-3 text-sm">${formatDate(user.createdAt)}</td>
+                        <td class="px-4 py-3 text-sm">${formatDate(user.lastLogin)}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex gap-2">
+                                <button onclick="viewSellerDetails('${user.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>
+                                <button onclick="toggleUserStatus('${user.id}', '${user.status}')" class="text-orange-500 hover:text-orange-700"><i class="fas fa-pause"></i></button>
+                                <button onclick="deleteUser('${user.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             }).join('');
             
             document.getElementById('pagination-info').textContent = `Showing ${start + 1} - ${end} of ${total} sellers`;
@@ -390,16 +285,16 @@
             const container = document.getElementById('pagination-container');
             if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
-            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`;
+            if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="px-3 py-1 rounded border hover:bg-blue-600 hover:text-white transition">Prev</button>`;
             for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`;
+                html += `<button onclick="goToPage(${i})" class="px-3 py-1 rounded border ${currentPage === i ? 'bg-blue-600 text-white' : 'hover:bg-blue-600 hover:text-white'} transition">${i}</button>`;
             }
-            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`;
+            if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="px-3 py-1 rounded border hover:bg-blue-600 hover:text-white transition">Next</button>`;
             container.innerHTML = html;
         }
 
         window.goToPage = (page) => { currentPage = page; renderUsers(); };
-        window.viewSellerDetails = (userId) => { alert(`Seller details page coming soon. User ID: ${userId}`); };
+        window.viewSellerDetails = (userId) => { alert(`Seller ID: ${userId}`); };
         window.toggleUserStatus = async (userId, currentStatus) => {
             const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
             if (!confirm(`${newStatus === 'active' ? 'Activate' : 'Suspend'} this user?`)) return;
@@ -407,16 +302,16 @@
             await loadUsers();
         };
         window.deleteUser = async (userId) => {
-            if (!confirm('Delete this user? This action cannot be undone.')) return;
+            if (!confirm('Delete this user? This cannot be undone.')) return;
             await updateDoc(doc(db, 'users', userId), { status: 'deleted', email: `deleted_${Date.now()}@removed.com`, name: 'Deleted User' });
             await loadUsers();
         };
         window.exportToCSV = () => {
             let filtered = allUsers;
-            if (currentSearch) filtered = filtered.filter(u => u.name?.toLowerCase().includes(currentSearch.toLowerCase()) || u.email?.toLowerCase().includes(currentSearch.toLowerCase()));
+            if (currentSearch) filtered = filtered.filter(u => u.name?.toLowerCase().includes(currentSearch.toLowerCase()));
             if (currentRole !== 'all') filtered = filtered.filter(u => u.role === currentRole);
-            const headers = ['ID', 'Name', 'Email', 'Role', 'Status', 'Orders', 'Revenue', 'Registered', 'Last Login'];
-            const rows = filtered.map(u => [u.id.slice(0, 8), u.name || 'N/A', u.email || 'N/A', u.role || 'user', u.status || 'active', u.ordersCount || 0, u.totalRevenue || 0, formatDate(u.createdAt), formatDate(u.lastLogin)]);
+            const headers = ['ID', 'Name', 'Email', 'Role', 'Status', 'Orders', 'Revenue', 'Registered'];
+            const rows = filtered.map(u => [u.id.slice(0, 8), u.name || 'N/A', u.email || 'N/A', u.role || 'user', u.status || 'active', u.ordersCount || 0, u.totalRevenue || 0, formatDate(u.createdAt)]);
             const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
