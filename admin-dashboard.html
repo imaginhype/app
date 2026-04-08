@@ -110,6 +110,58 @@
             align-items: center;
             gap: 0.5rem;
         }
+        
+        /* Desktop Sidebar - Collapsible */
+        .desktop-sidebar {
+            width: 16rem;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 40;
+        }
+        .desktop-sidebar.collapsed {
+            width: 4rem;
+        }
+        .desktop-sidebar.collapsed .nav-item span,
+        .desktop-sidebar.collapsed .sidebar-logo span,
+        .desktop-sidebar.collapsed .sidebar-footer span,
+        .desktop-sidebar.collapsed p.text-xs {
+            display: none;
+        }
+        .desktop-sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.75rem 0;
+        }
+        .desktop-sidebar.collapsed .nav-item i {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .desktop-sidebar.collapsed .sidebar-logo {
+            justify-content: center;
+        }
+        .main-content {
+            transition: margin-left 0.3s ease;
+            margin-left: 16rem;
+        }
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
+        .sidebar-toggle-btn {
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+        }
+        .sidebar-toggle-btn:hover {
+            background: var(--hover-bg);
+        }
     </style>
 </head>
 <body>
@@ -162,13 +214,14 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content flex-1 md:ml-64">
+    <main class="main-content flex-1">
         <!-- Top Bar with Sidebar Toggle -->
         <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center space-x-3">
+                <!-- Mobile menu button -->
                 <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <!-- Sidebar Toggle Button for Desktop -->
-                <button id="sidebarToggleBtn" class="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <!-- Desktop sidebar toggle button -->
+                <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block">
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 <div>
@@ -347,20 +400,27 @@
         let statusChartInstance = null;
         let currentDateRange = { days: 365, start: null, end: null };
 
-        // ========== COLLAPSIBLE SIDEBAR (Issue #13) ==========
+        // ========== COLLAPSIBLE SIDEBAR (CORRECTED) ==========
         function initCollapsibleSidebar() {
             const sidebar = document.querySelector('.desktop-sidebar');
             const toggleBtn = document.getElementById('sidebarToggleBtn');
             
             if (!sidebar || !toggleBtn) return;
             
+            // Check saved preference
             const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            
             if (isCollapsed) {
                 sidebar.classList.add('collapsed');
                 toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            } else {
+                sidebar.classList.remove('collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
             }
             
-            toggleBtn.addEventListener('click', function() {
+            // Toggle on click
+            toggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
                 sidebar.classList.toggle('collapsed');
                 const collapsed = sidebar.classList.contains('collapsed');
                 localStorage.setItem('sidebarCollapsed', collapsed);
@@ -371,7 +431,20 @@
                     toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
                 }
                 
-                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+                // Adjust main content margin
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) {
+                    if (collapsed) {
+                        mainContent.style.marginLeft = '4rem';
+                    } else {
+                        mainContent.style.marginLeft = '16rem';
+                    }
+                }
+                
+                // Trigger resize event for charts
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 300);
             });
         }
 
