@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Product Details - Marketplace Pro</title>
@@ -15,69 +25,105 @@
             object-fit: contain;
             background: #ffffff;
             border-radius: 16px;
+            transition: opacity 0.2s ease;
         }
         .dark .main-product-image {
             background: #1e293b;
         }
-        .scroll-btn {
+        
+        /* Arrow buttons for main image navigation */
+        .image-nav-btn {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            z-index: 10;
             transition: all 0.2s;
             border: none;
+            z-index: 10;
         }
-        .scroll-btn i {
-            color: white !important;
-            font-size: 14px;
-        }
-        .scroll-btn:hover {
+        .image-nav-btn:hover {
             background: var(--accent-color);
         }
-        .scroll-left { left: -12px; }
-        .scroll-right { right: -12px; }
-        .thumbnail-scroll {
+        .image-nav-btn i {
+            color: white;
+            font-size: 18px;
+        }
+        .nav-left {
+            left: 10px;
+        }
+        .nav-right {
+            right: 10px;
+        }
+        
+        /* Compact info row - horizontal layout */
+        .info-row-compact {
             display: flex;
-            overflow-x: auto;
+            flex-wrap: wrap;
             gap: 12px;
-            scroll-behavior: smooth;
-            padding-bottom: 8px;
+            margin-bottom: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
         }
-        .thumbnail-item {
-            flex-shrink: 0;
-            width: 70px;
-            height: 70px;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.2s ease;
-        }
-        .thumbnail-item.active {
-            border-color: var(--accent-color);
-        }
-        .thumbnail-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .info-card {
+        .info-item {
+            flex: 1;
+            min-width: 100px;
+            padding: 8px 12px;
             background: var(--bg-tertiary);
-            border-radius: 12px;
-            padding: 12px;
-            transition: all 0.2s;
+            border-radius: 10px;
+            text-align: center;
         }
-        @media (max-width: 768px) {
-            .thumbnail-item { width: 55px; height: 55px; }
+        .info-item-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .info-item-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Price section */
+        .price-section {
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .sale-price-large {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+        .regular-price-large {
+            font-size: 18px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            margin-left: 12px;
+        }
+        
+        /* Stock badge */
+        .stock-badge-large {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 12px;
+        }
+        .stock-in-large {
+            background: #10b98120;
+            color: #10b981;
+        }
+        .stock-out-large {
+            background: #ef444420;
+            color: #ef4444;
         }
         
         .back-btn {
@@ -107,26 +153,6 @@
             background-color: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
         }
-        .desktop-sidebar.collapsed {
-            width: 4rem;
-        }
-        .desktop-sidebar.collapsed .nav-item span,
-        .desktop-sidebar.collapsed .sidebar-logo span,
-        .desktop-sidebar.collapsed .sidebar-footer span,
-        .desktop-sidebar.collapsed p.text-xs {
-            display: none;
-        }
-        .desktop-sidebar.collapsed .nav-item {
-            justify-content: center;
-            padding: 0.75rem 0;
-        }
-        .desktop-sidebar.collapsed .nav-item i {
-            margin: 0;
-            font-size: 1.25rem;
-        }
-        .desktop-sidebar.collapsed .sidebar-logo {
-            justify-content: center;
-        }
         .sidebar-logo {
             display: flex;
             align-items: center;
@@ -150,6 +176,12 @@
             .desktop-sidebar { display: none; }
             .app-wrapper { display: block; }
             .main-content { margin-left: 0 !important; width: 100% !important; }
+        }
+        
+        @media (max-width: 640px) {
+            .info-item { min-width: 80px; padding: 6px 8px; }
+            .info-item-value { font-size: 12px; }
+            .sale-price-large { font-size: 24px; }
         }
     </style>
 </head>
@@ -181,7 +213,7 @@
 
     <div class="app-wrapper">
         <!-- Desktop Sidebar -->
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block" style="transition: none !important;">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
             <div class="p-4 border-b">
                 <div class="flex items-center space-x-2 sidebar-logo">
                     <i class="fas fa-store text-2xl text-purple-500"></i>
@@ -205,7 +237,7 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Top Bar -->
+            <!-- Top Bar - NO product title or category here -->
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
@@ -216,8 +248,8 @@
                         <i class="fas fa-arrow-left"></i> <span>Back to Products</span>
                     </a>
                     <div>
-                        <h1 class="text-xl md:text-2xl font-bold" id="product-name">Product Details</h1>
-                        <p class="text-sm text-gray-500" id="product-category-display">Loading...</p>
+                        <h1 class="text-xl md:text-2xl font-bold">Product Details</h1>
+                        <p class="text-sm text-gray-500">View and manage product information</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -250,54 +282,94 @@
             <!-- Product Details Content -->
             <div class="max-w-6xl mx-auto px-4 py-8">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Left Column - Images -->
+                    <!-- Left Column - Main Image with Navigation Arrows -->
                     <div>
                         <div class="relative">
                             <img id="main-product-image" class="main-product-image w-full" src="https://placehold.co/600x400?text=No+Image" alt="Product">
-                            <button class="scroll-btn scroll-left" onclick="scrollThumbnails(-1)"><i class="fas fa-chevron-left"></i></button>
-                            <button class="scroll-btn scroll-right" onclick="scrollThumbnails(1)"><i class="fas fa-chevron-right"></i></button>
+                            <button id="prev-image-btn" class="image-nav-btn nav-left" onclick="prevImage()">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button id="next-image-btn" class="image-nav-btn nav-right" onclick="nextImage()">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                        <div class="relative mt-4">
-                            <div id="thumbnail-container" class="thumbnail-scroll"></div>
+                        <!-- Image counter -->
+                        <div class="text-center mt-3">
+                            <span id="image-counter" class="text-xs text-gray-500"></span>
                         </div>
                     </div>
 
-                    <!-- Right Column - Details -->
+                    <!-- Right Column - Product Details -->
                     <div>
-                        <div class="mb-4">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span id="stock-badge" class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Loading...</span>
-                                <span id="sku-display" class="text-xs text-gray-500">SKU: -</span>
+                        <!-- Product Title (only here, not in header) -->
+                        <h1 id="product-title" class="text-2xl md:text-3xl font-bold mb-2">Loading...</h1>
+                        <p id="product-category" class="text-sm text-purple-500 mb-4">Loading...</p>
+
+                        <!-- Price Section -->
+                        <div class="price-section">
+                            <span id="sale-price" class="sale-price-large">AED 0</span>
+                            <span id="regular-price" class="regular-price-large hidden">AED 0</span>
+                            <span id="stock-badge" class="stock-badge-large stock-in-large">Loading...</span>
+                        </div>
+
+                        <!-- Compact Info Row (Brand, Condition, SKU, etc.) -->
+                        <div class="info-row-compact" id="info-row">
+                            <div class="info-item">
+                                <div class="info-item-label">Brand</div>
+                                <div class="info-item-value" id="brand-value">-</div>
                             </div>
-                            <h1 id="product-title" class="text-2xl md:text-3xl font-bold mb-2">Loading...</h1>
-                            <div class="flex items-baseline gap-2 mb-4">
-                                <span id="sale-price" class="text-3xl font-bold text-purple-600">AED 0</span>
-                                <span id="regular-price" class="text-lg text-gray-400 line-through hidden">AED 0</span>
+                            <div class="info-item">
+                                <div class="info-item-label">Condition</div>
+                                <div class="info-item-value" id="condition-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Stock</div>
+                                <div class="info-item-value" id="stock-quantity">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">SKU</div>
+                                <div class="info-item-value" id="sku-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Warehouse</div>
+                                <div class="info-item-value" id="warehouse-value">-</div>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 mb-6">
-                            <div class="info-card"><p class="text-xs text-gray-500">Brand</p><p id="brand-value" class="font-medium">-</p></div>
-                            <div class="info-card"><p class="text-xs text-gray-500">Condition</p><p id="condition-value" class="font-medium">-</p></div>
-                            <div class="info-card"><p class="text-xs text-gray-500">Stock Quantity</p><p id="stock-quantity" class="font-medium">-</p></div>
-                            <div class="info-card"><p class="text-xs text-gray-500">Warehouse</p><p id="warehouse-value" class="font-medium">-</p></div>
+                        <!-- Second Info Row -->
+                        <div class="info-row-compact" id="info-row-2">
+                            <div class="info-item">
+                                <div class="info-item-label">Material</div>
+                                <div class="info-item-value" id="material-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Size</div>
+                                <div class="info-item-value" id="size-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Weight</div>
+                                <div class="info-item-value" id="weight-value">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-item-label">Warranty</div>
+                                <div class="info-item-value" id="warranty-value">-</div>
+                            </div>
                         </div>
 
-                        <div class="mb-6">
-                            <h3 class="font-semibold mb-2">Description</h3>
+                        <!-- Description Section (after info cards) -->
+                        <div class="mt-6">
+                            <h3 class="font-semibold text-lg mb-3">Description</h3>
                             <div id="product-description" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed"></div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 mb-6">
-                            <div class="info-card"><p class="text-xs text-gray-500">Material</p><p id="material-value" class="font-medium">-</p></div>
-                            <div class="info-card"><p class="text-xs text-gray-500">Size</p><p id="size-value" class="font-medium">-</p></div>
-                            <div class="info-card"><p class="text-xs text-gray-500">Weight</p><p id="weight-value" class="font-medium">-</p></div>
-                            <div class="info-card"><p class="text-xs text-gray-500">Warranty</p><p id="warranty-value" class="font-medium">-</p></div>
-                        </div>
-
-                        <div class="flex gap-3 pt-4 border-t">
-                            <button onclick="editProduct()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition font-medium"><i class="fas fa-edit mr-2"></i>Edit Product</button>
-                            <button onclick="goBack()" class="flex-1 border border-gray-300 dark:border-gray-600 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</button>
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3 mt-8 pt-4 border-t">
+                            <button onclick="editProduct()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition font-medium">
+                                <i class="fas fa-edit mr-2"></i>Edit Product
+                            </button>
+                            <button onclick="goBack()" class="flex-1 border border-gray-300 dark:border-gray-600 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition font-medium">
+                                <i class="fas fa-arrow-left mr-2"></i>Back
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -309,7 +381,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCr0LDMOgUi0CoZjsmrPoDMXP6kl6AkCrM",
@@ -326,21 +398,55 @@
 
         let currentProduct = null;
         let currentImages = [];
+        let currentImageIndex = 0;
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
         window.editProduct = () => { window.location.href = `add-product.html?id=${getProductId()}`; };
         window.goBack = () => { window.location.href = 'products.html'; };
-        window.scrollThumbnails = (direction) => {
-            const container = document.getElementById('thumbnail-container');
-            if (container) {
-                const scrollAmount = direction * 120;
-                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            }
-        };
 
         function getProductId() {
             const params = new URLSearchParams(window.location.search);
             return params.get('id');
+        }
+
+        // Image navigation functions with looping
+        window.prevImage = function() {
+            if (!currentImages.length) return;
+            currentImageIndex--;
+            if (currentImageIndex < 0) {
+                currentImageIndex = currentImages.length - 1; // Loop to last
+            }
+            updateMainImage();
+        };
+
+        window.nextImage = function() {
+            if (!currentImages.length) return;
+            currentImageIndex++;
+            if (currentImageIndex >= currentImages.length) {
+                currentImageIndex = 0; // Loop to first
+            }
+            updateMainImage();
+        };
+
+        function updateMainImage() {
+            if (currentImages.length > 0 && currentImages[currentImageIndex]) {
+                const mainImage = document.getElementById('main-product-image');
+                mainImage.style.opacity = '0.5';
+                setTimeout(() => {
+                    mainImage.src = currentImages[currentImageIndex];
+                    mainImage.style.opacity = '1';
+                }, 150);
+                updateImageCounter();
+            }
+        }
+
+        function updateImageCounter() {
+            const counter = document.getElementById('image-counter');
+            if (currentImages.length > 0) {
+                counter.textContent = `Image ${currentImageIndex + 1} of ${currentImages.length}`;
+            } else {
+                counter.textContent = 'No images';
+            }
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -363,6 +469,7 @@
             
             currentProduct = { id: productDoc.id, ...productDoc.data() };
             currentImages = currentProduct.images || [];
+            currentImageIndex = 0;
             renderProductDetails();
         }
 
@@ -373,60 +480,58 @@
             const hasDiscount = regularPrice > salePrice;
             const isInStock = p.stockStatus === 'in-stock';
             
-            document.getElementById('product-name').textContent = p.name || 'Product Details';
+            // Product title and category (only here, not in header)
             document.getElementById('product-title').textContent = p.name || 'Untitled';
-            document.getElementById('product-category-display').textContent = p.category || 'Uncategorized';
+            document.getElementById('product-category').textContent = p.category || 'Uncategorized';
+            
+            // Price section
             document.getElementById('sale-price').textContent = `AED ${salePrice.toFixed(2)}`;
             if (hasDiscount) {
-                document.getElementById('regular-price').classList.remove('hidden');
-                document.getElementById('regular-price').textContent = `AED ${regularPrice.toFixed(2)}`;
+                const regularPriceEl = document.getElementById('regular-price');
+                regularPriceEl.classList.remove('hidden');
+                regularPriceEl.textContent = `AED ${regularPrice.toFixed(2)}`;
             }
-            document.getElementById('stock-badge').textContent = isInStock ? 'In Stock' : 'Out of Stock';
-            document.getElementById('stock-badge').className = `px-3 py-1 rounded-full text-xs font-medium ${isInStock ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`;
-            document.getElementById('sku-display').textContent = `SKU: ${p.sku || 'N/A'}`;
+            
+            // Stock badge
+            const stockBadge = document.getElementById('stock-badge');
+            stockBadge.textContent = isInStock ? 'In Stock' : 'Out of Stock';
+            stockBadge.className = `stock-badge-large ${isInStock ? 'stock-in-large' : 'stock-out-large'}`;
+            
+            // Info row values
             document.getElementById('brand-value').textContent = p.brand || '-';
             document.getElementById('condition-value').textContent = p.condition || 'New';
             document.getElementById('stock-quantity').textContent = p.stockQuantity || p.quantity || '0';
+            document.getElementById('sku-value').textContent = p.sku || '-';
             document.getElementById('warehouse-value').textContent = p.warehouse || '-';
             document.getElementById('material-value').textContent = p.material || '-';
             document.getElementById('size-value').textContent = p.size || '-';
             document.getElementById('weight-value').textContent = p.weight || '-';
             document.getElementById('warranty-value').textContent = p.warranty || '-';
             
+            // Description
             const descriptionHtml = p.description || 'No description available.';
             document.getElementById('product-description').innerHTML = descriptionHtml;
             
-            renderImages();
-        }
-
-        function renderImages() {
-            const thumbnailContainer = document.getElementById('thumbnail-container');
-            const mainImage = document.getElementById('main-product-image');
-            
-            if (!currentImages.length) {
-                thumbnailContainer.innerHTML = '<div class="text-center py-4 text-gray-500 w-full">No images</div>';
-                mainImage.src = 'https://placehold.co/600x400?text=No+Image';
-                return;
+            // Images
+            if (currentImages.length > 0) {
+                document.getElementById('main-product-image').src = currentImages[0];
+                updateImageCounter();
+            } else {
+                document.getElementById('main-product-image').src = 'https://placehold.co/600x400?text=No+Image';
+                document.getElementById('image-counter').textContent = 'No images';
             }
             
-            thumbnailContainer.innerHTML = currentImages.map((img, idx) => `
-                <div class="thumbnail-item ${idx === 0 ? 'active' : ''}" onclick="changeMainImage(${idx})">
-                    <img src="${img}" alt="Thumbnail ${idx + 1}">
-                </div>
-            `).join('');
-            
-            mainImage.src = currentImages[0];
-        }
-
-        window.changeMainImage = (index) => {
-            if (currentImages[index]) {
-                document.getElementById('main-product-image').src = currentImages[index];
-                document.querySelectorAll('.thumbnail-item').forEach((item, i) => {
-                    if (i === index) item.classList.add('active');
-                    else item.classList.remove('active');
-                });
+            // Show/hide navigation buttons based on image count
+            const prevBtn = document.getElementById('prev-image-btn');
+            const nextBtn = document.getElementById('next-image-btn');
+            if (currentImages.length <= 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
             }
-        };
+        }
     </script>
 </body>
 </html>
