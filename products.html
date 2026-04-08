@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // CRITICAL: This runs BEFORE page paints to prevent sidebar flicker
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Products - Marketplace Pro</title>
@@ -349,6 +360,41 @@
             background: var(--hover-bg);
             transform: translateX(-2px);
         }
+        
+        .desktop-sidebar {
+            width: 16rem;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+            position: relative;
+            height: 100vh;
+            flex-shrink: 0;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.5rem;
+            transition: none;
+            transform: none;
+        }
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            transition: none;
+            width: auto;
+        }
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .app-wrapper { display: block; }
+            .main-content { margin-left: 0 !important; width: 100% !important; }
+        }
     </style>
 </head>
 <body>
@@ -377,10 +423,9 @@
         </div>
     </aside>
 
-    <!-- FIXED: app-wrapper wraps sidebar + main content -->
     <div class="app-wrapper">
         <!-- Desktop Sidebar -->
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block" style="transition: none !important;">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
             <div class="p-4 border-b">
                 <div class="flex items-center space-x-2 sidebar-logo">
                     <i class="fas fa-store text-2xl text-purple-500"></i>
