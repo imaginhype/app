@@ -17,16 +17,8 @@ const db = getFirestore(app);
 let currentUserRole = null;
 let currentUserData = null;
 
-// Initialize sidebar on page load
-(function() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initSidebar);
-    } else {
-        initSidebar();
-    }
-})();
-
-function initSidebar() {
+// Initialize sidebar toggle after sidebar is loaded
+export function initSidebar() {
     const sidebar = document.querySelector('.desktop-sidebar');
     const toggleBtn = document.getElementById('sidebarToggleBtn');
     
@@ -48,6 +40,7 @@ function initSidebar() {
         });
     }
     
+    // Load role-based menu after user is authenticated
     loadRoleBasedMenu();
 }
 
@@ -61,12 +54,27 @@ async function loadRoleBasedMenu() {
     currentUserRole = userDoc.role;
     currentUserData = userDoc;
     
+    // Update panel labels based on role
+    const panelLabel = document.getElementById('mobile-panel-label');
+    const desktopLabel = document.getElementById('desktop-panel-label');
+    
+    if (currentUserRole === ROLES.ADMIN) {
+        if (panelLabel) panelLabel.textContent = 'Admin Panel';
+        if (desktopLabel) desktopLabel.textContent = 'Admin Panel';
+    } else if (currentUserRole === ROLES.MANAGER) {
+        if (panelLabel) panelLabel.textContent = 'Manager Panel';
+        if (desktopLabel) desktopLabel.textContent = 'Manager Panel';
+    } else {
+        if (panelLabel) panelLabel.textContent = 'Seller Panel';
+        if (desktopLabel) desktopLabel.textContent = 'Seller Panel';
+    }
+    
     updateMobileMenu();
     updateDesktopMenu();
 }
 
 function updateMobileMenu() {
-    const mobileNav = document.querySelector('#mobile-sidebar nav');
+    const mobileNav = document.querySelector('#mobile-nav');
     if (!mobileNav) return;
     
     const menus = getNavigationMenu(currentUserRole);
@@ -82,7 +90,7 @@ function updateMobileMenu() {
 }
 
 function updateDesktopMenu() {
-    const desktopNav = document.querySelector('.desktop-sidebar nav');
+    const desktopNav = document.querySelector('#desktop-nav');
     if (!desktopNav) return;
     
     const menus = getNavigationMenu(currentUserRole);
@@ -198,3 +206,12 @@ window.toggleTheme = function() {
 
 const savedTheme = localStorage.getItem('theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
+
+// ============================================
+// LOGOUT FUNCTION
+// ============================================
+
+window.logout = async () => {
+    await signOut(auth);
+    window.location.href = '/';
+};
