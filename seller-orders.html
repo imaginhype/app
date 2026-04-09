@@ -16,7 +16,7 @@
     <title>My Orders - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css");
     <style>
         .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
         .status-pending { background: #f59e0b20; color: #f59e0b; }
@@ -27,6 +27,8 @@
         .stat-card:hover { transform: translateY(-2px); }
         .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
         .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        .filter-chip { cursor: pointer; transition: all 0.2s; padding: 6px 16px; border-radius: 30px; font-size: 13px; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-color); }
+        .filter-chip.active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
         
         .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
         .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
@@ -36,21 +38,9 @@
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4">Seller Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Seller Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
@@ -88,8 +78,8 @@
     <!-- Order Details Modal -->
     <div id="order-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"><div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800"><h2 class="text-xl font-bold" id="order-modal-title">Order Details</h2><button onclick="closeOrderModal()" class="text-2xl hover:text-gray-500">&times;</button></div><div class="p-5" id="order-modal-content">Loading...</div><div class="p-5 border-t"><button onclick="closeOrderModal()" class="w-full bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition">Close</button></div></div></div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -127,7 +117,6 @@
         window.goToPage = (page) => { currentPage = page; renderOrders(); };
         
         window.viewOrderDetails = async (id) => { const orderDoc = await getDoc(doc(db, 'orders', id)); const order = orderDoc.data(); const modal = document.getElementById('order-modal'); const content = document.getElementById('order-modal-content'); document.getElementById('order-modal-title').textContent = `Order #${id.slice(0, 8)}`; content.innerHTML = `<div class="space-y-4"><div class="grid grid-cols-2 gap-4"><div><strong>Order ID:</strong> ${id.slice(0, 8)}</div><div><strong>Status:</strong> <span class="status-badge status-${order.orderStatus}">${order.orderStatus}</span></div><div><strong>Customer:</strong> ${escapeHtml(order.customerName || 'N/A')}</div><div><strong>Phone:</strong> ${escapeHtml(order.customerPhone || 'N/A')}</div><div><strong>Address:</strong> ${escapeHtml(order.customerAddress || 'N/A')}</div><div><strong>Total Amount:</strong> AED ${order.totalAmount || 0}</div><div><strong>Your Commission:</strong> AED ${order.sellerCommission || 0}</div><div><strong>Commission Paid:</strong> ${order.sellerPaid ? '✅ Yes' : '❌ No'}</div><div><strong>Date:</strong> ${formatDateTime(order.createdAt)}</div></div><div><strong>Order Items:</strong></div><div class="border rounded-lg overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-3 py-2 text-left">Product</th><th class="px-3 py-2 text-center">Qty</th><th class="px-3 py-2 text-right">Price</th><th class="px-3 py-2 text-right">Total</th></tr></thead><tbody>${order.items?.map(item => `<tr class="border-t"><td class="px-3 py-2">${escapeHtml(item.productName)}</td><td class="px-3 py-2 text-center">${item.quantity}</td><td class="px-3 py-2 text-right">AED ${item.retailPrice}</td><td class="px-3 py-2 text-right">AED ${item.retailPrice * item.quantity}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center py-4">No items</td></tr>'}</tbody><tfoot class="bg-gray-50 dark:bg-gray-700"><tr><td colspan="3" class="px-3 py-2 text-right font-semibold">Total:</td><td class="px-3 py-2 text-right font-bold">AED ${order.totalAmount || 0}</td></tr></tfoot></table></div></div>`; modal.classList.remove('hidden'); };
-        
         window.closeOrderModal = () => { document.getElementById('order-modal').classList.add('hidden'); };
         window.exportMyOrders = () => { const headers = ['Order ID', 'Date', 'Customer', 'Product', 'Amount', 'Commission', 'Status']; const rows = allOrders.map(o => [o.id.slice(0, 8), formatDate(o.createdAt), o.customerName || 'N/A', o.productName || (o.items?.[0]?.productName || 'N/A'), o.totalAmount || 0, o.sellerCommission || 0, o.orderStatus || 'pending']); const csv = [headers, ...rows].map(row => row.join(',')).join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `my_orders_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url); };
         
