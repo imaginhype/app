@@ -5,7 +5,8 @@
 // Load sidebar HTML and inject into page
 async function loadSidebar() {
     try {
-        const response = await fetch('/sidebar-content.html');
+        // FIXED: Changed from .html to .js to match actual filename
+        const response = await fetch('/sidebar-content.js');
         const sidebarHtml = await response.text();
         
         // Insert sidebar at the beginning of body (after any existing content)
