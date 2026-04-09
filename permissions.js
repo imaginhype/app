@@ -94,24 +94,31 @@ export function getNavigationMenu(role) {
         { name: 'Dashboard', icon: 'tachometer-alt', link: getDashboardLink(role), permission: null }
     ];
     
-    // Admin menus (FULL ACCESS to everything)
+    // ADMIN MENUS - FULL ACCESS TO EVERYTHING
     const adminMenus = [
         { name: 'Products', icon: 'box', link: 'products.html', permission: null },
         { name: 'Add Product', icon: 'plus-circle', link: 'add-product.html', permission: null },
+        { name: 'Product View', icon: 'eye', link: 'product-view.html', permission: null },
         { name: 'Orders', icon: 'shopping-cart', link: 'orders.html', permission: null },
+        { name: 'Seller Orders', icon: 'list', link: 'seller-orders.html', permission: null },
+        { name: 'Create Order', icon: 'plus', link: 'create-order.html', permission: null },
         { name: 'Sellers', icon: 'users', link: 'sellers.html', permission: null },
         { name: 'Suppliers', icon: 'truck', link: 'suppliers.html', permission: null },
         { name: 'Payouts', icon: 'money-bill-wave', link: 'payouts.html', permission: null },
+        { name: 'Seller Payouts', icon: 'money-bill', link: 'seller-payouts.html', permission: null },
+        { name: 'Bank Details', icon: 'university', link: 'bank-details.html', permission: null },
         { name: 'Announcements', icon: 'bullhorn', link: 'announcements.html', permission: null },
         { name: 'Reports', icon: 'chart-line', link: 'reports.html', permission: null },
         { name: 'Activity Log', icon: 'history', link: 'activity-log.html', permission: null },
         { name: 'Support Tickets', icon: 'ticket-alt', link: 'tickets.html', permission: null },
+        { name: 'Seller Tickets', icon: 'ticket', link: 'seller-tickets.html', permission: null },
+        { name: 'Chat', icon: 'comments', link: 'chat.html', permission: null },
         { name: 'Notifications', icon: 'bell', link: 'notifications.html', permission: null },
         { name: 'Profile', icon: 'user', link: 'profile.html', permission: null },
-        { name: 'Settings', icon: 'cog', link: 'account-settings.html', permission: null }
+        { name: 'Account Settings', icon: 'cog', link: 'account-settings.html', permission: null }
     ];
     
-    // Manager menus (Limited)
+    // MANAGER MENUS - Limited access
     const managerMenus = [
         { name: 'Products', icon: 'box', link: 'products.html', permission: null },
         { name: 'Add Product', icon: 'plus-circle', link: 'add-product.html', permission: null },
@@ -122,10 +129,10 @@ export function getNavigationMenu(role) {
         { name: 'Support Tickets', icon: 'ticket-alt', link: 'tickets.html', permission: null },
         { name: 'Notifications', icon: 'bell', link: 'notifications.html', permission: null },
         { name: 'Profile', icon: 'user', link: 'profile.html', permission: null },
-        { name: 'Settings', icon: 'cog', link: 'account-settings.html', permission: null }
+        { name: 'Account Settings', icon: 'cog', link: 'account-settings.html', permission: null }
     ];
     
-    // Seller menus (Own data only)
+    // SELLER MENUS - Own data only
     const sellerMenus = [
         { name: 'Products', icon: 'box', link: 'products.html', permission: null },
         { name: 'My Orders', icon: 'shopping-cart', link: 'seller-orders.html', permission: null },
@@ -137,7 +144,7 @@ export function getNavigationMenu(role) {
         { name: 'Announcements', icon: 'bullhorn', link: 'announcements.html', permission: null },
         { name: 'Notifications', icon: 'bell', link: 'notifications.html', permission: null },
         { name: 'Profile', icon: 'user', link: 'profile.html', permission: null },
-        { name: 'Settings', icon: 'cog', link: 'account-settings.html', permission: null }
+        { name: 'Account Settings', icon: 'cog', link: 'account-settings.html', permission: null }
     ];
     
     if (role === ROLES.ADMIN) return [...commonMenus, ...adminMenus];
@@ -156,16 +163,15 @@ function getDashboardLink(role) {
 
 // Check if user can access a specific page
 export function canAccessPage(userRole, pageName) {
-    // ADMIN has access to ALL pages - this is the key fix
+    // ADMIN has access to ALL pages - FULL ACCESS
     if (userRole === ROLES.ADMIN) {
         return true;
     }
     
     // For non-admin users, check specific permissions
     const pagePermissions = {
-        // Admin only pages (not for manager or seller)
+        // Admin only pages
         'admin-dashboard.html': [ROLES.ADMIN],
-        'sellers.html': [ROLES.ADMIN, ROLES.MANAGER],
         'suppliers.html': [ROLES.ADMIN],
         'payouts.html': [ROLES.ADMIN],
         'activity-log.html': [ROLES.ADMIN],
@@ -175,6 +181,7 @@ export function canAccessPage(userRole, pageName) {
         'products.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         'add-product.html': [ROLES.ADMIN, ROLES.MANAGER],
         'orders.html': [ROLES.ADMIN, ROLES.MANAGER],
+        'sellers.html': [ROLES.ADMIN, ROLES.MANAGER],
         'reports.html': [ROLES.ADMIN, ROLES.MANAGER],
         'tickets.html': [ROLES.ADMIN, ROLES.MANAGER],
         'announcements.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
