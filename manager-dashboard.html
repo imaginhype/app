@@ -39,18 +39,6 @@
     </style>
 </head>
 <body>
-    <!-- CLEANUP SCRIPT: Ensures no lingering login content -->
-    <script>
-        (function() {
-            if (document.body && document.body.innerHTML) {
-                if (document.body.innerHTML.includes('login-form') || 
-                    document.body.innerHTML.includes('Welcome Back') ||
-                    document.body.innerHTML.includes('Sign Up')) {
-                    window.location.reload();
-                }
-            }
-        })();
-    </script>
 
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
@@ -91,7 +79,7 @@
 
                 <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-chart-line text-purple-500"></i> Orders Trend</h3><div class="chart-container"><canvas id="ordersChart"></canvas></div></div>
 
-                <div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td>\u003c/tr> </tbody>}</div></div>
+                <div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></tr> </tbody>}</div></div>
             </div>
         </main>
     </div>
