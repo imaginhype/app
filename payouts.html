@@ -31,6 +31,7 @@
         .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
         .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
         .cycle-card { background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05)); border: 1px solid var(--border-color); border-radius: 1rem; padding: 1rem; }
+        .bulk-actions-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(37, 99, 235, 0.1); border-radius: 10px; margin-bottom: 16px; }
         
         .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
         .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
@@ -40,21 +41,9 @@
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4">Admin Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Admin Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
@@ -80,16 +69,18 @@
 
                 <div class="flex justify-between items-center flex-wrap gap-3 mb-4"><div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="search-payouts" placeholder="Search by seller name..." class="pl-10 pr-4 py-2 rounded-full border dark:bg-gray-800 w-full md:w-80"></div><div class="flex gap-2"><button id="pay-selected-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"><i class="fas fa-check-circle mr-2"></i>Pay Selected</button><button id="export-payouts-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"><i class="fas fa-download mr-2"></i>Export</button></div></div>
 
+                <div id="bulk-actions" class="bulk-actions-bar hidden"><span id="selected-count" class="text-sm font-medium">0 requests selected</span><div class="flex gap-2"><button onclick="clearSelection()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm">Clear</button></div></div>
+
                 <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow">
                     <table class="w-full min-w-[800px]">
                         <thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold w-10"><input type="checkbox" id="select-all-requests" class="rounded"></th><th class="px-4 py-3 text-left text-sm font-semibold">Seller</th><th class="px-4 py-3 text-left text-sm font-semibold">Requested Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Available Balance</th><th class="px-4 py-3 text-left text-sm font-semibold">Request Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Bank Details</th><th class="px-4 py-3 text-left text-sm font-semibold">Action</th></tr></thead>
-                        <tbody id="payout-requests-table"><tr><td colspan="8" class="text-center py-8">Loading payout requests...</td></tr></tbody>
+                        <tbody id="payout-requests-table"><tr><td colspan="8" class="text-center py-8">Loading payout requests...</td</tr></tbody>
                     </table>
                 </div>
                 <div class="flex justify-between items-center mt-4"><div class="text-sm text-gray-500" id="pagination-info">Showing 0 - 0 of 0 requests</div><div class="flex gap-2" id="pagination-container"></div></div>
 
                 <!-- Payout History -->
-                <div class="mt-8"><h3 class="text-lg font-semibold mb-4">Payout History</h3><div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow"><table class="w-full min-w-[800px]"><thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold">Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Seller</th><th class="px-4 py-3 text-left text-sm font-semibold">Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Processed By</th></tr></thead><tbody id="payout-history-table"><tr><td colspan="5" class="text-center py-8">Loading history...</td></tr></tbody></table></div></div>
+                <div class="mt-8"><h3 class="text-lg font-semibold mb-4">Payout History</h3><div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow"><table class="w-full min-w-[800px]"><thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold">Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Seller</th><th class="px-4 py-3 text-left text-sm font-semibold">Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Processed By</th></tr></thead><tbody id="payout-history-table"><tr><td colspan="5" class="text-center py-8">Loading history...</td</tr></tbody>}</div></div>
             </div>
         </main>
     </div>
@@ -97,8 +88,8 @@
     <!-- Process Payout Modal -->
     <div id="payout-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4"><div class="p-5 border-b"><h2 class="text-xl font-bold">Process Payout</h2></div><div class="p-5"><p class="mb-4" id="payout-seller-name"></p><p class="mb-4"><strong>Amount:</strong> <span id="payout-amount"></span></p><div><label class="block text-sm font-medium mb-1">Notes (optional)</label><textarea id="payout-notes" rows="2" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></textarea></div><div class="flex gap-3 mt-6"><button id="confirm-payout-btn" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">Confirm Payment</button><button onclick="closePayoutModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -110,11 +101,14 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let allSellers = [], payoutRequests = [], currentPage = 1, currentPayoutSellerId = null, currentPayoutAmount = 0;
+        let allSellers = [], payoutRequests = [], currentPage = 1, currentPayoutSellerId = null, currentPayoutAmount = 0, selectedRequests = new Set();
         const itemsPerPage = 10;
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
         window.closePayoutModal = () => { document.getElementById('payout-modal').classList.add('hidden'); };
+        function clearSelection() { selectedRequests.clear(); document.querySelectorAll('.payout-checkbox').forEach(cb => cb.checked = false); updateBulkActionsBar(); }
+        window.clearSelection = clearSelection;
+        function updateBulkActionsBar() { const count = selectedRequests.size; const bulkActions = document.getElementById('bulk-actions'); if (count > 0) { bulkActions.classList.remove('hidden'); document.getElementById('selected-count').textContent = `${count} request${count > 1 ? 's' : ''} selected`; } else { bulkActions.classList.add('hidden'); } }
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
@@ -130,8 +124,8 @@
         
         function calculatePayoutRequests() { const now = new Date(); const day = now.getDate(); let cycleOpen = (day <= 7) || (day >= 15 && day <= 21); document.getElementById('cycle-status').innerHTML = cycleOpen ? `${now.getFullYear()}-${now.getMonth()+1}-${day <= 7 ? '1-7' : '15-21'} (Open)` : `${now.getFullYear()}-${now.getMonth()+1}-${day < 15 ? '1-7' : '15-21'} (Closed)`; document.getElementById('toggle-cycle-btn').textContent = cycleOpen ? 'Close Cycle' : 'Open Cycle'; payoutRequests = allSellers.filter(s => s.pendingEarnings > 0 && s.payoutThreshold && s.pendingEarnings >= s.payoutThreshold); if (!cycleOpen) payoutRequests = []; }
         
-        function renderPayoutRequests() { const start = (currentPage - 1) * itemsPerPage; const end = Math.min(start + itemsPerPage, payoutRequests.length); const paginated = payoutRequests.slice(start, end); const tbody = document.getElementById('payout-requests-table'); if (!paginated.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No payout requests available. ' + (payoutRequests.length === 0 ? 'Sellers need to request payouts.' : '') + '</td></tr>'; document.getElementById('pagination-container').innerHTML = ''; return; }
-        tbody.innerHTML = paginated.map(seller => `<tr class="border-b dark:border-gray-700"><td class="px-4 py-3"><input type="checkbox" class="payout-checkbox rounded" data-id="${seller.id}" data-amount="${seller.pendingEarnings}"></td><td class="px-4 py-3 font-medium">${escapeHtml(seller.name)}</td><td class="px-4 py-3 font-semibold text-purple-600">AED ${seller.pendingEarnings.toLocaleString()}</td><td class="px-4 py-3">AED ${seller.pendingEarnings.toLocaleString()}</td><td class="px-4 py-3">${formatDate(new Date().toISOString())}</td><td class="px-4 py-3"><span class="status-badge status-pending">Pending</span></td><td class="px-4 py-3"><button onclick="viewBankDetails('${seller.id}')" class="text-blue-500 hover:text-blue-700 text-sm">View</button></td><td class="px-4 py-3"><button onclick="processPayout('${seller.id}', ${seller.pendingEarnings})" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">Pay Now</button></td></tr>`).join('');
+        function renderPayoutRequests() { const start = (currentPage - 1) * itemsPerPage; const end = Math.min(start + itemsPerPage, payoutRequests.length); const paginated = payoutRequests.slice(start, end); const tbody = document.getElementById('payout-requests-table'); if (!paginated.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No payout requests available.' + (payoutRequests.length === 0 ? ' Sellers need to request payouts.' : '') + '</td></tr>'; document.getElementById('pagination-container').innerHTML = ''; return; }
+        tbody.innerHTML = paginated.map(seller => `<tr class="border-b dark:border-gray-700"><td class="px-4 py-3"><input type="checkbox" class="payout-checkbox rounded" data-id="${seller.id}" data-amount="${seller.pendingEarnings}" ${selectedRequests.has(seller.id) ? 'checked' : ''}></td><td class="px-4 py-3 font-medium">${escapeHtml(seller.name)}</td><td class="px-4 py-3 font-semibold text-purple-600">AED ${seller.pendingEarnings.toLocaleString()}</td><td class="px-4 py-3">AED ${seller.pendingEarnings.toLocaleString()}</td><td class="px-4 py-3">${formatDate(new Date().toISOString())}</td><td class="px-4 py-3"><span class="status-badge status-pending">Pending</span></td><td class="px-4 py-3"><button onclick="viewBankDetails('${seller.id}')" class="text-blue-500 hover:text-blue-700 text-sm">View</button></td><td class="px-4 py-3"><button onclick="processPayout('${seller.id}', ${seller.pendingEarnings})" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">Pay Now</button></td></tr>`).join('');
         document.getElementById('pagination-info').textContent = `Showing ${start + 1} - ${end} of ${payoutRequests.length} requests`; renderPagination(payoutRequests.length); }
         
         function renderPagination(total) { const totalPages = Math.ceil(total / itemsPerPage); const container = document.getElementById('pagination-container'); if (totalPages <= 1) { container.innerHTML = ''; return; } let html = ''; if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`; for (let i = 1; i <= Math.min(totalPages, 5); i++) { html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`; } if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`; container.innerHTML = html; }
@@ -148,8 +142,10 @@
         function updateStats() { const totalDue = allSellers.reduce((sum, s) => sum + (s.pendingEarnings || 0), 0); const totalRequested = payoutRequests.reduce((sum, r) => sum + (r.pendingEarnings || 0), 0); document.getElementById('total-due').textContent = `AED ${totalDue.toLocaleString()}`; document.getElementById('total-requested').textContent = `AED ${totalRequested.toLocaleString()}`; }
         
         document.getElementById('toggle-cycle-btn').addEventListener('click', () => { alert('Cycle status would be toggled here. In production, this would update a setting in the database.'); });
-        document.getElementById('select-all-requests').addEventListener('change', (e) => { document.querySelectorAll('.payout-checkbox').forEach(cb => cb.checked = e.target.checked); });
-        document.getElementById('pay-selected-btn').addEventListener('click', () => { const selected = []; document.querySelectorAll('.payout-checkbox:checked').forEach(cb => { selected.push({ id: cb.dataset.id, amount: parseFloat(cb.dataset.amount) }); }); if (selected.length === 0) { alert('No requests selected'); return; } if (confirm(`Process payout for ${selected.length} seller(s)? Total: AED ${selected.reduce((s, r) => s + r.amount, 0).toLocaleString()}`)) { selected.forEach(async s => await processPayoutDirect(s.id, s.amount)); setTimeout(() => loadPayoutData(), 2000); } });
+        document.getElementById('select-all-requests').addEventListener('change', (e) => { document.querySelectorAll('.payout-checkbox').forEach(cb => { cb.checked = e.target.checked; if (e.target.checked) selectedRequests.add(cb.dataset.id); else selectedRequests.delete(cb.dataset.id); }); updateBulkActionsBar(); });
+        document.querySelectorAll('.payout-checkbox').forEach(cb => { cb.addEventListener('change', (e) => { if (e.target.checked) selectedRequests.add(e.target.dataset.id); else selectedRequests.delete(e.target.dataset.id); updateBulkActionsBar(); }); });
+        
+        document.getElementById('pay-selected-btn').addEventListener('click', () => { const selected = []; selectedRequests.forEach(id => { const seller = allSellers.find(s => s.id === id); if (seller) selected.push({ id, amount: seller.pendingEarnings }); }); if (selected.length === 0) { alert('No requests selected'); return; } if (confirm(`Process payout for ${selected.length} seller(s)? Total: AED ${selected.reduce((s, r) => s + r.amount, 0).toLocaleString()}`)) { selected.forEach(async s => await processPayoutDirect(s.id, s.amount)); setTimeout(() => loadPayoutData(), 2000); clearSelection(); } });
         
         async function processPayoutDirect(sellerId, amount) { await updateDoc(doc(db, 'users', sellerId), { totalPaid: (allSellers.find(s => s.id === sellerId)?.totalPaid || 0) + amount }); const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', sellerId), where('sellerPaid', '==', false))); for (const orderDoc of ordersSnap.docs) { await updateDoc(doc(db, 'orders', orderDoc.id), { sellerPaid: true, sellerPaidDate: new Date().toISOString() }); } await addDoc(collection(db, 'payouts'), { sellerId, sellerName: allSellers.find(s => s.id === sellerId)?.name, amount, status: 'paid', processedDate: new Date().toISOString(), processedBy: auth.currentUser.uid }); }
         
