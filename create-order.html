@@ -18,40 +18,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .product-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
+        .product-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; transition: all 0.2s; cursor: pointer; }
         .product-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); border-color: var(--accent-color); }
-        .product-card.selected { border-color: var(--accent-color); background: var(--accent-color); background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05)); }
+        .product-card.selected { border-color: var(--accent-color); background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05)); }
         .cart-item { background: var(--bg-tertiary); border-radius: 0.75rem; padding: 0.75rem; margin-bottom: 0.5rem; }
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
         .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
         
-        .desktop-sidebar {
-            width: 16rem;
-            transition: width 0.3s ease;
-            overflow-x: hidden;
-            position: relative;
-            height: 100vh;
-            flex-shrink: 0;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-        }
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
         .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
         .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
         .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
@@ -63,13 +37,13 @@
 
     <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
         <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4">Seller Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4" id="panel-label">Seller Panel</div><nav id="mobile-nav"></nav></div>
         <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
     </aside>
 
     <div class="app-wrapper">
         <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Seller Panel</p></div>
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2" id="desktop-panel-label">Seller Panel</p></div>
             <nav id="desktop-nav"></nav>
             <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
         </aside>
@@ -79,12 +53,12 @@
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
                     <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
-                    <a href="seller-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> <span>Back</span></a>
                     <div><h1 class="text-xl md:text-2xl font-bold">Create New Order</h1><p class="text-sm text-gray-500">Select products and enter customer details</p></div>
                 </div>
                 <div class="flex items-center space-x-4">
                     <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
-                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Seller</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">User</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
                     <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
                 </div>
             </div>
@@ -141,11 +115,10 @@
     </div>
 
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { firebaseConfig } from './firebase-config.js';
         import { ROLES } from './permissions.js';
 
@@ -153,27 +126,41 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUserId = null;
-        let currentUserData = null;
+        let currentUserId = null, currentUserData = null, currentUserRole = null;
         let allProducts = [];
         let cart = [];
         let currentOrderType = 'catalog';
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
-        window.cancelOrder = () => { window.location.href = 'seller-dashboard.html'; };
+        window.cancelOrder = () => { window.location.href = 'javascript:history.back()'; };
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             currentUserId = user.uid;
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             currentUserData = userDoc.data();
+            currentUserRole = currentUserData?.role;
             
-            if (currentUserData?.role !== ROLES.SELLER || currentUserData?.verificationStatus !== 'approved') {
-                window.location.href = '/seller-dashboard.html';
+            // Allow Admin, Manager, and Seller to create orders
+            if (currentUserRole !== ROLES.ADMIN && currentUserRole !== ROLES.MANAGER && currentUserRole !== ROLES.SELLER) {
+                window.location.href = '/unauthorized.html';
                 return;
             }
             
-            document.getElementById('user-name').textContent = currentUserData.name || 'Seller';
+            document.getElementById('user-name').textContent = currentUserData.name || 'User';
+            
+            // Update panel labels based on role
+            if (currentUserRole === ROLES.ADMIN) {
+                document.getElementById('panel-label').textContent = 'Admin Panel';
+                document.getElementById('desktop-panel-label').textContent = 'Admin Panel';
+            } else if (currentUserRole === ROLES.MANAGER) {
+                document.getElementById('panel-label').textContent = 'Manager Panel';
+                document.getElementById('desktop-panel-label').textContent = 'Manager Panel';
+            } else {
+                document.getElementById('panel-label').textContent = 'Seller Panel';
+                document.getElementById('desktop-panel-label').textContent = 'Seller Panel';
+            }
+            
             await loadProducts();
         });
 
@@ -190,7 +177,7 @@
             
             const container = document.getElementById('products-list');
             if (!filtered.length) { container.innerHTML = '<div class="text-center py-8 col-span-full text-gray-500">No products found</div>'; return; }
-            container.innerHTML = filtered.map(p => `<div class="product-card p-4" onclick="addToCart('${p.id}')"><div class="flex gap-4"><div class="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">${p.images && p.images[0] ? `<img src="${p.images[0]}" class="w-full h-full object-cover rounded-lg">` : '<i class="fas fa-box text-2xl text-gray-400"></i>'}</div><div class="flex-1"><h4 class="font-semibold">${escapeHtml(p.name)}</h4><p class="text-sm text-gray-500">${escapeHtml(p.category || 'Uncategorized')}</p><div class="flex justify-between items-center mt-2"><span class="text-lg font-bold text-purple-600">AED ${p.retailPrice}</span><span class="text-sm text-green-600">Commission: ${p.commissionValue || 10}%</span></div></div></div></div>`).join('');
+            container.innerHTML = filtered.map(p => `<div class="product-card p-4" onclick="addToCart('${p.id}')"><div class="flex gap-4"><div class="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">${p.images && p.images[0] ? `<img src="${p.images[0]}" class="w-full h-full object-cover rounded-lg">` : '<i class="fas fa-box text-2xl text-gray-400"></i>'}</div><div class="flex-1"><h4 class="font-semibold">${escapeHtml(p.name)}</h4><p class="text-sm text-gray-500">${escapeHtml(p.category || 'Uncategorized')}</p><div class="flex justify-between items-center mt-2"><span class="text-lg font-bold text-purple-600">AED ${p.retailPrice || p.price}</span><span class="text-sm text-green-600">Commission: ${p.commissionValue || 10}%</span></div></div></div></div>`).join('');
         }
 
         window.addToCart = (productId) => {
@@ -199,7 +186,7 @@
             
             const existingItem = cart.find(item => item.productId === productId);
             if (existingItem) { existingItem.quantity++; }
-            else { cart.push({ productId: product.id, productName: product.name, retailPrice: product.retailPrice, commissionRate: product.commissionValue || 10, quantity: 1 }); }
+            else { cart.push({ productId: product.id, productName: product.name, retailPrice: product.retailPrice || product.price, commissionRate: product.commissionValue || 10, quantity: 1 }); }
             renderCart();
         };
 
@@ -220,8 +207,10 @@
         window.removeFromCart = (idx) => { cart.splice(idx, 1); renderCart(); };
 
         document.getElementById('search-products')?.addEventListener('input', () => renderProducts());
+        
         document.getElementById('catalog-product-btn').addEventListener('click', () => { currentOrderType = 'catalog'; document.getElementById('catalog-section').classList.remove('hidden'); document.getElementById('custom-section').classList.add('hidden'); document.getElementById('catalog-product-btn').classList.add('bg-purple-500', 'text-white'); document.getElementById('catalog-product-btn').classList.remove('border', 'border-gray-300'); document.getElementById('custom-product-btn').classList.remove('bg-purple-500', 'text-white'); document.getElementById('custom-product-btn').classList.add('border', 'border-gray-300'); });
         document.getElementById('custom-product-btn').addEventListener('click', () => { currentOrderType = 'custom'; document.getElementById('catalog-section').classList.add('hidden'); document.getElementById('custom-section').classList.remove('hidden'); document.getElementById('custom-product-btn').classList.add('bg-purple-500', 'text-white'); document.getElementById('custom-product-btn').classList.remove('border', 'border-gray-300'); document.getElementById('catalog-product-btn').classList.remove('bg-purple-500', 'text-white'); document.getElementById('catalog-product-btn').classList.add('border', 'border-gray-300'); });
+        
         document.getElementById('add-custom-to-cart').addEventListener('click', () => { const name = document.getElementById('custom-product-name').value.trim(); const price = parseFloat(document.getElementById('custom-retail-price').value); if (!name || !price) { alert('Please enter product name and retail price'); return; } cart.push({ productId: null, productName: name, retailPrice: price, commissionRate: 0, isCustom: true, customDesc: document.getElementById('custom-product-desc').value, suggestedCommission: parseFloat(document.getElementById('custom-commission').value) || 0, quantity: 1 }); renderCart(); document.getElementById('custom-product-name').value = ''; document.getElementById('custom-product-desc').value = ''; document.getElementById('custom-retail-price').value = ''; document.getElementById('custom-commission').value = ''; alert('Custom product added to cart. Admin will review and set commission.'); });
 
         document.getElementById('submit-order').addEventListener('click', async () => {
@@ -236,7 +225,7 @@
             
             const orderData = { sellerId: currentUserId, sellerName: currentUserData.name, customerName, customerPhone, customerAddress, notes: document.getElementById('order-notes').value, items: cart, totalAmount, sellerCommission: totalCommission, orderStatus: 'pending', customerPaid: false, supplierPaid: false, sellerPaid: false, createdAt: new Date().toISOString() };
             
-            try { const docRef = await addDoc(collection(db, 'orders'), orderData); alert('Order created successfully!'); window.location.href = 'seller-orders.html'; } catch (error) { console.error('Error creating order:', error); alert('Error creating order. Please try again.'); }
+            try { await addDoc(collection(db, 'orders'), orderData); alert('Order created successfully!'); window.location.href = 'seller-orders.html'; } catch (error) { console.error('Error creating order:', error); alert('Error creating order. Please try again.'); }
         });
 
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
