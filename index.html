@@ -303,12 +303,8 @@
                 if (role === 'admin') redirectUrl = '/admin-dashboard.html';
                 if (role === 'manager') redirectUrl = '/manager-dashboard.html';
                 
-                // FIX: Clear the entire page before redirect
-                document.body.innerHTML = '<div style="background:#0f172a;height:100vh;"></div>';
-                
-                setTimeout(() => {
-                    window.location.replace(redirectUrl);
-                }, 50);
+                // FIXED: Simple redirect without body manipulation
+                window.location.href = redirectUrl;
                 
             } catch (error) {
                 loginError.textContent = friendlyAuthError(error.code);
@@ -355,10 +351,7 @@
                 showLoading(false);
                 
                 if (role === 'admin') {
-                    document.body.innerHTML = '<div style="background:#0f172a;height:100vh;"></div>';
-                    setTimeout(() => {
-                        window.location.replace('/admin-dashboard.html');
-                    }, 50);
+                    window.location.href = '/admin-dashboard.html';
                 } else {
                     okDiv.textContent = 'Account created! A verification email has been sent. Please verify your email, then complete your seller verification form to start selling.';
                     okDiv.classList.remove('hidden');
