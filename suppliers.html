@@ -34,24 +34,25 @@
         .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
         .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
         @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+        
+        /* Dark mode modal fix */
+        [data-theme="dark"] #supplier-modal > div,
+        [data-theme="dark"] .modal-content {
+            background-color: #1e293b !important;
+        }
+        [data-theme="dark"] #supplier-modal input,
+        [data-theme="dark"] #supplier-modal select,
+        [data-theme="dark"] #supplier-modal textarea {
+            background-color: #334155 !important;
+            border-color: #475569 !important;
+            color: #f1f5f9 !important;
+        }
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4">Admin Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Admin Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
@@ -77,7 +78,7 @@
                         <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
                             <tr><th class="px-4 py-3 text-left text-sm font-semibold">ID</th><th class="px-4 py-3 text-left text-sm font-semibold">Supplier Name</th><th class="px-4 py-3 text-left text-sm font-semibold">Contact Person</th><th class="px-4 py-3 text-left text-sm font-semibold">Phone</th><th class="px-4 py-3 text-left text-sm font-semibold">Email</th><th class="px-4 py-3 text-left text-sm font-semibold">Products</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
                         </thead>
-                        <tbody id="suppliers-table-body"><tr><td colspan="8" class="text-center py-8">Loading suppliers...</td</tr></tbody>
+                        <tbody id="suppliers-table-body"><tr><td colspan="8" class="text-center py-8">Loading suppliers...</td</tr>
                     </table>
                 </div>
 
@@ -87,13 +88,13 @@
     </div>
 
     <!-- Add/Edit Supplier Modal -->
-    <div id="supplier-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto"><div class="p-5 border-b"><h2 class="text-xl font-bold" id="supplier-modal-title">Add Supplier</h2></div><div class="p-5"><div class="space-y-4"><div><label class="block text-sm font-medium mb-1">Supplier Name *</label><input type="text" id="supplier-name" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Contact Person</label><input type="text" id="supplier-contact" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div><label class="block text-sm font-medium mb-1">Phone *</label><input type="tel" id="supplier-phone" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Email</label><input type="email" id="supplier-email" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div><label class="block text-sm font-medium mb-1">Address</label><input type="text" id="supplier-address" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div></div><div><label class="block text-sm font-medium mb-1">Bank Details</label><input type="text" id="supplier-bank" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700" placeholder="Bank name, IBAN, SWIFT"></div><div><label class="block text-sm font-medium mb-1">Status</label><select id="supplier-status" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div><div class="flex gap-3 mt-6"><button id="save-supplier" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition">Save Supplier</button><button onclick="closeSupplierModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
+    <div id="supplier-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto"><div class="p-5 border-b"><h2 class="text-xl font-bold" id="supplier-modal-title">Add Supplier</h2></div><div class="p-5"><div class="space-y-4"><div><label class="block text-sm font-medium mb-1">Supplier Name *</label><input type="text" id="supplier-name" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Contact Person</label><input type="text" id="supplier-contact" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"></div><div><label class="block text-sm font-medium mb-1">Phone *</label><input type="tel" id="supplier-phone" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Email</label><input type="email" id="supplier-email" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"></div><div><label class="block text-sm font-medium mb-1">Address</label><input type="text" id="supplier-address" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"></div></div><div><label class="block text-sm font-medium mb-1">Bank Details</label><input type="text" id="supplier-bank" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600" placeholder="Bank name, IBAN, SWIFT"></div><div><label class="block text-sm font-medium mb-1">Status</label><select id="supplier-status" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div><div class="flex gap-3 mt-6"><button id="save-supplier" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition">Save Supplier</button><button onclick="closeSupplierModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
 
     <!-- Payment Record Modal -->
-    <div id="payment-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4"><div class="p-5 border-b"><h2 class="text-xl font-bold">Record Supplier Payment</h2></div><div class="p-5"><div><label class="block text-sm font-medium mb-1">Amount (AED)</label><input type="number" id="payment-amount" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div><label class="block text-sm font-medium mb-1 mt-3">Payment Date</label><input type="date" id="payment-date" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div><label class="block text-sm font-medium mb-1 mt-3">Reference / Notes</label><textarea id="payment-notes" rows="2" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></textarea></div><div class="flex gap-3 mt-6"><button id="confirm-payment" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">Record Payment</button><button onclick="closePaymentModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
+    <div id="payment-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4"><div class="p-5 border-b"><h2 class="text-xl font-bold">Record Supplier Payment</h2></div><div class="p-5"><div><label class="block text-sm font-medium mb-1">Amount (AED)</label><input type="number" id="payment-amount" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"></div><div><label class="block text-sm font-medium mb-1 mt-3">Payment Date</label><input type="date" id="payment-date" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"></div><div><label class="block text-sm font-medium mb-1 mt-3">Reference / Notes</label><textarea id="payment-notes" rows="2" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600"></textarea></div><div class="flex gap-3 mt-6"><button id="confirm-payment" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">Record Payment</button><button onclick="closePaymentModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -131,13 +132,10 @@
         window.goToPage = (page) => { currentPage = page; renderSuppliers(); };
         
         window.editSupplier = async (id) => { currentSupplierId = id; const sup = allSuppliers.find(s => s.id === id); if (!sup) return; document.getElementById('supplier-modal-title').textContent = 'Edit Supplier'; document.getElementById('supplier-name').value = sup.name || ''; document.getElementById('supplier-contact').value = sup.contactPerson || ''; document.getElementById('supplier-phone').value = sup.phone || ''; document.getElementById('supplier-email').value = sup.email || ''; document.getElementById('supplier-address').value = sup.address || ''; document.getElementById('supplier-bank').value = sup.bankDetails || ''; document.getElementById('supplier-status').value = sup.status || 'active'; document.getElementById('supplier-modal').classList.remove('hidden'); };
-        
         window.recordSupplierPayment = (id) => { currentSupplierId = id; document.getElementById('payment-amount').value = ''; document.getElementById('payment-date').value = new Date().toISOString().split('T')[0]; document.getElementById('payment-notes').value = ''; document.getElementById('payment-modal').classList.remove('hidden'); };
-        
         window.deleteSupplier = async (id) => { if (!confirm('Delete this supplier? This will also remove them from products.')) return; await deleteDoc(doc(db, 'suppliers', id)); await loadSuppliers(); };
         
         document.getElementById('save-supplier').addEventListener('click', async () => { const data = { name: document.getElementById('supplier-name').value.trim(), contactPerson: document.getElementById('supplier-contact').value.trim(), phone: document.getElementById('supplier-phone').value.trim(), email: document.getElementById('supplier-email').value.trim(), address: document.getElementById('supplier-address').value.trim(), bankDetails: document.getElementById('supplier-bank').value.trim(), status: document.getElementById('supplier-status').value, updatedAt: new Date().toISOString() }; if (!data.name || !data.phone) { alert('Supplier name and phone are required'); return; } if (currentSupplierId) { await updateDoc(doc(db, 'suppliers', currentSupplierId), data); } else { data.createdAt = new Date().toISOString(); await addDoc(collection(db, 'suppliers'), data); } closeSupplierModal(); await loadSuppliers(); });
-        
         document.getElementById('confirm-payment').addEventListener('click', async () => { const amount = document.getElementById('payment-amount').value; if (!amount) { alert('Please enter amount'); return; } const paymentData = { supplierId: currentSupplierId, amount: parseFloat(amount), date: document.getElementById('payment-date').value, notes: document.getElementById('payment-notes').value, recordedAt: new Date().toISOString() }; await addDoc(collection(db, 'supplierPayments'), paymentData); closePaymentModal(); alert('Payment recorded successfully'); });
         
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
