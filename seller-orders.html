@@ -88,7 +88,7 @@
     <!-- Order Details Modal -->
     <div id="order-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"><div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800"><h2 class="text-xl font-bold" id="order-modal-title">Order Details</h2><button onclick="closeOrderModal()" class="text-2xl hover:text-gray-500">&times;</button></div><div class="p-5" id="order-modal-content">Loading...</div><div class="p-5 border-t"><button onclick="closeOrderModal()" class="w-full bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition">Close</button></div></div></div>
 
-    <script src="sidebar.js"></script>
+    <script type="module" src="sidebar.js"></script>
     <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
