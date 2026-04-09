@@ -254,7 +254,6 @@
             return map[code] || 'Something went wrong. Please try again.';
         }
 
-        // UPDATED LOGIN FUNCTION - Clears page before redirect
         window.handleLogin = async () => {
             const email = loginEmail.value.trim();
             const password = loginPassword.value;
@@ -304,7 +303,7 @@
                 if (role === 'admin') redirectUrl = '/admin-dashboard.html';
                 if (role === 'manager') redirectUrl = '/manager-dashboard.html';
                 
-                // FIX: Clear the entire page before redirect to prevent login residue
+                // FIX: Clear the entire page before redirect
                 document.body.innerHTML = '<div style="background:#0f172a;height:100vh;"></div>';
                 
                 setTimeout(() => {
@@ -357,7 +356,9 @@
                 
                 if (role === 'admin') {
                     document.body.innerHTML = '<div style="background:#0f172a;height:100vh;"></div>';
-                    setTimeout(() => { window.location.replace('/admin-dashboard.html'); }, 50);
+                    setTimeout(() => {
+                        window.location.replace('/admin-dashboard.html');
+                    }, 50);
                 } else {
                     okDiv.textContent = 'Account created! A verification email has been sent. Please verify your email, then complete your seller verification form to start selling.';
                     okDiv.classList.remove('hidden');
