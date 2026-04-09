@@ -48,27 +48,15 @@
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4" id="panel-label">Admin Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2" id="desktop-panel-label">Admin Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
                     <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
-                    <a href="products.html" class="back-btn"><i class="fas fa-arrow-left"></i> <span>Back to Products</span></a>
+                    <a href="products.html" class="back-btn" id="back-link"><i class="fas fa-arrow-left"></i> <span>Back to Products</span></a>
                     <div><h1 class="text-xl md:text-2xl font-bold">Product Details</h1><p class="text-sm text-gray-500">View and manage product information</p></div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -82,13 +70,14 @@
         </main>
     </div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { firebaseConfig } from './firebase-config.js';
-        import { ROLES } from './permissions.js';
+        import { ROLES, canAccessPage } from './permissions.js';
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -112,32 +101,10 @@
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             currentUserRole = userDoc.data()?.role;
-            
-            // Allow Admin, Manager, and Seller to view products
-            if (currentUserRole !== ROLES.ADMIN && currentUserRole !== ROLES.MANAGER && currentUserRole !== ROLES.SELLER) {
-                window.location.href = '/unauthorized.html';
-                return;
-            }
-            
+            if (!canAccessPage(currentUserRole, 'product-view.html')) { window.location.href = '/unauthorized.html'; return; }
             document.getElementById('user-name').textContent = userDoc.data()?.name || 'User';
-            
-            // Update panel labels based on role
-            if (currentUserRole === ROLES.ADMIN) {
-                document.getElementById('panel-label').textContent = 'Admin Panel';
-                document.getElementById('desktop-panel-label').textContent = 'Admin Panel';
-            } else if (currentUserRole === ROLES.MANAGER) {
-                document.getElementById('panel-label').textContent = 'Manager Panel';
-                document.getElementById('desktop-panel-label').textContent = 'Manager Panel';
-            } else {
-                document.getElementById('panel-label').textContent = 'Seller Panel';
-                document.getElementById('desktop-panel-label').textContent = 'Seller Panel';
-            }
-            
-            // Hide edit button for sellers
-            if (currentUserRole === ROLES.SELLER) {
-                document.getElementById('edit-btn').style.display = 'none';
-            }
-            
+            if (currentUserRole === ROLES.MANAGER) { document.getElementById('back-link').href = 'manager-dashboard.html'; }
+            if (currentUserRole === ROLES.SELLER) { document.getElementById('back-link').href = 'seller-dashboard.html'; document.getElementById('edit-btn').style.display = 'none'; }
             await loadProduct();
         });
 
