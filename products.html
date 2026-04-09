@@ -158,7 +158,7 @@
 
     <div id="edit-category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" onclick="closeEditCategoryModal(event)"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4" onclick="event.stopPropagation()"><div class="p-5 border-b flex justify-between items-center"><h2 class="text-xl font-bold dark:text-white text-gray-900">Edit Category</h2><button onclick="closeEditCategoryModal()" class="text-2xl hover:text-gray-500 dark:text-gray-400">&times;</button></div><div class="p-5"><div class="mb-4"><label class="block text-sm font-medium mb-2 dark:text-gray-300 text-gray-700">Category Name</label><input type="text" id="edit-category-name" class="w-full px-4 py-2 rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Category names must be between 2-50 characters</p></div><div class="flex gap-3 mt-6"><button onclick="updateCategory()" class="flex-1 bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition">Save Changes</button><button onclick="closeEditCategoryModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button></div></div></div></div>
 
-    <script src="sidebar.js"></script>
+    <script type="module" src="sidebar.js"></script>
     <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
