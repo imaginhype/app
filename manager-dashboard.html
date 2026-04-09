@@ -19,47 +19,19 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .stat-card {
-            transition: all 0.2s ease;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-        }
+        .stat-card { transition: all 0.2s ease; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; }
         .stat-card:hover { transform: translateY(-2px); }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
         .status-pending { background: #f59e0b20; color: #f59e0b; }
         .status-approved { background: #10b98120; color: #10b981; }
         .status-completed { background: #3b82f620; color: #3b82f6; }
         .status-paid { background: #8b5cf620; color: #8b5cf6; }
-        .section-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; }
         .chart-container { height: 300px; position: relative; width: 100%; }
-        canvas { max-height: 100%; width: 100%; }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
         
-        .desktop-sidebar {
-            width: 16rem;
-            transition: width 0.3s ease;
-            overflow-x: hidden;
-            position: relative;
-            height: 100vh;
-            flex-shrink: 0;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-        }
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
         .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
         .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
         .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
@@ -67,22 +39,11 @@
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4">Manager Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Manager Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
+            <!-- Top Bar -->
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
@@ -104,6 +65,7 @@
             </div>
 
             <div class="p-4 md:p-6">
+                <!-- Stats Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="stat-card p-4"><div class="text-2xl font-bold text-purple-500" id="stat-products">0</div><div class="text-sm text-gray-500">Total Products</div></div>
                     <div class="stat-card p-4"><div class="text-2xl font-bold text-blue-500" id="stat-orders">0</div><div class="text-sm text-gray-500">Total Orders</div></div>
@@ -111,21 +73,23 @@
                     <div class="stat-card p-4"><div class="text-2xl font-bold text-orange-500" id="stat-pending">0</div><div class="text-sm text-gray-500">Pending Orders</div></div>
                 </div>
 
+                <!-- Orders Trend Chart -->
                 <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-chart-line text-purple-500"></i> Orders Trend</h3><div class="chart-container"><canvas id="ordersChart"></canvas></div></div>
 
+                <!-- Recent Orders -->
                 <div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></tr></tbody>}</div></div>
             </div>
         </main>
     </div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { firebaseConfig } from './firebase-config.js';
-        import { ROLES, canAccessPage } from './permissions.js';
+        import { ROLES } from './permissions.js';
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -138,33 +102,20 @@
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
-            const userData = userDoc.data();
-            
-            if (userData?.role !== ROLES.MANAGER) {
-                window.location.href = '/unauthorized.html';
-                return;
-            }
-            
-            document.getElementById('manager-name').textContent = userData.name || 'Manager';
-            document.getElementById('user-name').textContent = userData.name || 'Manager';
-            
+            if (userDoc.data()?.role !== ROLES.MANAGER) { window.location.href = '/unauthorized.html'; return; }
+            document.getElementById('manager-name').textContent = userDoc.data()?.name || 'Manager';
+            document.getElementById('user-name').textContent = userDoc.data()?.name || 'Manager';
             await loadDashboardData();
         });
 
-        async function loadDashboardData() {
-            await loadStats();
-            await loadRecentOrders();
-            await loadCharts();
-        }
+        async function loadDashboardData() { await loadStats(); await loadRecentOrders(); await loadCharts(); }
 
         async function loadStats() {
             const productsSnap = await getDocs(collection(db, 'products'));
             const ordersSnap = await getDocs(collection(db, 'orders'));
             const usersSnap = await getDocs(collection(db, 'users'));
-            
             const sellers = usersSnap.docs.filter(d => d.data().role === 'seller' && d.data().status === 'active').length;
             const pendingOrders = ordersSnap.docs.filter(d => d.data().orderStatus === 'pending').length;
-            
             document.getElementById('stat-products').textContent = productsSnap.size;
             document.getElementById('stat-orders').textContent = ordersSnap.size;
             document.getElementById('stat-sellers').textContent = sellers;
@@ -174,33 +125,17 @@
         async function loadCharts() {
             const ordersSnap = await getDocs(collection(db, 'orders'));
             const monthly = { Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0, Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0 };
-            
-            ordersSnap.docs.forEach(d => {
-                const o = d.data();
-                if (o.createdAt) {
-                    const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' });
-                    monthly[m] = (monthly[m] || 0) + 1;
-                }
-            });
-            
+            ordersSnap.docs.forEach(d => { const o = d.data(); if (o.createdAt) { const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' }); monthly[m] = (monthly[m] || 0) + 1; } });
             const ctx = document.getElementById('ordersChart');
             if (ordersChartInstance) ordersChartInstance.destroy();
-            ordersChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: Object.keys(monthly), datasets: [{ label: 'Number of Orders', data: Object.values(monthly), backgroundColor: '#8b5cf6', borderRadius: 8 }] },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
+            ordersChartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(monthly), datasets: [{ label: 'Number of Orders', data: Object.values(monthly), backgroundColor: '#8b5cf6', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: true } });
         }
 
         async function loadRecentOrders() {
             const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
             const tbody = document.getElementById('recent-orders-table');
             if (ordersSnap.empty) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No orders yet</td></tr>'; return; }
-            tbody.innerHTML = ordersSnap.docs.map(d => {
-                const o = d.data();
-                const statusClass = o.orderStatus === 'pending' ? 'status-pending' : (o.orderStatus === 'approved' ? 'status-approved' : (o.orderStatus === 'completed' ? 'status-completed' : 'status-paid'));
-                return `<tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td><td class="px-4 py-2">${escapeHtml(o.sellerName || 'N/A')}</td><td class="px-4 py-2">AED ${o.totalAmount || 0}</td><td class="px-4 py-2"><span class="status-badge ${statusClass}">${o.orderStatus || 'pending'}</span></td><td class="px-4 py-2"><a href="orders.html" class="text-purple-500 hover:underline">View</a></td></tr>`;
-            }).join('');
+            tbody.innerHTML = ordersSnap.docs.map(d => { const o = d.data(); const statusClass = o.orderStatus === 'pending' ? 'status-pending' : (o.orderStatus === 'approved' ? 'status-approved' : (o.orderStatus === 'completed' ? 'status-completed' : 'status-paid')); return `<tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td><td class="px-4 py-2">${escapeHtml(o.sellerName || 'N/A')}</td><td class="px-4 py-2">AED ${o.totalAmount || 0}</td><td class="px-4 py-2"><span class="status-badge ${statusClass}">${o.orderStatus || 'pending'}</span></td><td class="px-4 py-2"><a href="orders.html" class="text-purple-500 hover:underline">View</a></td></tr>`; }).join('');
         }
 
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
