@@ -39,32 +39,20 @@
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4">Seller Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Seller Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
                     <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
-                    <a href="seller-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <a href="seller-dashboard.html" class="back-btn" id="back-link"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
                     <div><h1 class="text-xl md:text-2xl font-bold">Chat with Support</h1><p class="text-sm text-gray-500">Direct messaging with admin</p></div>
                 </div>
                 <div class="flex items-center space-x-4">
                     <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
-                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Seller</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">User</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
                     <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
                 </div>
             </div>
@@ -83,36 +71,54 @@
         </main>
     </div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, where, orderBy, addDoc, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { firebaseConfig } from './firebase-config.js';
-        import { ROLES } from './permissions.js';
+        import { ROLES, canAccessPage } from './permissions.js';
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUserId = null, currentUserData = null, unsubscribe = null;
+        let currentUserId = null, currentUserData = null, currentUserRole = null, unsubscribe = null;
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.data()?.role !== ROLES.SELLER || userDoc.data()?.verificationStatus !== 'approved') { window.location.href = '/seller-dashboard.html'; return; }
-            currentUserId = user.uid;
             currentUserData = userDoc.data();
-            document.getElementById('user-name').textContent = currentUserData.name || 'Seller';
+            currentUserRole = currentUserData?.role;
+            currentUserId = user.uid;
+            
+            if (!canAccessPage(currentUserRole, 'chat.html')) { window.location.href = '/unauthorized.html'; return; }
+            
+            document.getElementById('user-name').textContent = currentUserData?.name || 'User';
+            
+            // Update back link based on role
+            if (currentUserRole === ROLES.ADMIN) {
+                document.getElementById('back-link').href = 'admin-dashboard.html';
+            } else if (currentUserRole === ROLES.MANAGER) {
+                document.getElementById('back-link').href = 'manager-dashboard.html';
+            } else {
+                document.getElementById('back-link').href = 'seller-dashboard.html';
+            }
+            
             setupChatListener();
         });
 
         function setupChatListener() {
             if (unsubscribe) unsubscribe();
-            const q = query(collection(db, 'chatMessages'), where('sellerId', '==', currentUserId), orderBy('timestamp', 'asc'));
+            let q;
+            if (currentUserRole === ROLES.ADMIN || currentUserRole === ROLES.MANAGER) {
+                q = query(collection(db, 'chatMessages'), orderBy('timestamp', 'asc'));
+            } else {
+                q = query(collection(db, 'chatMessages'), where('sellerId', '==', currentUserId), orderBy('timestamp', 'asc'));
+            }
             unsubscribe = onSnapshot(q, (snapshot) => {
                 const messages = [];
                 snapshot.forEach(doc => messages.push({ id: doc.id, ...doc.data() }));
@@ -130,7 +136,16 @@
         document.getElementById('send-btn').addEventListener('click', async () => {
             const message = document.getElementById('message-input').value.trim();
             if (!message) return;
-            await addDoc(collection(db, 'chatMessages'), { sellerId: currentUserId, sellerName: currentUserData.name, senderId: currentUserId, senderName: currentUserData.name, message: message, timestamp: new Date().toISOString(), read: false });
+            await addDoc(collection(db, 'chatMessages'), { 
+                sellerId: currentUserId, 
+                sellerName: currentUserData.name, 
+                senderId: currentUserId, 
+                senderName: currentUserData.name, 
+                senderRole: currentUserRole,
+                message: message, 
+                timestamp: new Date().toISOString(), 
+                read: false 
+            });
             document.getElementById('message-input').value = '';
         });
 
