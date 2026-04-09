@@ -42,11 +42,21 @@
     </style>
 </head>
 <body>
+    <!-- CLEANUP SCRIPT: Removes timestamp parameter from URL when coming from login page -->
+    <script>
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('t')) {
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        })();
+    </script>
+
     <!-- Sidebar loads automatically via load-sidebar.js -->
     
     <div class="app-wrapper">
         <main class="main-content">
-            <!-- Top Bar -->
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
@@ -68,7 +78,6 @@
             </div>
 
             <div class="p-4 md:p-6">
-                <!-- Stats Cards Row 1 -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="stat-card p-4"><div class="text-2xl font-bold" id="stat-total-sellers">0</div><div class="text-sm opacity-70">Total Sellers</div></div>
                     <div class="stat-card p-4"><div class="text-2xl font-bold" id="stat-total-orders">0</div><div class="text-sm opacity-70">Total Orders</div></div>
@@ -76,7 +85,6 @@
                     <div class="stat-card p-4"><div class="text-2xl font-bold" id="stat-revenue">AED 0</div><div class="text-sm opacity-70">Platform Revenue</div></div>
                 </div>
 
-                <!-- Stats Cards Row 2 -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="stat-card p-4"><div class="text-2xl font-bold" id="stat-orders-today">0</div><div class="text-sm opacity-70">Orders Today</div></div>
                     <div class="stat-card p-4"><div class="text-2xl font-bold" id="stat-pending-payouts">AED 0</div><div class="text-sm opacity-70">Pending Payouts</div></div>
@@ -84,19 +92,15 @@
                     <div class="stat-card p-4"><div class="text-2xl font-bold" id="stat-success-rate">0%</div><div class="text-sm opacity-70">Success Rate</div></div>
                 </div>
 
-                <!-- Pending Verifications Alert -->
                 <div id="pending-verifications-alert" class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl hidden"><div class="flex justify-between items-center"><span><i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i><span id="pending-count-text">0 sellers</span> waiting for verification approval</span><a href="sellers.html" class="text-purple-500 hover:underline">Review Now →</a></div></div>
 
-                <!-- Revenue Chart and Quick Stats Row -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                     <div class="card p-5 rounded-xl lg:col-span-2"><h3 class="section-title"><i class="fas fa-chart-line text-purple-500"></i> Revenue Trend</h3><div class="chart-container"><canvas id="revenueChart"></canvas></div></div>
                     <div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-chart-simple text-green-500"></i> Quick Stats</h3><div class="space-y-4"><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Orders Completed</span><span class="text-xl font-bold text-green-600" id="quick-completed">0</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Pending Payouts</span><span class="text-xl font-bold text-orange-600" id="quick-pending-payouts">AED 0</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Active Sellers</span><span class="text-xl font-bold text-purple-600" id="quick-active-sellers">0</span></div></div></div>
                 </div>
 
-                <!-- Recent Orders Table -->
                 <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></tr></tbody></table></div></div>
 
-                <!-- Top Sellers & Top Products -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-trophy text-yellow-500"></i> Top 10 Sellers</h3><div id="top-sellers-list" class="space-y-2"><div class="text-center py-4 text-gray-500">Loading...</div></div></div><div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-box text-purple-500"></i> Top 10 Products</h3><div id="top-products-list" class="space-y-2"><div class="text-center py-4 text-gray-500">Loading...</div></div></div></div>
             </div>
         </main>
