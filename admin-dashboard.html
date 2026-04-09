@@ -41,18 +41,15 @@
     </style>
 </head>
 <body>
-    <!-- CLEANUP SCRIPT: Removes any lingering login page content -->
+    <!-- CLEANUP SCRIPT: Ensures no lingering login content -->
     <script>
         (function() {
-            if (document.body.innerHTML.includes('login-form') || 
-                document.body.innerHTML.includes('Welcome Back') ||
-                document.body.innerHTML.includes('Sign Up')) {
-                window.location.reload();
-            }
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('t')) {
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, document.title, newUrl);
+            if (document.body && document.body.innerHTML) {
+                if (document.body.innerHTML.includes('login-form') || 
+                    document.body.innerHTML.includes('Welcome Back') ||
+                    document.body.innerHTML.includes('Sign Up')) {
+                    window.location.reload();
+                }
             }
         })();
     </script>
@@ -115,7 +112,7 @@
                     <div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-chart-simple text-green-500"></i> Quick Stats</h3><div class="space-y-4"><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Orders Completed</span><span class="text-xl font-bold text-green-600" id="quick-completed">0</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Pending Payouts</span><span class="text-xl font-bold text-orange-600" id="quick-pending-payouts">AED 0</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Active Sellers</span><span class="text-xl font-bold text-purple-600" id="quick-active-sellers">0</span></div></div></div>
                 </div>
 
-                <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></tr></tbody>}</div></div>
+                <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></tr></tbody></table></div></div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-trophy text-yellow-500"></i> Top 10 Sellers</h3><div id="top-sellers-list" class="space-y-2"><div class="text-center py-4 text-gray-500">Loading...</div></div></div><div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-box text-purple-500"></i> Top 10 Products</h3><div id="top-products-list" class="space-y-2"><div class="text-center py-4 text-gray-500">Loading...</div></div></div></div>
             </div>
@@ -193,7 +190,7 @@
         async function loadRecentOrders() {
             const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
             const tbody = document.getElementById('recent-orders-table');
-            if (ordersSnap.empty) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No orders yet</td></tr>'; return; }
+            if (ordersSnap.empty) { tbody.innerHTML = '</table><td colspan="6" class="text-center py-4">No orders yet</td>\u003c/tr>'; return; }
             tbody.innerHTML = ordersSnap.docs.map(d => { const o = d.data(); return `<tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td><td class="px-4 py-2">${escapeHtml(o.sellerName || 'N/A')}</td><td class="px-4 py-2">AED ${o.totalAmount || 0}</td><td class="px-4 py-2"><span class="status-badge status-${o.orderStatus || 'pending'}">${o.orderStatus || 'pending'}</span></td><td class="px-4 py-2"><a href="orders.html" class="text-purple-500 hover:underline">View</a></td></tr>`; }).join('');
         }
 
