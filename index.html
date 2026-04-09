@@ -54,9 +54,13 @@
             border: none;
             cursor: pointer;
         }
-        .auth-btn:hover {
+        .auth-btn:hover:not(:disabled) {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        .auth-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
         .auth-btn-secondary {
             background: transparent;
@@ -93,9 +97,22 @@
             border-bottom: 1px solid var(--border-color);
             backdrop-filter: blur(10px);
         }
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body class="transition-colors duration-300">
+<body>
 
     <!-- Navigation Bar -->
     <nav class="nav-bar fixed w-full top-0 z-50 shadow-lg">
@@ -136,13 +153,16 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Email Address</label>
-                        <input type="email" id="login-email" class="auth-input" placeholder="admin@example.com">
+                        <input type="email" id="login-email" class="auth-input" placeholder="admin@example.com" autocomplete="off">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">Password</label>
-                        <input type="password" id="login-password" class="auth-input" placeholder="••••••••">
+                        <input type="password" id="login-password" class="auth-input" placeholder="••••••••" autocomplete="off">
                     </div>
-                    <button onclick="handleLogin()" class="auth-btn">Login</button>
+                    <button onclick="handleLogin()" id="login-btn" class="auth-btn">Login</button>
+                    <div id="login-loading" class="hidden text-center mt-2 text-sm text-purple-500">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Logging in...
+                    </div>
                 </div>
                 <p class="text-center mt-4 text-sm">
                     <button onclick="showForgotPassword()" class="text-purple-500 hover:underline">Forgot password?</button>
@@ -161,21 +181,24 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Full Name</label>
-                        <input type="text" id="signup-name" class="auth-input" placeholder="John Doe">
+                        <input type="text" id="signup-name" class="auth-input" placeholder="John Doe" autocomplete="off">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">Email Address</label>
-                        <input type="email" id="signup-email" class="auth-input" placeholder="seller@example.com">
+                        <input type="email" id="signup-email" class="auth-input" placeholder="seller@example.com" autocomplete="off">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">Password</label>
-                        <input type="password" id="signup-password" class="auth-input" placeholder="•••••••• (min 6 characters)">
+                        <input type="password" id="signup-password" class="auth-input" placeholder="•••••••• (min 6 characters)" autocomplete="off">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-2">Confirm Password</label>
-                        <input type="password" id="signup-confirm" class="auth-input" placeholder="••••••••">
+                        <input type="password" id="signup-confirm" class="auth-input" placeholder="••••••••" autocomplete="off">
                     </div>
-                    <button onclick="handleSignup()" class="auth-btn">Sign Up</button>
+                    <button onclick="handleSignup()" id="signup-btn" class="auth-btn">Sign Up</button>
+                    <div id="signup-loading" class="hidden text-center mt-2 text-sm text-purple-500">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Creating account...
+                    </div>
                 </div>
                 <p class="text-center mt-4 text-sm">
                     Already have an account?
@@ -191,9 +214,12 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Email Address</label>
-                        <input type="email" id="forgot-email" class="auth-input" placeholder="your@email.com">
+                        <input type="email" id="forgot-email" class="auth-input" placeholder="your@email.com" autocomplete="off">
                     </div>
-                    <button onclick="handleForgotPassword()" class="auth-btn">Send Reset Link</button>
+                    <button onclick="handleForgotPassword()" id="forgot-btn" class="auth-btn">Send Reset Link</button>
+                    <div id="forgot-loading" class="hidden text-center mt-2 text-sm text-purple-500">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Sending...
+                    </div>
                 </div>
                 <p class="text-center mt-4 text-sm">
                     <button onclick="showLogin()" class="text-purple-500 hover:underline">Back to Login</button>
@@ -216,6 +242,14 @@
         // Make auth and db available globally
         window.auth = auth;
         window.db = db;
+
+        // Clear login form fields on page load (FIX #1)
+        function clearLoginForm() {
+            const emailInput = document.getElementById('login-email');
+            const passwordInput = document.getElementById('login-password');
+            if (emailInput) emailInput.value = '';
+            if (passwordInput) passwordInput.value = '';
+        }
 
         // Theme functions
         window.toggleTheme = function() {
@@ -246,6 +280,9 @@
             document.querySelectorAll('.fa-sun').forEach(icon => icon.style.display = 'inline');
         }
 
+        // Clear login form on page load
+        clearLoginForm();
+
         // Check if first user exists
         async function isFirstUser() {
             const snapshot = await getDocs(collection(db, 'users'));
@@ -257,6 +294,7 @@
             document.getElementById('login-form').classList.remove('hidden');
             document.getElementById('signup-form').classList.add('hidden');
             document.getElementById('forgot-form').classList.add('hidden');
+            clearLoginForm();
         };
 
         window.showSignup = () => {
@@ -284,18 +322,27 @@
             return map[code] || 'Something went wrong. Please try again.';
         }
 
-        // Handle Login
+        // Handle Login with loading feedback (FIX #2) and replace() (FIX #3)
         window.handleLogin = async () => {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
             const errDiv = document.getElementById('login-error');
+            const loginBtn = document.getElementById('login-btn');
+            const loadingDiv = document.getElementById('login-loading');
+            
             errDiv.classList.add('hidden');
-
+            
             if (!email || !password) {
                 errDiv.textContent = 'Please fill in all fields.';
                 errDiv.classList.remove('hidden');
                 return;
             }
+            
+            // Show loading state
+            const originalText = loginBtn.innerHTML;
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Logging in...';
+            if (loadingDiv) loadingDiv.classList.remove('hidden');
 
             try {
                 const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -305,46 +352,57 @@
                 if (!userData) {
                     errDiv.textContent = 'User data not found. Please contact support.';
                     errDiv.classList.remove('hidden');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalText;
+                    if (loadingDiv) loadingDiv.classList.add('hidden');
                     return;
                 }
-
-                // Check if account is suspended
+                
                 if (userData.status === 'suspended') {
                     errDiv.textContent = 'Your account has been suspended. Please contact support.';
                     errDiv.classList.remove('hidden');
                     await signOut(auth);
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalText;
+                    if (loadingDiv) loadingDiv.classList.add('hidden');
                     return;
                 }
-
-                // Check email verification
+                
                 if (!cred.user.emailVerified && userData.role !== 'admin') {
                     errDiv.textContent = 'Please verify your email before logging in. Check your inbox for the verification link.';
                     errDiv.classList.remove('hidden');
                     await signOut(auth);
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalText;
+                    if (loadingDiv) loadingDiv.classList.add('hidden');
                     return;
                 }
-
-                // Update last login
+                
                 await updateDoc(doc(db, 'users', cred.user.uid), {
                     lastLoginAt: new Date().toISOString()
                 });
-
-                // Redirect based on role
+                
                 const role = userData.role;
+                
+                // FIX #3: Use replace() to prevent login page flash
                 if (role === 'admin') {
-                    window.location.href = '/admin-dashboard.html';
+                    window.location.replace('/admin-dashboard.html');
                 } else if (role === 'manager') {
-                    window.location.href = '/manager-dashboard.html';
+                    window.location.replace('/manager-dashboard.html');
                 } else {
-                    window.location.href = '/seller-dashboard.html';
+                    window.location.replace('/seller-dashboard.html');
                 }
+                
             } catch (error) {
                 errDiv.textContent = friendlyAuthError(error.code);
                 errDiv.classList.remove('hidden');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalText;
+                if (loadingDiv) loadingDiv.classList.add('hidden');
             }
         };
 
-        // Handle Signup
+        // Handle Signup with loading feedback
         window.handleSignup = async () => {
             const name = document.getElementById('signup-name').value.trim();
             const email = document.getElementById('signup-email').value.trim();
@@ -352,9 +410,12 @@
             const confirm = document.getElementById('signup-confirm').value;
             const errDiv = document.getElementById('signup-error');
             const okDiv = document.getElementById('signup-success');
+            const signupBtn = document.getElementById('signup-btn');
+            const loadingDiv = document.getElementById('signup-loading');
+            
             errDiv.classList.add('hidden');
             okDiv.classList.add('hidden');
-
+            
             if (!name || !email || !password || !confirm) {
                 errDiv.textContent = 'Please fill in all fields.';
                 errDiv.classList.remove('hidden');
@@ -370,6 +431,12 @@
                 errDiv.classList.remove('hidden');
                 return;
             }
+            
+            // Show loading state
+            const originalText = signupBtn.innerHTML;
+            signupBtn.disabled = true;
+            signupBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating account...';
+            if (loadingDiv) loadingDiv.classList.remove('hidden');
 
             try {
                 const isFirst = await isFirstUser();
@@ -378,10 +445,8 @@
 
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
                 
-                // Send email verification
                 await sendEmailVerification(cred.user);
                 
-                // Create user document
                 await setDoc(doc(db, 'users', cred.user.uid), {
                     uid: cred.user.uid,
                     name: name,
@@ -401,43 +466,55 @@
                 });
 
                 if (role === 'admin') {
-                    // Admin auto-approved, redirect to dashboard
-                    window.location.href = '/admin-dashboard.html';
+                    window.location.replace('/admin-dashboard.html');
                 } else {
                     okDiv.textContent = 'Account created! A verification email has been sent. Please verify your email, then complete your seller verification form to start selling.';
                     okDiv.classList.remove('hidden');
                     
-                    // Clear form
                     document.getElementById('signup-name').value = '';
                     document.getElementById('signup-email').value = '';
                     document.getElementById('signup-password').value = '';
                     document.getElementById('signup-confirm').value = '';
                     
-                    // Show login form after 3 seconds
                     setTimeout(() => {
                         showLogin();
                         okDiv.classList.add('hidden');
                     }, 5000);
                 }
+                
             } catch (error) {
                 errDiv.textContent = friendlyAuthError(error.code);
                 errDiv.classList.remove('hidden');
+            } finally {
+                signupBtn.disabled = false;
+                signupBtn.innerHTML = originalText;
+                if (loadingDiv) loadingDiv.classList.add('hidden');
             }
         };
 
-        // Handle Forgot Password
+        // Handle Forgot Password with loading feedback
         window.handleForgotPassword = async () => {
             const email = document.getElementById('forgot-email').value.trim();
             const errDiv = document.getElementById('forgot-error');
             const okDiv = document.getElementById('forgot-success');
+            const forgotBtn = document.getElementById('forgot-btn');
+            const loadingDiv = document.getElementById('forgot-loading');
+            
             errDiv.classList.add('hidden');
             okDiv.classList.add('hidden');
-
+            
             if (!email) {
                 errDiv.textContent = 'Please enter your email address.';
                 errDiv.classList.remove('hidden');
                 return;
             }
+            
+            // Show loading state
+            const originalText = forgotBtn.innerHTML;
+            forgotBtn.disabled = true;
+            forgotBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+            if (loadingDiv) loadingDiv.classList.remove('hidden');
+            
             try {
                 await sendPasswordResetEmail(auth, email);
                 okDiv.textContent = 'Reset link sent! Check your inbox.';
@@ -448,6 +525,10 @@
             } catch (error) {
                 errDiv.textContent = friendlyAuthError(error.code);
                 errDiv.classList.remove('hidden');
+            } finally {
+                forgotBtn.disabled = false;
+                forgotBtn.innerHTML = originalText;
+                if (loadingDiv) loadingDiv.classList.add('hidden');
             }
         };
     </script>
