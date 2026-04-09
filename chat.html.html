@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Chat with Admin - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .chat-container { height: calc(100vh - 200px); min-height: 400px; display: flex; flex-direction: column; }
+        .messages-area { flex: 1; overflow-y: auto; padding: 1rem; }
+        .message { margin-bottom: 1rem; display: flex; }
+        .message-sent { justify-content: flex-end; }
+        .message-received { justify-content: flex-start; }
+        .message-bubble { max-width: 70%; padding: 0.75rem 1rem; border-radius: 1.25rem; }
+        .message-sent .message-bubble { background: var(--accent-color); color: white; border-bottom-right-radius: 0.25rem; }
+        .message-received .message-bubble { background: var(--bg-tertiary); color: var(--text-primary); border-bottom-left-radius: 0.25rem; }
+        .message-time { font-size: 0.7rem; opacity: 0.7; margin-top: 0.25rem; text-align: right; }
+        .chat-input-area { padding: 1rem; border-top: 1px solid var(--border-color); background: var(--bg-card); }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
+        .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
+        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
+        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+    </style>
+</head>
+<body>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4">Seller Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+    </aside>
+
+    <div class="app-wrapper">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Seller Panel</p></div>
+            <nav id="desktop-nav"></nav>
+            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
+                    <a href="seller-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <div><h1 class="text-xl md:text-2xl font-bold">Chat with Support</h1><p class="text-sm text-gray-500">Direct messaging with admin</p></div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Seller</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
+                </div>
+            </div>
+
+            <div class="p-4">
+                <div class="chat-container">
+                    <div class="messages-area" id="messages-area">
+                        <div class="text-center py-8 text-gray-500">Loading messages...</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <div class="flex gap-3"><textarea id="message-input" rows="2" class="flex-1 px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-700 resize-none" placeholder="Type your message here..."></textarea><button id="send-btn" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"><i class="fas fa-paper-plane"></i></button></div>
+                        <p class="text-xs text-gray-500 mt-2">Admin is typically online during business hours (9 AM - 6 PM).</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, orderBy, addDoc, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { ROLES } from './permissions.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserId = null, currentUserData = null, unsubscribe = null;
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.data()?.role !== ROLES.SELLER || userDoc.data()?.verificationStatus !== 'approved') { window.location.href = '/seller-dashboard.html'; return; }
+            currentUserId = user.uid;
+            currentUserData = userDoc.data();
+            document.getElementById('user-name').textContent = currentUserData.name || 'Seller';
+            setupChatListener();
+        });
+
+        function setupChatListener() {
+            if (unsubscribe) unsubscribe();
+            const q = query(collection(db, 'chatMessages'), where('sellerId', '==', currentUserId), orderBy('timestamp', 'asc'));
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                const messages = [];
+                snapshot.forEach(doc => messages.push({ id: doc.id, ...doc.data() }));
+                renderMessages(messages);
+            });
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messages-area');
+            if (!messages.length) { container.innerHTML = '<div class="text-center py-8 text-gray-500">No messages yet. Send a message to get support.</div>'; return; }
+            container.innerHTML = messages.map(msg => `<div class="message ${msg.senderId === currentUserId ? 'message-sent' : 'message-received'}"><div class="message-bubble"><p class="text-sm">${escapeHtml(msg.message)}</p><p class="message-time">${formatTime(msg.timestamp)}</p></div></div>`).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('send-btn').addEventListener('click', async () => {
+            const message = document.getElementById('message-input').value.trim();
+            if (!message) return;
+            await addDoc(collection(db, 'chatMessages'), { sellerId: currentUserId, sellerName: currentUserData.name, senderId: currentUserId, senderName: currentUserData.name, message: message, timestamp: new Date().toISOString(), read: false });
+            document.getElementById('message-input').value = '';
+        });
+
+        document.getElementById('message-input').addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('send-btn').click(); } });
+
+        function formatTime(dateString) { if (!dateString) return ''; const date = new Date(dateString); return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+    </script>
+</body>
+</html>

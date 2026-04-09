@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sellers - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .status-active { background: #10b98120; color: #10b981; }
+        .status-suspended { background: #ef444420; color: #ef4444; }
+        .status-pending { background: #f59e0b20; color: #f59e0b; }
+        .status-approved { background: #10b98120; color: #10b981; }
+        .status-rejected { background: #ef444420; color: #ef4444; }
+        .seller-row:hover { background-color: var(--hover-bg); }
+        .table-container { overflow-x: auto; }
+        .search-input { padding: 8px 14px; border-radius: 30px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); width: 100%; max-width: 280px; font-size: 13px; }
+        .filter-select { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); font-size: 13px; cursor: pointer; }
+        .action-toolbar { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .filters-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+        @media (max-width: 640px) { .filters-bar { flex-direction: column; align-items: stretch; } .search-input { max-width: 100%; } }
+        .pagination-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .pagination-btn:hover, .pagination-btn.active { background: var(--accent-color); color: white; }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
+        .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
+        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
+        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+    </style>
+</head>
+<body>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4" id="panel-label">Admin Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+    </aside>
+
+    <div class="app-wrapper">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2" id="desktop-panel-label">Admin Panel</p></div>
+            <nav id="desktop-nav"></nav>
+            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
+                    <a href="admin-dashboard.html" class="back-btn" id="back-link"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <div><h1 class="text-xl md:text-2xl font-bold">Sellers</h1><p class="text-sm text-gray-500">Manage sellers, verify accounts, and control access</p></div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Admin</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6">
+                <div class="action-toolbar"><button onclick="exportToCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-download"></i> Export</button></div>
+
+                <div class="filters-bar"><div class="flex-1 min-w-[180px] max-w-sm"><input type="text" id="search-sellers" placeholder="Search by name, email, or phone..." class="search-input w-full"></div><div class="flex gap-3"><select id="status-filter" class="filter-select"><option value="all">All Status</option><option value="active">Active</option><option value="pending">Pending Verification</option><option value="suspended">Suspended</option><option value="rejected">Rejected</option></select><select id="role-filter" class="filter-select"><option value="all">All Roles</option><option value="seller">Seller</option><option value="manager">Manager</option></select><button id="filter-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Apply</button></div></div>
+
+                <div class="table-container bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full min-w-[1000px]">
+                        <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                            <tr><th class="px-4 py-3 text-left text-sm font-semibold">ID</th><th class="px-4 py-3 text-left text-sm font-semibold">Name</th><th class="px-4 py-3 text-left text-sm font-semibold">Email</th><th class="px-4 py-3 text-left text-sm font-semibold">Role</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Orders</th><th class="px-4 py-3 text-left text-sm font-semibold">Earnings</th><th class="px-4 py-3 text-left text-sm font-semibold">Joined</th><th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                        </thead>
+                        <tbody id="sellers-table-body"><tr><td colspan="9" class="text-center py-8">Loading sellers...</td></tr></tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-between items-center mt-4"><div class="text-sm text-gray-500" id="pagination-info">Showing 0 - 0 of 0 sellers</div><div class="flex gap-2" id="pagination-container"></div></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Seller Details Modal -->
+    <div id="seller-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto"><div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800"><h2 class="text-xl font-bold" id="seller-modal-title">Seller Details</h2><button onclick="closeSellerModal()" class="text-2xl hover:text-gray-500">&times;</button></div><div class="p-5" id="seller-modal-content">Loading...</div><div class="p-5 border-t flex gap-3"><button id="approve-seller-btn" class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition hidden">Approve Seller</button><button id="reject-seller-btn" class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition hidden">Reject Seller</button><button id="suspend-seller-btn" class="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition hidden">Suspend</button><button id="activate-seller-btn" class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition hidden">Activate</button><button id="change-role-btn" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Change Role</button><button onclick="closeSellerModal()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition">Close</button></div></div></div>
+
+    <!-- Change Role Modal -->
+    <div id="role-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4"><div class="p-5 border-b"><h2 class="text-xl font-bold">Change User Role</h2></div><div class="p-5"><select id="new-role" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"><option value="seller">Seller</option><option value="manager">Manager</option></select><div class="flex gap-3 mt-6"><button id="confirm-role-change" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save Changes</button><button onclick="closeRoleModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { ROLES, canAccessPage } from './permissions.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allUsers = [], currentSearch = '', currentStatusFilter = 'all', currentRoleFilter = 'all', currentPage = 1, currentUserId = null, currentUserRole = null;
+        const itemsPerPage = 15;
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            currentUserRole = userDoc.data()?.role;
+            if (!canAccessPage(currentUserRole, 'sellers.html')) { window.location.href = '/unauthorized.html'; return; }
+            document.getElementById('user-name').textContent = userDoc.data()?.name || 'Admin';
+            if (currentUserRole === ROLES.MANAGER) { document.getElementById('panel-label').textContent = 'Manager Panel'; document.getElementById('desktop-panel-label').textContent = 'Manager Panel'; document.getElementById('back-link').href = 'manager-dashboard.html'; document.getElementById('action-toolbar')?.remove(); document.querySelector('.filters-bar .flex.gap-3').innerHTML = '<select id="status-filter" class="filter-select"><option value="all">All Status</option><option value="active">Active</option><option value="pending">Pending Verification</option></select>'; }
+            await loadUsers();
+        });
+
+        async function loadUsers() { const usersSnap = await getDocs(collection(db, 'users')); allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), ordersCount: 0, totalEarnings: 0 })); const ordersSnap = await getDocs(collection(db, 'orders')); ordersSnap.docs.forEach(orderDoc => { const order = orderDoc.data(); const sellerId = order.sellerId; if (sellerId) { const user = allUsers.find(u => u.id === sellerId); if (user) { user.ordersCount = (user.ordersCount || 0) + 1; user.totalEarnings = (user.totalEarnings || 0) + (order.sellerCommission || 0); } } }); renderUsers(); }
+        
+        function renderUsers() { let filtered = allUsers.filter(u => u.role === 'seller' || u.role === 'manager'); if (currentSearch) { const search = currentSearch.toLowerCase(); filtered = filtered.filter(u => u.name?.toLowerCase().includes(search) || u.email?.toLowerCase().includes(search) || u.phone?.toLowerCase().includes(search)); } if (currentStatusFilter !== 'all') { filtered = filtered.filter(u => u.verificationStatus === currentStatusFilter || (currentStatusFilter === 'active' && u.status === 'active') || (currentStatusFilter === 'suspended' && u.status === 'suspended')); } if (currentRoleFilter !== 'all') filtered = filtered.filter(u => u.role === currentRoleFilter); const total = filtered.length; const start = (currentPage - 1) * itemsPerPage; const end = Math.min(start + itemsPerPage, total); const paginated = filtered.slice(start, end); const tbody = document.getElementById('sellers-table-body'); if (!paginated.length) { tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-500">No sellers found.</td></tr>'; document.getElementById('pagination-info').textContent = 'Showing 0 - 0 of 0 sellers'; document.getElementById('pagination-container').innerHTML = ''; return; }
+        tbody.innerHTML = paginated.map(user => { const statusClass = user.verificationStatus === 'approved' ? 'status-active' : (user.verificationStatus === 'pending' ? 'status-pending' : (user.verificationStatus === 'rejected' ? 'status-rejected' : (user.status === 'suspended' ? 'status-suspended' : 'status-active'))); const statusText = user.verificationStatus === 'approved' ? 'Active' : (user.verificationStatus === 'pending' ? 'Pending' : (user.verificationStatus === 'rejected' ? 'Rejected' : (user.status === 'suspended' ? 'Suspended' : 'Active'))); const verifiedIcon = user.emailVerified ? '<i class="fas fa-check-circle text-green-500" title="Verified"></i>' : '<i class="fas fa-times-circle text-red-500" title="Not Verified"></i>'; return `<tr class="seller-row border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><td class="px-4 py-3 text-sm">#${user.id.slice(0, 6)}</td><td class="px-4 py-3"><div class="font-medium dark:text-white">${escapeHtml(user.name || 'N/A')}</div><div class="text-xs text-gray-500">${escapeHtml(user.email || '')}</div></td><td class="px-4 py-3 text-sm">${escapeHtml(user.email || '')}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${user.role === 'manager' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}">${user.role || 'seller'}</span></td><td class="px-4 py-3"><span class="status-badge ${statusClass}">${statusText}</span></td><td class="px-4 py-3 text-sm">${user.ordersCount || 0}</td><td class="px-4 py-3 text-sm font-semibold">AED ${(user.totalEarnings || 0).toLocaleString()}</td><td class="px-4 py-3 text-sm">${formatDate(user.createdAt)}</td><td class="px-4 py-3"><div class="flex gap-2"><button onclick="viewSellerDetails('${user.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button>${currentUserRole === ROLES.ADMIN ? `<button onclick="editSeller('${user.id}')" class="text-green-500 hover:text-green-700"><i class="fas fa-edit"></i></button><button onclick="deleteSeller('${user.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>` : ''}</div></td></tr>`; }).join('');
+        document.getElementById('pagination-info').textContent = `Showing ${start + 1} - ${end} of ${total} sellers`; renderPagination(total); }
+        
+        function renderPagination(total) { const totalPages = Math.ceil(total / itemsPerPage); const container = document.getElementById('pagination-container'); if (totalPages <= 1) { container.innerHTML = ''; return; } let html = ''; if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`; for (let i = 1; i <= Math.min(totalPages, 5); i++) { html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`; } if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`; container.innerHTML = html; }
+        window.goToPage = (page) => { currentPage = page; renderUsers(); };
+        
+        window.viewSellerDetails = async (id) => { currentUserId = id; const userDoc = await getDoc(doc(db, 'users', id)); const user = userDoc.data(); const modal = document.getElementById('seller-modal'); const content = document.getElementById('seller-modal-content'); document.getElementById('seller-modal-title').textContent = `Seller: ${user.name || 'N/A'}`; content.innerHTML = `<div class="space-y-4"><div class="grid grid-cols-2 gap-4"><div><strong>Name:</strong> ${escapeHtml(user.name || 'N/A')}</div><div><strong>Email:</strong> ${escapeHtml(user.email || 'N/A')}</div><div><strong>Phone:</strong> ${escapeHtml(user.phoneNumber || 'N/A')}</div><div><strong>Role:</strong> ${user.role || 'seller'}</div><div><strong>Status:</strong> ${user.verificationStatus || 'pending'}</div><div><strong>Joined:</strong> ${formatDate(user.createdAt)}</div><div><strong>Last Login:</strong> ${formatDate(user.lastLoginAt)}</div><div><strong>Total Orders:</strong> ${user.ordersCount || 0}</div><div><strong>Total Earnings:</strong> AED ${(user.totalEarnings || 0).toLocaleString()}</div></div><div><strong>Bank Details:</strong></div><div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"><p><strong>Account Holder:</strong> ${escapeHtml(user.bankDetails?.accountHolderName || 'Not provided')}</p><p><strong>Bank Name:</strong> ${escapeHtml(user.bankDetails?.bankName || 'Not provided')}</p><p><strong>IBAN:</strong> ${user.bankDetails?.iban ? '****' + user.bankDetails.iban.slice(-4) : 'Not provided'}</p><p><strong>SWIFT:</strong> ${user.bankDetails?.swiftCode || 'Not provided'}</p></div></div>`; modal.classList.remove('hidden'); const approveBtn = document.getElementById('approve-seller-btn'); const rejectBtn = document.getElementById('reject-seller-btn'); const suspendBtn = document.getElementById('suspend-seller-btn'); const activateBtn = document.getElementById('activate-seller-btn'); if (currentUserRole === ROLES.ADMIN) { if (user.verificationStatus === 'pending') { approveBtn.classList.remove('hidden'); rejectBtn.classList.remove('hidden'); suspendBtn.classList.add('hidden'); activateBtn.classList.add('hidden'); } else if (user.status === 'suspended') { approveBtn.classList.add('hidden'); rejectBtn.classList.add('hidden'); suspendBtn.classList.add('hidden'); activateBtn.classList.remove('hidden'); } else { approveBtn.classList.add('hidden'); rejectBtn.classList.add('hidden'); suspendBtn.classList.remove('hidden'); activateBtn.classList.add('hidden'); } } };
+        
+        window.closeSellerModal = () => { document.getElementById('seller-modal').classList.add('hidden'); currentUserId = null; };
+        window.editSeller = async (id) => { const newName = prompt('Enter new name:'); if (newName) await updateDoc(doc(db, 'users', id), { name: newName, updatedAt: new Date().toISOString() }); await loadUsers(); };
+        window.deleteSeller = async (id) => { if (!confirm('Delete this seller? This cannot be undone.')) return; await updateDoc(doc(db, 'users', id), { status: 'deleted', email: `deleted_${Date.now()}@removed.com`, name: 'Deleted User' }); await loadUsers(); };
+        
+        document.getElementById('approve-seller-btn')?.addEventListener('click', async () => { if (!currentUserId) return; await updateDoc(doc(db, 'users', currentUserId), { verificationStatus: 'approved', status: 'active', updatedAt: new Date().toISOString() }); closeSellerModal(); await loadUsers(); });
+        document.getElementById('reject-seller-btn')?.addEventListener('click', async () => { if (!currentUserId) return; const reason = prompt('Reason for rejection:'); await updateDoc(doc(db, 'users', currentUserId), { verificationStatus: 'rejected', rejectionReason: reason, updatedAt: new Date().toISOString() }); closeSellerModal(); await loadUsers(); });
+        document.getElementById('suspend-seller-btn')?.addEventListener('click', async () => { if (!currentUserId) return; await updateDoc(doc(db, 'users', currentUserId), { status: 'suspended', updatedAt: new Date().toISOString() }); closeSellerModal(); await loadUsers(); });
+        document.getElementById('activate-seller-btn')?.addEventListener('click', async () => { if (!currentUserId) return; await updateDoc(doc(db, 'users', currentUserId), { status: 'active', updatedAt: new Date().toISOString() }); closeSellerModal(); await loadUsers(); });
+        
+        document.getElementById('change-role-btn')?.addEventListener('click', () => { if (!currentUserId) return; document.getElementById('role-modal').classList.remove('hidden'); });
+        window.closeRoleModal = () => { document.getElementById('role-modal').classList.add('hidden'); };
+        document.getElementById('confirm-role-change')?.addEventListener('click', async () => { if (!currentUserId) return; const newRole = document.getElementById('new-role').value; await updateDoc(doc(db, 'users', currentUserId), { role: newRole, updatedAt: new Date().toISOString() }); closeRoleModal(); closeSellerModal(); await loadUsers(); });
+        
+        window.exportToCSV = () => { let filtered = allUsers.filter(u => u.role === 'seller' || u.role === 'manager'); if (currentSearch) filtered = filtered.filter(u => u.name?.toLowerCase().includes(currentSearch.toLowerCase())); const headers = ['ID', 'Name', 'Email', 'Role', 'Status', 'Orders', 'Earnings', 'Joined']; const rows = filtered.map(u => [u.id.slice(0, 8), u.name || 'N/A', u.email || 'N/A', u.role || 'seller', u.verificationStatus || 'pending', u.ordersCount || 0, u.totalEarnings || 0, formatDate(u.createdAt)]); const csv = [headers, ...rows].map(row => row.join(',')).join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `sellers_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url); };
+        
+        function formatDate(dateString) { if (!dateString) return 'N/A'; return new Date(dateString).toLocaleDateString(); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+        document.getElementById('search-sellers').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderUsers(); });
+        document.getElementById('status-filter').addEventListener('change', (e) => { currentStatusFilter = e.target.value; currentPage = 1; renderUsers(); });
+        document.getElementById('role-filter').addEventListener('change', (e) => { currentRoleFilter = e.target.value; currentPage = 1; renderUsers(); });
+        document.getElementById('filter-btn').addEventListener('click', () => { currentPage = 1; renderUsers(); });
+    </script>
+</body>
+</html>

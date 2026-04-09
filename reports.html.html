@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Reports - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .report-tab { cursor: pointer; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; }
+        .report-tab.active { background: var(--accent-color); color: white; }
+        .report-tab:hover:not(.active) { background: var(--hover-bg); }
+        .date-filter { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        .chart-container { height: 300px; position: relative; width: 100%; }
+        
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
+        .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
+        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
+        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+    </style>
+</head>
+<body>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4" id="panel-label">Admin Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+    </aside>
+
+    <div class="app-wrapper">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2" id="desktop-panel-label">Admin Panel</p></div>
+            <nav id="desktop-nav"></nav>
+            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
+                    <a href="admin-dashboard.html" class="back-btn" id="back-link"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <div><h1 class="text-xl md:text-2xl font-bold">Reports & Analytics</h1><p class="text-sm text-gray-500">View platform performance and insights</p></div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Admin</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6">
+                <!-- Date Range Filter -->
+                <div class="date-filter">
+                    <div class="flex gap-2"><button class="date-preset px-3 py-1 rounded-lg bg-gray-200 dark:bg-gray-700" data-days="7">Last 7 days</button><button class="date-preset px-3 py-1 rounded-lg bg-gray-200 dark:bg-gray-700" data-days="30">Last 30 days</button><button class="date-preset px-3 py-1 rounded-lg bg-purple-600 text-white" data-days="90">Last 90 days</button><button class="date-preset px-3 py-1 rounded-lg bg-gray-200 dark:bg-gray-700" data-days="365">Last year</button></div>
+                    <div class="flex gap-2"><input type="date" id="start-date" class="px-3 py-1 rounded-lg border dark:bg-gray-800"><span>to</span><input type="date" id="end-date" class="px-3 py-1 rounded-lg border dark:bg-gray-800"><button id="apply-date" class="px-4 py-1 bg-blue-600 text-white rounded-lg">Apply</button></div>
+                    <div><button id="export-report" class="px-4 py-2 bg-green-600 text-white rounded-lg"><i class="fas fa-download mr-2"></i>Export Report</button></div>
+                </div>
+
+                <!-- Report Tabs -->
+                <div class="flex flex-wrap gap-2 mb-6 border-b pb-2"><button class="report-tab active" data-report="revenue">Revenue Report</button><button class="report-tab" data-report="orders">Orders Report</button><button class="report-tab" data-report="sellers">Sellers Report</button><button class="report-tab" data-report="products">Products Report</button><button class="report-tab" data-report="payouts">Payouts Report</button></div>
+
+                <!-- Revenue Report -->
+                <div id="revenue-report" class="report-panel">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="stat-card p-4"><div class="text-2xl font-bold text-purple-600" id="total-revenue">AED 0</div><div class="text-sm text-gray-500">Total Revenue</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-green-600" id="avg-order-value">AED 0</div><div class="text-sm text-gray-500">Average Order Value</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-blue-600" id="total-commission">AED 0</div><div class="text-sm text-gray-500">Total Commission Paid</div></div></div>
+                    <div class="card p-5 rounded-xl"><h3 class="text-lg font-semibold mb-4">Revenue Trend</h3><div class="chart-container"><canvas id="revenueTrendChart"></canvas></div></div>
+                </div>
+
+                <!-- Orders Report -->
+                <div id="orders-report" class="report-panel hidden"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="stat-card p-4"><div class="text-2xl font-bold text-purple-600" id="total-orders">0</div><div class="text-sm text-gray-500">Total Orders</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-green-600" id="completed-orders">0</div><div class="text-sm text-gray-500">Completed Orders</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-orange-600" id="pending-orders">0</div><div class="text-sm text-gray-500">Pending Orders</div></div></div><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Month</th><th class="px-4 py-2 text-left">Orders</th><th class="px-4 py-2 text-left">Revenue</th><th class="px-4 py-2 text-left">Commission</th></tr></thead><tbody id="orders-table-body"></tbody></table></div></div>
+
+                <!-- Sellers Report -->
+                <div id="sellers-report" class="report-panel hidden"><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Seller Name</th><th class="px-4 py-2 text-left">Orders</th><th class="px-4 py-2 text-left">Total Commission</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th></tr></thead><tbody id="sellers-table-body"></tbody></table></div></div>
+
+                <!-- Products Report -->
+                <div id="products-report" class="report-panel hidden"><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Product Name</th><th class="px-4 py-2 text-left">Category</th><th class="px-4 py-2 text-left">Units Sold</th><th class="px-4 py-2 text-left">Revenue</th><th class="px-4 py-2 text-left">Profit</th></tr></thead><tbody id="products-table-body"></tbody></table></div></div>
+
+                <!-- Payouts Report -->
+                <div id="payouts-report" class="report-panel hidden"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div class="stat-card p-4"><div class="text-2xl font-bold text-purple-600" id="total-payouts">AED 0</div><div class="text-sm text-gray-500">Total Payouts Processed</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-orange-600" id="pending-payouts">AED 0</div><div class="text-sm text-gray-500">Pending Payouts</div></div></div><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th></tr></thead><tbody id="payouts-table-body"></tbody></table></div></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { ROLES, canAccessPage } from './permissions.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let revenueChart = null, currentUserRole = null, currentData = { orders: [], sellers: [], products: [], payouts: [] };
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            currentUserRole = userDoc.data()?.role;
+            if (!canAccessPage(currentUserRole, 'reports.html')) { window.location.href = '/unauthorized.html'; return; }
+            document.getElementById('user-name').textContent = userDoc.data()?.name || 'Admin';
+            if (currentUserRole === ROLES.MANAGER) { document.getElementById('panel-label').textContent = 'Manager Panel'; document.getElementById('desktop-panel-label').textContent = 'Manager Panel'; document.getElementById('back-link').href = 'manager-dashboard.html'; }
+            await loadAllData();
+        });
+
+        async function loadAllData() { await loadOrders(); await loadSellers(); await loadProducts(); await loadPayouts(); renderCurrentReport(); }
+        async function loadOrders() { const snap = await getDocs(collection(db, 'orders')); currentData.orders = snap.docs.map(d => ({ id: d.id, ...d.data() })); }
+        async function loadSellers() { const snap = await getDocs(collection(db, 'users')); currentData.sellers = snap.docs.filter(d => d.data().role === 'seller').map(d => ({ id: d.id, ...d.data() })); }
+        async function loadProducts() { const snap = await getDocs(collection(db, 'products')); currentData.products = snap.docs.map(d => ({ id: d.id, ...d.data() })); }
+        async function loadPayouts() { const snap = await getDocs(collection(db, 'payouts')); currentData.payouts = snap.docs.map(d => ({ id: d.id, ...d.data() })); }
+
+        function renderCurrentReport() { const activeTab = document.querySelector('.report-tab.active').dataset.report; if (activeTab === 'revenue') renderRevenueReport(); else if (activeTab === 'orders') renderOrdersReport(); else if (activeTab === 'sellers') renderSellersReport(); else if (activeTab === 'products') renderProductsReport(); else if (activeTab === 'payouts') renderPayoutsReport(); }
+
+        function renderRevenueReport() { let totalRevenue = 0, totalCommission = 0; currentData.orders.forEach(o => { totalRevenue += o.platformProfit || 0; totalCommission += o.sellerCommission || 0; }); const avgOrderValue = currentData.orders.length ? totalRevenue / currentData.orders.length : 0; document.getElementById('total-revenue').textContent = `AED ${totalRevenue.toLocaleString()}`; document.getElementById('avg-order-value').textContent = `AED ${avgOrderValue.toFixed(2)}`; document.getElementById('total-commission').textContent = `AED ${totalCommission.toLocaleString()}`; const monthly = {}; currentData.orders.forEach(o => { if (o.createdAt) { const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' }); monthly[m] = (monthly[m] || 0) + (o.platformProfit || 0); } }); if (revenueChart) revenueChart.destroy(); const ctx = document.getElementById('revenueTrendChart').getContext('2d'); revenueChart = new Chart(ctx, { type: 'line', data: { labels: Object.keys(monthly), datasets: [{ label: 'Revenue (AED)', data: Object.values(monthly), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.4, fill: true }] }, options: { responsive: true, maintainAspectRatio: true } }); }
+
+        function renderOrdersReport() { document.getElementById('total-orders').textContent = currentData.orders.length; document.getElementById('completed-orders').textContent = currentData.orders.filter(o => o.orderStatus === 'completed').length; document.getElementById('pending-orders').textContent = currentData.orders.filter(o => o.orderStatus === 'pending').length; const monthly = {}; currentData.orders.forEach(o => { if (o.createdAt) { const m = new Date(o.createdAt).toLocaleString('default', { month: 'short', year: 'numeric' }); if (!monthly[m]) monthly[m] = { orders: 0, revenue: 0, commission: 0 }; monthly[m].orders++; monthly[m].revenue += o.platformProfit || 0; monthly[m].commission += o.sellerCommission || 0; } }); const tbody = document.getElementById('orders-table-body'); tbody.innerHTML = Object.entries(monthly).map(([month, data]) => `<tr class="border-b"><td class="px-4 py-2">${month}</td><td class="px-4 py-2">${data.orders}</td><td class="px-4 py-2">AED ${data.revenue.toLocaleString()}</td><td class="px-4 py-2">AED ${data.commission.toLocaleString()}</td></tr>`).join(''); }
+
+        function renderSellersReport() { const sellerStats = {}; currentData.orders.forEach(o => { if (o.sellerId) { if (!sellerStats[o.sellerId]) sellerStats[o.sellerId] = { name: o.sellerName, orders: 0, commission: 0 }; sellerStats[o.sellerId].orders++; sellerStats[o.sellerId].commission += o.sellerCommission || 0; } }); const tbody = document.getElementById('sellers-table-body'); tbody.innerHTML = Object.values(sellerStats).map(s => `<tr class="border-b"><td class="px-4 py-2">${escapeHtml(s.name)}</td><td class="px-4 py-2">${s.orders}</td><td class="px-4 py-2">AED ${s.commission.toLocaleString()}</td><td class="px-4 py-2"><span class="status-badge status-active">Active</span></td><td class="px-4 py-2">-</td></tr>`).join(''); }
+
+        function renderProductsReport() { const productStats = {}; currentData.orders.forEach(o => { if (o.productName) { if (!productStats[o.productName]) productStats[o.productName] = { name: o.productName, category: o.category || 'Uncategorized', units: 0, revenue: 0, profit: 0 }; productStats[o.productName].units += o.quantity || 1; productStats[o.productName].revenue += o.totalAmount || 0; productStats[o.productName].profit += o.platformProfit || 0; } }); const tbody = document.getElementById('products-table-body'); tbody.innerHTML = Object.values(productStats).map(p => `<tr class="border-b"><td class="px-4 py-2">${escapeHtml(p.name)}</td><td class="px-4 py-2">${escapeHtml(p.category)}</td><td class="px-4 py-2">${p.units}</td><td class="px-4 py-2">AED ${p.revenue.toLocaleString()}</td><td class="px-4 py-2">AED ${p.profit.toLocaleString()}</td></tr>`).join(''); }
+
+        function renderPayoutsReport() { const totalPaid = currentData.payouts.reduce((sum, p) => sum + (p.amount || 0), 0); let pendingPayouts = 0; currentData.orders.forEach(o => { if (!o.sellerPaid && o.sellerCommission) pendingPayouts += o.sellerCommission; }); document.getElementById('total-payouts').textContent = `AED ${totalPaid.toLocaleString()}`; document.getElementById('pending-payouts').textContent = `AED ${pendingPayouts.toLocaleString()}`; const tbody = document.getElementById('payouts-table-body'); tbody.innerHTML = currentData.payouts.map(p => `<tr class="border-b"><td class="px-4 py-2">${formatDate(p.processedDate)}</td><td class="px-4 py-2">${escapeHtml(p.sellerName)}</td><td class="px-4 py-2">AED ${p.amount}</td><td class="px-4 py-2"><span class="status-badge status-paid">Paid</span></td></tr>`).join(''); }
+
+        document.querySelectorAll('.report-tab').forEach(tab => { tab.addEventListener('click', () => { document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); document.querySelectorAll('.report-panel').forEach(p => p.classList.add('hidden')); document.getElementById(`${tab.dataset.report}-report`).classList.remove('hidden'); renderCurrentReport(); }); });
+        document.getElementById('export-report').addEventListener('click', () => { const activeTab = document.querySelector('.report-tab.active').dataset.report; exportToCSV(currentData[activeTab === 'revenue' ? 'orders' : activeTab], `${activeTab}_report.csv`); });
+
+        function formatDate(dateString) { if (!dateString) return 'N/A'; return new Date(dateString).toLocaleDateString(); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+        function exportToCSV(data, filename) { if (!data || !data.length) { alert('No data to export'); return; } const headers = Object.keys(data[0]); const csvRows = [headers.join(',')]; for (const row of data) { const values = headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`); csvRows.push(values.join(',')); } const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); }
+    </script>
+</body>
+</html>

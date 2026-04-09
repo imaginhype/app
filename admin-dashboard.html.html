@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Admin Dashboard - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stat-card {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-icon {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            opacity: 0.15;
+            font-size: 2.5rem;
+            color: var(--text-primary);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-pending { background: #f59e0b20; color: #f59e0b; }
+        .status-approved { background: #10b98120; color: #10b981; }
+        .status-completed { background: #3b82f620; color: #3b82f6; }
+        .status-paid { background: #8b5cf620; color: #8b5cf6; }
+        
+        .date-filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        .date-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+        .date-preset {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .date-preset.active { background: var(--accent-color); color: white; }
+        .custom-date-range { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .custom-date-range input {
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+        @media (max-width: 768px) {
+            .date-filter-container { flex-direction: column; align-items: stretch; }
+            .date-presets { justify-content: center; }
+            .custom-date-range { justify-content: center; }
+        }
+        
+        .rank-card {
+            transition: all 0.2s;
+            padding: 8px 12px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .rank-card:hover { background-color: var(--hover-bg); transform: translateX(4px); }
+        .delivery-item {
+            padding: 10px 12px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chart-container { height: 300px; position: relative; width: 100%; }
+        canvas { max-height: 100%; width: 100%; }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        
+        .desktop-sidebar {
+            width: 16rem;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+            position: relative;
+            height: 100vh;
+            flex-shrink: 0;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.5rem;
+            transition: none;
+            transform: none;
+        }
+        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
+        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .app-wrapper { display: block; }
+            .main-content { margin-left: 0 !important; width: 100% !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <!-- Mobile Sidebar -->
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div>
+            <button onclick="closeMobileMenu()" class="text-2xl">&times;</button>
+        </div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4">Admin Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+    </aside>
+
+    <div class="app-wrapper">
+        <!-- Desktop Sidebar -->
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Admin Panel</p></div>
+            <nav id="desktop-nav"></nav>
+            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
+                    <div><h1 class="text-xl md:text-2xl font-bold">Admin Dashboard</h1><p class="text-sm text-gray-500">Welcome back, <span id="admin-name">Admin</span></p></div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Admin</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a>
+                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a>
+                            <div class="border-t"></div>
+                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6">
+                <!-- Stats Cards Row 1 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="stat-card p-4"><i class="stat-icon fas fa-users"></i><div class="text-2xl font-bold" id="stat-total-sellers">0</div><div class="text-sm opacity-70">Total Sellers</div></div>
+                    <div class="stat-card p-4"><i class="stat-icon fas fa-shopping-cart"></i><div class="text-2xl font-bold" id="stat-total-orders">0</div><div class="text-sm opacity-70">Total Orders</div></div>
+                    <div class="stat-card p-4"><i class="stat-icon fas fa-clock"></i><div class="text-2xl font-bold" id="stat-pending-orders">0</div><div class="text-sm opacity-70">Pending Orders</div></div>
+                    <div class="stat-card p-4"><i class="stat-icon fas fa-chart-line"></i><div class="text-2xl font-bold" id="stat-revenue">AED 0</div><div class="text-sm opacity-70">Platform Revenue</div></div>
+                </div>
+
+                <!-- Stats Cards Row 2 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="stat-card p-4"><i class="stat-icon fas fa-calendar-day"></i><div class="text-2xl font-bold" id="stat-orders-today">0</div><div class="text-sm opacity-70">Orders Today</div></div>
+                    <div class="stat-card p-4"><i class="stat-icon fas fa-hourglass-half"></i><div class="text-2xl font-bold" id="stat-pending-payouts">AED 0</div><div class="text-sm opacity-70">Pending Payouts</div></div>
+                    <div class="stat-card p-4"><i class="stat-icon fas fa-truck"></i><div class="text-2xl font-bold" id="stat-owed-to-suppliers">AED 0</div><div class="text-sm opacity-70">Owed to Suppliers</div></div>
+                    <div class="stat-card p-4"><i class="stat-icon fas fa-percent"></i><div class="text-2xl font-bold" id="stat-success-rate">0%</div><div class="text-sm opacity-70">Success Rate</div></div>
+                </div>
+
+                <!-- Pending Verifications Alert -->
+                <div id="pending-verifications-alert" class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl hidden">
+                    <div class="flex justify-between items-center"><span><i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i><span id="pending-count-text">0 sellers</span> waiting for verification approval</span><a href="sellers.html" class="text-purple-500 hover:underline">Review Now →</a></div>
+                </div>
+
+                <!-- Revenue Chart -->
+                <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-chart-line text-purple-500"></i> Revenue Trend</h3><div class="chart-container"><canvas id="revenueChart"></canvas></div></div>
+
+                <!-- Recent Orders -->
+                <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></tr></tbody>}</div></div>
+
+                <!-- Top Sellers & Top Products -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-trophy text-yellow-500"></i> Top 10 Sellers</h3><div id="top-sellers-list" class="space-y-2"><div class="text-center py-4 text-gray-500">Loading...</div></div></div><div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-box text-purple-500"></i> Top 10 Products</h3><div id="top-products-list" class="space-y-2"><div class="text-center py-4 text-gray-500">Loading...</div></div></div></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { ROLES, canAccessPage } from './permissions.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let revenueChartInstance = null;
+        let currentUserRole = null;
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userData = userDoc.data();
+            
+            if (userData?.role !== ROLES.ADMIN) {
+                window.location.href = '/unauthorized.html';
+                return;
+            }
+            
+            currentUserRole = userData.role;
+            document.getElementById('admin-name').textContent = userData.name || 'Admin';
+            document.getElementById('user-name').textContent = userData.name || 'Admin';
+            
+            await loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            await loadStats();
+            await loadRecentOrders();
+            await loadTopSellers();
+            await loadTopProducts();
+            await loadCharts();
+            await checkPendingVerifications();
+        }
+
+        async function loadStats() {
+            const usersSnap = await getDocs(collection(db, 'users'));
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            
+            const sellers = usersSnap.docs.filter(d => d.data().role === 'seller' && d.data().status === 'active').length;
+            const pendingVerifications = usersSnap.docs.filter(d => d.data().role === 'seller' && d.data().verificationStatus === 'pending').length;
+            const totalOrders = ordersSnap.size;
+            const pendingOrders = ordersSnap.docs.filter(d => d.data().orderStatus === 'pending').length;
+            
+            let totalRevenue = 0;
+            let pendingPayouts = 0;
+            let owedToSuppliers = 0;
+            let completedOrders = 0;
+            
+            ordersSnap.docs.forEach(doc => {
+                const o = doc.data();
+                totalRevenue += o.platformProfit || 0;
+                if (o.sellerPaid !== true) pendingPayouts += o.sellerCommission || 0;
+                if (o.supplierPaid !== true) owedToSuppliers += o.wholesalePrice || 0;
+                if (o.orderStatus === 'completed') completedOrders++;
+            });
+            
+            const successRate = totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toFixed(1) : 0;
+            const ordersToday = ordersSnap.docs.filter(d => {
+                const createdAt = d.data().createdAt;
+                if (!createdAt) return false;
+                const today = new Date().toDateString();
+                return new Date(createdAt).toDateString() === today;
+            }).length;
+            
+            document.getElementById('stat-total-sellers').textContent = sellers;
+            document.getElementById('stat-total-orders').textContent = totalOrders;
+            document.getElementById('stat-pending-orders').textContent = pendingOrders;
+            document.getElementById('stat-revenue').textContent = `AED ${totalRevenue.toLocaleString()}`;
+            document.getElementById('stat-orders-today').textContent = ordersToday;
+            document.getElementById('stat-pending-payouts').textContent = `AED ${pendingPayouts.toLocaleString()}`;
+            document.getElementById('stat-owed-to-suppliers').textContent = `AED ${owedToSuppliers.toLocaleString()}`;
+            document.getElementById('stat-success-rate').textContent = `${successRate}%`;
+        }
+
+        async function checkPendingVerifications() {
+            const usersSnap = await getDocs(collection(db, 'users'));
+            const pending = usersSnap.docs.filter(d => d.data().role === 'seller' && d.data().verificationStatus === 'pending');
+            const alertDiv = document.getElementById('pending-verifications-alert');
+            if (pending.length > 0) {
+                document.getElementById('pending-count-text').textContent = `${pending.length} seller${pending.length > 1 ? 's' : ''}`;
+                alertDiv.classList.remove('hidden');
+            } else {
+                alertDiv.classList.add('hidden');
+            }
+        }
+
+        async function loadCharts() {
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const monthly = { Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0, Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0 };
+            
+            ordersSnap.docs.forEach(d => {
+                const o = d.data();
+                if (o.createdAt) {
+                    const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' });
+                    monthly[m] = (monthly[m] || 0) + (o.platformProfit || 0);
+                }
+            });
+            
+            const ctx = document.getElementById('revenueChart');
+            if (revenueChartInstance) revenueChartInstance.destroy();
+            revenueChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: Object.keys(monthly), datasets: [{ label: 'Revenue (AED)', data: Object.values(monthly), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.05)', borderWidth: 2, pointBackgroundColor: '#8b5cf6', pointBorderColor: '#ffffff', pointRadius: 4, tension: 0.3, fill: true }] },
+                options: { responsive: true, maintainAspectRatio: true }
+            });
+        }
+
+        async function loadRecentOrders() {
+            const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
+            const tbody = document.getElementById('recent-orders-table');
+            if (ordersSnap.empty) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No orders yet</td></tr>'; return; }
+            tbody.innerHTML = ordersSnap.docs.map(d => {
+                const o = d.data();
+                return `<tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td><td class="px-4 py-2">${escapeHtml(o.sellerName || 'N/A')}</td><td class="px-4 py-2">AED ${o.totalAmount || 0}</td><td class="px-4 py-2">${getStatusBadge(o.orderStatus || 'pending')}</td><td class="px-4 py-2"><a href="orders.html" class="text-purple-500 hover:underline">View</a></td></tr>`;
+            }).join('');
+        }
+
+        async function loadTopSellers() {
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const sellerEarnings = {};
+            ordersSnap.docs.forEach(d => {
+                const o = d.data();
+                if (o.sellerName) sellerEarnings[o.sellerName] = (sellerEarnings[o.sellerName] || 0) + (o.sellerCommission || 0);
+            });
+            const sorted = Object.entries(sellerEarnings).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const container = document.getElementById('top-sellers-list');
+            if (!sorted.length) { container.innerHTML = '<div class="text-center py-4 text-gray-500">No data yet</div>'; return; }
+            container.innerHTML = sorted.map(([name, earnings], idx) => `<div class="rank-card"><div class="flex items-center gap-3"><span class="w-6 text-center font-bold ${idx < 3 ? 'text-yellow-500' : 'text-gray-500'}">#${idx+1}</span><span class="font-medium">${escapeHtml(name)}</span></div><span class="font-semibold text-purple-600">AED ${earnings.toLocaleString()}</span></div>`).join('');
+        }
+
+        async function loadTopProducts() {
+            const ordersSnap = await getDocs(collection(db, 'orders'));
+            const productSales = {};
+            ordersSnap.docs.forEach(d => {
+                const o = d.data();
+                if (o.productName) productSales[o.productName] = (productSales[o.productName] || 0) + (o.quantity || 1);
+            });
+            const sorted = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const container = document.getElementById('top-products-list');
+            if (!sorted.length) { container.innerHTML = '<div class="text-center py-4 text-gray-500">No data yet</div>'; return; }
+            container.innerHTML = sorted.map(([name, qty], idx) => `<div class="rank-card"><div class="flex items-center gap-3"><span class="w-6 text-center font-bold ${idx < 3 ? 'text-yellow-500' : 'text-gray-500'}">#${idx+1}</span><span class="font-medium">${escapeHtml(name)}</span></div><span class="text-sm">${qty} sold</span></div>`).join('');
+        }
+
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+        function getStatusBadge(status) { const map = { pending: 'status-pending', approved: 'status-approved', completed: 'status-completed', paid: 'status-paid' }; return `<span class="status-badge ${map[status] || 'status-pending'}">${status}</span>`; }
+    </script>
+</body>
+</html>

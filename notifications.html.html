@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Notifications - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .notification-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; padding: 1rem; transition: all 0.2s; display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; margin-bottom: 1rem; }
+        .notification-item:hover { background: var(--hover-bg); transform: translateX(2px); }
+        .notification-item.unread { border-left: 3px solid var(--accent-color); background: linear-gradient(90deg, rgba(139,92,246,0.05), transparent); }
+        .notification-icon { width: 40px; height: 40px; background: var(--bg-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
+        .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
+        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
+        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+    </style>
+</head>
+<body>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4" id="panel-label">Admin Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+    </aside>
+
+    <div class="app-wrapper">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2" id="desktop-panel-label">Admin Panel</p></div>
+            <nav id="desktop-nav"></nav>
+            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
+                    <a href="admin-dashboard.html" class="back-btn" id="back-link"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <div><h1 class="text-xl md:text-2xl font-bold">Notifications</h1><p class="text-sm text-gray-500">Stay updated with important events</p></div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">User</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6 max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-semibold">All Notifications</h2><button id="mark-all-read" class="text-sm text-purple-500 hover:underline"><i class="fas fa-check-double mr-1"></i>Mark all as read</button></div>
+                <div id="notifications-list" class="space-y-3"><div class="text-center py-8 text-gray-500">Loading notifications...</div></div>
+                <div class="flex justify-center mt-6" id="pagination-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { ROLES, canAccessPage } from './permissions.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allNotifications = [], currentPage = 1, itemsPerPage = 20, currentUserId = null, currentUserRole = null;
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            currentUserId = user.uid;
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            currentUserRole = userDoc.data()?.role;
+            if (!canAccessPage(currentUserRole, 'notifications.html')) { window.location.href = '/unauthorized.html'; return; }
+            document.getElementById('user-name').textContent = userDoc.data()?.name || 'User';
+            if (currentUserRole === ROLES.MANAGER) { document.getElementById('panel-label').textContent = 'Manager Panel'; document.getElementById('desktop-panel-label').textContent = 'Manager Panel'; document.getElementById('back-link').href = 'manager-dashboard.html'; }
+            if (currentUserRole === ROLES.SELLER) { document.getElementById('panel-label').textContent = 'Seller Panel'; document.getElementById('desktop-panel-label').textContent = 'Seller Panel'; document.getElementById('back-link').href = 'seller-dashboard.html'; }
+            await loadNotifications();
+        });
+
+        async function loadNotifications() { const q = query(collection(db, 'notifications'), where('userId', '==', currentUserId), orderBy('createdAt', 'desc')); const snap = await getDocs(q); allNotifications = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderNotifications(); }
+
+        function renderNotifications() { const total = allNotifications.length; const start = (currentPage - 1) * itemsPerPage; const end = Math.min(start + itemsPerPage, total); const paginated = allNotifications.slice(start, end); const container = document.getElementById('notifications-list'); if (!paginated.length) { container.innerHTML = '<div class="text-center py-8 text-gray-500">No notifications yet. You\'re all caught up!</div>'; return; }
+        container.innerHTML = paginated.map(notif => `<div class="notification-item ${notif.read ? '' : 'unread'}" onclick="markAsRead('${notif.id}')"><div class="notification-icon"><i class="fas ${getIconForType(notif.type)} text-purple-500"></i></div><div class="flex-1"><div class="flex justify-between items-start"><h4 class="font-semibold">${escapeHtml(notif.title)}</h4><span class="text-xs text-gray-500">${formatDate(notif.createdAt)}</span></div><p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${escapeHtml(notif.message)}</p></div><div class="text-gray-400">${notif.read ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-circle text-purple-500"></i>'}</div></div>`).join('');
+        const totalPages = Math.ceil(total / itemsPerPage); const paginationContainer = document.getElementById('pagination-container'); if (totalPages <= 1) { paginationContainer.innerHTML = ''; return; } let paginationHtml = ''; if (currentPage > 1) paginationHtml += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`; for (let i = 1; i <= Math.min(totalPages, 5); i++) { paginationHtml += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`; } if (currentPage < totalPages) paginationHtml += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`; paginationContainer.innerHTML = paginationHtml; }
+
+        window.goToPage = (page) => { currentPage = page; renderNotifications(); };
+        window.markAsRead = async (id) => { const notif = allNotifications.find(n => n.id === id); if (notif && !notif.read) { await updateDoc(doc(db, 'notifications', id), { read: true, readAt: new Date().toISOString() }); notif.read = true; renderNotifications(); } };
+        document.getElementById('mark-all-read').addEventListener('click', async () => { for (const notif of allNotifications.filter(n => !n.read)) { await updateDoc(doc(db, 'notifications', notif.id), { read: true, readAt: new Date().toISOString() }); } await loadNotifications(); });
+
+        function getIconForType(type) { const icons = { payout: 'fa-money-bill-wave', order: 'fa-shopping-cart', verification: 'fa-check-circle', announcement: 'fa-bullhorn', ticket: 'fa-ticket-alt', chat: 'fa-comment' }; return icons[type] || 'fa-bell'; }
+        function formatDate(dateString) { if (!dateString) return 'N/A'; const date = new Date(dateString); const now = new Date(); const diff = now - date; const minutes = Math.floor(diff / 60000); const hours = Math.floor(diff / 3600000); const days = Math.floor(diff / 86400000); if (minutes < 1) return 'Just now'; if (minutes < 60) return `${minutes} min ago`; if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`; if (days === 1) return 'Yesterday'; if (days < 7) return `${days} days ago`; return date.toLocaleDateString(); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+    </script>
+</body>
+</html>

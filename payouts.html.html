@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Payouts Management - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .status-pending { background: #f59e0b20; color: #f59e0b; }
+        .status-paid { background: #10b98120; color: #10b981; }
+        .status-processing { background: #3b82f620; color: #3b82f6; }
+        .table-container { overflow-x: auto; }
+        .search-input { padding: 8px 14px; border-radius: 30px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); width: 100%; max-width: 280px; font-size: 13px; }
+        .pagination-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .pagination-btn:hover, .pagination-btn.active { background: var(--accent-color); color: white; }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        .cycle-card { background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.05)); border: 1px solid var(--border-color); border-radius: 1rem; padding: 1rem; }
+        
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
+        .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
+        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
+        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+    </style>
+</head>
+<body>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4">Admin Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+    </aside>
+
+    <div class="app-wrapper">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Admin Panel</p></div>
+            <nav id="desktop-nav"></nav>
+            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
+                    <a href="admin-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <div><h1 class="text-xl md:text-2xl font-bold">Payouts Management</h1><p class="text-sm text-gray-500">Process seller commission payouts</p></div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Admin</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6">
+                <!-- Payout Cycle Status -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="cycle-card"><div class="flex justify-between items-center"><span class="text-sm text-gray-500">Current Cycle</span><button id="toggle-cycle-btn" class="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 transition">Close Cycle</button></div><p class="text-lg font-bold mt-2" id="cycle-status">April 1-7, 2025 (Open)</p><p class="text-xs text-gray-500 mt-1">Requests accepted until Apr 7</p></div>
+                    <div class="stat-card p-4"><div class="text-2xl font-bold text-purple-500" id="total-due">AED 0</div><div class="text-sm text-gray-500">Total Due to Sellers</div></div>
+                    <div class="stat-card p-4"><div class="text-2xl font-bold text-green-500" id="total-requested">AED 0</div><div class="text-sm text-gray-500">Requested This Cycle</div></div>
+                </div>
+
+                <div class="flex justify-between items-center flex-wrap gap-3 mb-4"><div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="search-payouts" placeholder="Search by seller name..." class="pl-10 pr-4 py-2 rounded-full border dark:bg-gray-800 w-full md:w-80"></div><div class="flex gap-2"><button id="pay-selected-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"><i class="fas fa-check-circle mr-2"></i>Pay Selected</button><button id="export-payouts-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"><i class="fas fa-download mr-2"></i>Export</button></div></div>
+
+                <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow">
+                    <table class="w-full min-w-[800px]">
+                        <thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold w-10"><input type="checkbox" id="select-all-requests" class="rounded"></th><th class="px-4 py-3 text-left text-sm font-semibold">Seller</th><th class="px-4 py-3 text-left text-sm font-semibold">Requested Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Available Balance</th><th class="px-4 py-3 text-left text-sm font-semibold">Request Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Bank Details</th><th class="px-4 py-3 text-left text-sm font-semibold">Action</th></tr></thead>
+                        <tbody id="payout-requests-table"><tr><td colspan="8" class="text-center py-8">Loading payout requests...</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="flex justify-between items-center mt-4"><div class="text-sm text-gray-500" id="pagination-info">Showing 0 - 0 of 0 requests</div><div class="flex gap-2" id="pagination-container"></div></div>
+
+                <!-- Payout History -->
+                <div class="mt-8"><h3 class="text-lg font-semibold mb-4">Payout History</h3><div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow"><table class="w-full min-w-[800px]"><thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold">Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Seller</th><th class="px-4 py-3 text-left text-sm font-semibold">Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Processed By</th></tr></thead><tbody id="payout-history-table"><tr><td colspan="5" class="text-center py-8">Loading history...</td></tr></tbody></table></div></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Process Payout Modal -->
+    <div id="payout-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4"><div class="p-5 border-b"><h2 class="text-xl font-bold">Process Payout</h2></div><div class="p-5"><p class="mb-4" id="payout-seller-name"></p><p class="mb-4"><strong>Amount:</strong> <span id="payout-amount"></span></p><div><label class="block text-sm font-medium mb-1">Notes (optional)</label><textarea id="payout-notes" rows="2" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></textarea></div><div class="flex gap-3 mt-6"><button id="confirm-payout-btn" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">Confirm Payment</button><button onclick="closePayoutModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { ROLES, canAccessPage } from './permissions.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allSellers = [], payoutRequests = [], currentPage = 1, currentPayoutSellerId = null, currentPayoutAmount = 0;
+        const itemsPerPage = 10;
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+        window.closePayoutModal = () => { document.getElementById('payout-modal').classList.add('hidden'); };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!canAccessPage(userDoc.data()?.role, 'payouts.html')) { window.location.href = '/unauthorized.html'; return; }
+            document.getElementById('user-name').textContent = userDoc.data()?.name || 'Admin';
+            await loadPayoutData();
+        });
+
+        async function loadPayoutData() { await loadSellers(); await calculatePayoutRequests(); renderPayoutRequests(); await loadPayoutHistory(); updateStats(); }
+        
+        async function loadSellers() { const usersSnap = await getDocs(collection(db, 'users')); allSellers = usersSnap.docs.filter(d => d.data().role === 'seller' && d.data().verificationStatus === 'approved').map(d => ({ id: d.id, ...d.data(), pendingEarnings: 0 })); const ordersSnap = await getDocs(collection(db, 'orders')); ordersSnap.docs.forEach(d => { const order = d.data(); if (order.sellerId && !order.sellerPaid) { const seller = allSellers.find(s => s.id === order.sellerId); if (seller) seller.pendingEarnings = (seller.pendingEarnings || 0) + (order.sellerCommission || 0); } }); }
+        
+        function calculatePayoutRequests() { const now = new Date(); const day = now.getDate(); let cycleOpen = (day <= 7) || (day >= 15 && day <= 21); document.getElementById('cycle-status').innerHTML = cycleOpen ? `${now.getFullYear()}-${now.getMonth()+1}-${day <= 7 ? '1-7' : '15-21'} (Open)` : `${now.getFullYear()}-${now.getMonth()+1}-${day < 15 ? '1-7' : '15-21'} (Closed)`; document.getElementById('toggle-cycle-btn').textContent = cycleOpen ? 'Close Cycle' : 'Open Cycle'; payoutRequests = allSellers.filter(s => s.pendingEarnings > 0 && s.payoutThreshold && s.pendingEarnings >= s.payoutThreshold); if (!cycleOpen) payoutRequests = []; }
+        
+        function renderPayoutRequests() { const start = (currentPage - 1) * itemsPerPage; const end = Math.min(start + itemsPerPage, payoutRequests.length); const paginated = payoutRequests.slice(start, end); const tbody = document.getElementById('payout-requests-table'); if (!paginated.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No payout requests available. ' + (payoutRequests.length === 0 ? 'Sellers need to request payouts.' : '') + '</td></tr>'; document.getElementById('pagination-container').innerHTML = ''; return; }
+        tbody.innerHTML = paginated.map(seller => `<tr class="border-b dark:border-gray-700"><td class="px-4 py-3"><input type="checkbox" class="payout-checkbox rounded" data-id="${seller.id}" data-amount="${seller.pendingEarnings}"></td><td class="px-4 py-3 font-medium">${escapeHtml(seller.name)}</td><td class="px-4 py-3 font-semibold text-purple-600">AED ${seller.pendingEarnings.toLocaleString()}</td><td class="px-4 py-3">AED ${seller.pendingEarnings.toLocaleString()}</td><td class="px-4 py-3">${formatDate(new Date().toISOString())}</td><td class="px-4 py-3"><span class="status-badge status-pending">Pending</span></td><td class="px-4 py-3"><button onclick="viewBankDetails('${seller.id}')" class="text-blue-500 hover:text-blue-700 text-sm">View</button></td><td class="px-4 py-3"><button onclick="processPayout('${seller.id}', ${seller.pendingEarnings})" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">Pay Now</button></td></tr>`).join('');
+        document.getElementById('pagination-info').textContent = `Showing ${start + 1} - ${end} of ${payoutRequests.length} requests`; renderPagination(payoutRequests.length); }
+        
+        function renderPagination(total) { const totalPages = Math.ceil(total / itemsPerPage); const container = document.getElementById('pagination-container'); if (totalPages <= 1) { container.innerHTML = ''; return; } let html = ''; if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`; for (let i = 1; i <= Math.min(totalPages, 5); i++) { html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`; } if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`; container.innerHTML = html; }
+        window.goToPage = (page) => { currentPage = page; renderPayoutRequests(); };
+        
+        window.viewBankDetails = (sellerId) => { const seller = allSellers.find(s => s.id === sellerId); if (!seller || !seller.bankDetails) { alert('No bank details on file'); return; } alert(`Bank Details:\nAccount Holder: ${seller.bankDetails.accountHolderName || 'N/A'}\nBank: ${seller.bankDetails.bankName || 'N/A'}\nIBAN: ${seller.bankDetails.iban || 'N/A'}\nSWIFT: ${seller.bankDetails.swiftCode || 'N/A'}`); };
+        
+        window.processPayout = (sellerId, amount) => { currentPayoutSellerId = sellerId; currentPayoutAmount = amount; const seller = allSellers.find(s => s.id === sellerId); document.getElementById('payout-seller-name').innerHTML = `<strong>Seller:</strong> ${escapeHtml(seller?.name || 'Unknown')}`; document.getElementById('payout-amount').textContent = `AED ${amount.toLocaleString()}`; document.getElementById('payout-notes').value = ''; document.getElementById('payout-modal').classList.remove('hidden'); };
+        
+        document.getElementById('confirm-payout-btn').addEventListener('click', async () => { if (!currentPayoutSellerId) return; const notes = document.getElementById('payout-notes').value; await updateDoc(doc(db, 'users', currentPayoutSellerId), { totalPaid: (allSellers.find(s => s.id === currentPayoutSellerId)?.totalPaid || 0) + currentPayoutAmount, updatedAt: new Date().toISOString() }); const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentPayoutSellerId), where('sellerPaid', '==', false))); for (const orderDoc of ordersSnap.docs) { await updateDoc(doc(db, 'orders', orderDoc.id), { sellerPaid: true, sellerPaidDate: new Date().toISOString(), payoutNotes: notes, updatedAt: new Date().toISOString() }); } await addDoc(collection(db, 'payouts'), { sellerId: currentPayoutSellerId, sellerName: allSellers.find(s => s.id === currentPayoutSellerId)?.name, amount: currentPayoutAmount, status: 'paid', processedDate: new Date().toISOString(), processedBy: auth.currentUser.uid, notes: notes }); closePayoutModal(); await loadPayoutData(); alert(`Payout of AED ${currentPayoutAmount} processed successfully!`); });
+        
+        async function loadPayoutHistory() { const payoutsSnap = await getDocs(query(collection(db, 'payouts'), orderBy('processedDate', 'desc'), limit(50))); const tbody = document.getElementById('payout-history-table'); if (payoutsSnap.empty) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No payout history yet.</td></tr>'; return; } tbody.innerHTML = payoutsSnap.docs.map(d => { const p = d.data(); return `<tr class="border-b"><td class="px-4 py-3 text-sm">${formatDate(p.processedDate)}</td><td class="px-4 py-3">${escapeHtml(p.sellerName)}</td><td class="px-4 py-3 font-semibold text-green-600">AED ${p.amount}</td><td class="px-4 py-3"><span class="status-badge status-paid">Paid</span></td><td class="px-4 py-3 text-sm">Admin</td></tr>`; }).join(''); }
+        
+        function updateStats() { const totalDue = allSellers.reduce((sum, s) => sum + (s.pendingEarnings || 0), 0); const totalRequested = payoutRequests.reduce((sum, r) => sum + (r.pendingEarnings || 0), 0); document.getElementById('total-due').textContent = `AED ${totalDue.toLocaleString()}`; document.getElementById('total-requested').textContent = `AED ${totalRequested.toLocaleString()}`; }
+        
+        document.getElementById('toggle-cycle-btn').addEventListener('click', () => { alert('Cycle status would be toggled here. In production, this would update a setting in the database.'); });
+        document.getElementById('select-all-requests').addEventListener('change', (e) => { document.querySelectorAll('.payout-checkbox').forEach(cb => cb.checked = e.target.checked); });
+        document.getElementById('pay-selected-btn').addEventListener('click', () => { const selected = []; document.querySelectorAll('.payout-checkbox:checked').forEach(cb => { selected.push({ id: cb.dataset.id, amount: parseFloat(cb.dataset.amount) }); }); if (selected.length === 0) { alert('No requests selected'); return; } if (confirm(`Process payout for ${selected.length} seller(s)? Total: AED ${selected.reduce((s, r) => s + r.amount, 0).toLocaleString()}`)) { selected.forEach(async s => await processPayoutDirect(s.id, s.amount)); setTimeout(() => loadPayoutData(), 2000); } });
+        
+        async function processPayoutDirect(sellerId, amount) { await updateDoc(doc(db, 'users', sellerId), { totalPaid: (allSellers.find(s => s.id === sellerId)?.totalPaid || 0) + amount }); const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', sellerId), where('sellerPaid', '==', false))); for (const orderDoc of ordersSnap.docs) { await updateDoc(doc(db, 'orders', orderDoc.id), { sellerPaid: true, sellerPaidDate: new Date().toISOString() }); } await addDoc(collection(db, 'payouts'), { sellerId, sellerName: allSellers.find(s => s.id === sellerId)?.name, amount, status: 'paid', processedDate: new Date().toISOString(), processedBy: auth.currentUser.uid }); }
+        
+        document.getElementById('export-payouts-btn').addEventListener('click', () => { const headers = ['Seller', 'Amount', 'Request Date', 'Status']; const rows = payoutRequests.map(r => [r.name, r.pendingEarnings, formatDate(new Date().toISOString()), 'Pending']); const csv = [headers, ...rows].map(row => row.join(',')).join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `payout_requests_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url); });
+        
+        function formatDate(dateString) { if (!dateString) return 'N/A'; return new Date(dateString).toLocaleDateString(); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+    </script>
+</body>
+</html>

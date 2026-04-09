@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Suppliers - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .status-active { background: #10b98120; color: #10b981; }
+        .status-inactive { background: #ef444420; color: #ef4444; }
+        .table-container { overflow-x: auto; }
+        .search-input { padding: 8px 14px; border-radius: 30px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); width: 100%; max-width: 280px; font-size: 13px; }
+        .action-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .pagination-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .pagination-btn:hover, .pagination-btn.active { background: var(--accent-color); color: white; }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
+        .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
+        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
+        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+    </style>
+</head>
+<body>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4">Admin Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+    </aside>
+
+    <div class="app-wrapper">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Admin Panel</p></div>
+            <nav id="desktop-nav"></nav>
+            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
+                    <a href="admin-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <div><h1 class="text-xl md:text-2xl font-bold">Suppliers</h1><p class="text-sm text-gray-500">Manage product suppliers and track payments</p></div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Admin</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6">
+                <div class="action-toolbar"><div><button onclick="openAddSupplierModal()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2"><i class="fas fa-plus"></i> Add Supplier</button></div><div><input type="text" id="search-suppliers" placeholder="Search suppliers..." class="search-input"></div></div>
+
+                <div class="mb-4 flex gap-3"><select id="status-filter" class="px-4 py-2 rounded-lg border dark:bg-gray-800"><option value="all">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option></select><button id="apply-filter" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Apply</button></div>
+
+                <div class="table-container bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full min-w-[900px]">
+                        <thead class="bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                            <tr><th class="px-4 py-3 text-left text-sm font-semibold">ID</th><th class="px-4 py-3 text-left text-sm font-semibold">Supplier Name</th><th class="px-4 py-3 text-left text-sm font-semibold">Contact Person</th><th class="px-4 py-3 text-left text-sm font-semibold">Phone</th><th class="px-4 py-3 text-left text-sm font-semibold">Email</th><th class="px-4 py-3 text-left text-sm font-semibold">Products</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                        </thead>
+                        <tbody id="suppliers-table-body"><tr><td colspan="8" class="text-center py-8">Loading suppliers...</td</tr></tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-between items-center mt-4"><div class="text-sm text-gray-500" id="pagination-info">Showing 0 - 0 of 0 suppliers</div><div class="flex gap-2" id="pagination-container"></div></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Supplier Modal -->
+    <div id="supplier-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[85vh] overflow-y-auto"><div class="p-5 border-b"><h2 class="text-xl font-bold" id="supplier-modal-title">Add Supplier</h2></div><div class="p-5"><div class="space-y-4"><div><label class="block text-sm font-medium mb-1">Supplier Name *</label><input type="text" id="supplier-name" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Contact Person</label><input type="text" id="supplier-contact" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div><label class="block text-sm font-medium mb-1">Phone *</label><input type="tel" id="supplier-phone" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="block text-sm font-medium mb-1">Email</label><input type="email" id="supplier-email" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div><label class="block text-sm font-medium mb-1">Address</label><input type="text" id="supplier-address" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div></div><div><label class="block text-sm font-medium mb-1">Bank Details</label><input type="text" id="supplier-bank" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700" placeholder="Bank name, IBAN, SWIFT"></div><div><label class="block text-sm font-medium mb-1">Status</label><select id="supplier-status" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div><div class="flex gap-3 mt-6"><button id="save-supplier" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition">Save Supplier</button><button onclick="closeSupplierModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
+
+    <!-- Payment Record Modal -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4"><div class="p-5 border-b"><h2 class="text-xl font-bold">Record Supplier Payment</h2></div><div class="p-5"><div><label class="block text-sm font-medium mb-1">Amount (AED)</label><input type="number" id="payment-amount" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div><label class="block text-sm font-medium mb-1 mt-3">Payment Date</label><input type="date" id="payment-date" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></div><div><label class="block text-sm font-medium mb-1 mt-3">Reference / Notes</label><textarea id="payment-notes" rows="2" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"></textarea></div><div class="flex gap-3 mt-6"><button id="confirm-payment" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">Record Payment</button><button onclick="closePaymentModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { ROLES, canAccessPage } from './permissions.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allSuppliers = [], currentSearch = '', currentStatusFilter = 'all', currentPage = 1, currentSupplierId = null;
+        const itemsPerPage = 15;
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+        window.openAddSupplierModal = () => { document.getElementById('supplier-modal-title').textContent = 'Add Supplier'; document.getElementById('supplier-name').value = ''; document.getElementById('supplier-contact').value = ''; document.getElementById('supplier-phone').value = ''; document.getElementById('supplier-email').value = ''; document.getElementById('supplier-address').value = ''; document.getElementById('supplier-bank').value = ''; document.getElementById('supplier-status').value = 'active'; currentSupplierId = null; document.getElementById('supplier-modal').classList.remove('hidden'); };
+        window.closeSupplierModal = () => { document.getElementById('supplier-modal').classList.add('hidden'); };
+        window.closePaymentModal = () => { document.getElementById('payment-modal').classList.add('hidden'); };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!canAccessPage(userDoc.data()?.role, 'suppliers.html')) { window.location.href = '/unauthorized.html'; return; }
+            document.getElementById('user-name').textContent = userDoc.data()?.name || 'Admin';
+            await loadSuppliers();
+        });
+
+        async function loadSuppliers() { const snap = await getDocs(collection(db, 'suppliers')); allSuppliers = snap.docs.map(d => ({ id: d.id, ...d.data(), productsCount: 0 })); const productsSnap = await getDocs(collection(db, 'products')); productsSnap.docs.forEach(p => { const supplierId = p.data().supplierId; if (supplierId) { const supplier = allSuppliers.find(s => s.id === supplierId); if (supplier) supplier.productsCount = (supplier.productsCount || 0) + 1; } }); renderSuppliers(); }
+        
+        function renderSuppliers() { let filtered = allSuppliers; if (currentSearch) { const search = currentSearch.toLowerCase(); filtered = filtered.filter(s => s.name?.toLowerCase().includes(search) || s.contactPerson?.toLowerCase().includes(search) || s.email?.toLowerCase().includes(search)); } if (currentStatusFilter !== 'all') filtered = filtered.filter(s => s.status === currentStatusFilter); const total = filtered.length; const start = (currentPage - 1) * itemsPerPage; const end = Math.min(start + itemsPerPage, total); const paginated = filtered.slice(start, end); const tbody = document.getElementById('suppliers-table-body'); if (!paginated.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No suppliers found. <button onclick="openAddSupplierModal()" class="text-purple-500 hover:underline">Add your first supplier →</button></td></tr>'; document.getElementById('pagination-container').innerHTML = ''; return; }
+        tbody.innerHTML = paginated.map(sup => `<tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"><td class="px-4 py-3 text-sm">#${sup.id.slice(0, 6)}</td><td class="px-4 py-3 font-medium">${escapeHtml(sup.name)}</td><td class="px-4 py-3">${escapeHtml(sup.contactPerson || '-')}</td><td class="px-4 py-3">${escapeHtml(sup.phone || '-')}</td><td class="px-4 py-3">${escapeHtml(sup.email || '-')}</td><td class="px-4 py-3 text-sm">${sup.productsCount || 0}</td><td class="px-4 py-3"><span class="status-badge ${sup.status === 'active' ? 'status-active' : 'status-inactive'}">${sup.status || 'active'}</span></td><td class="px-4 py-3"><div class="flex gap-2"><button onclick="editSupplier('${sup.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button><button onclick="recordSupplierPayment('${sup.id}')" class="text-green-500 hover:text-green-700"><i class="fas fa-money-bill-wave"></i></button><button onclick="deleteSupplier('${sup.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
+        document.getElementById('pagination-info').textContent = `Showing ${start + 1} - ${end} of ${total} suppliers`; renderPagination(total); }
+        
+        function renderPagination(total) { const totalPages = Math.ceil(total / itemsPerPage); const container = document.getElementById('pagination-container'); if (totalPages <= 1) { container.innerHTML = ''; return; } let html = ''; if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`; for (let i = 1; i <= Math.min(totalPages, 5); i++) { html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`; } if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`; container.innerHTML = html; }
+        window.goToPage = (page) => { currentPage = page; renderSuppliers(); };
+        
+        window.editSupplier = async (id) => { currentSupplierId = id; const sup = allSuppliers.find(s => s.id === id); if (!sup) return; document.getElementById('supplier-modal-title').textContent = 'Edit Supplier'; document.getElementById('supplier-name').value = sup.name || ''; document.getElementById('supplier-contact').value = sup.contactPerson || ''; document.getElementById('supplier-phone').value = sup.phone || ''; document.getElementById('supplier-email').value = sup.email || ''; document.getElementById('supplier-address').value = sup.address || ''; document.getElementById('supplier-bank').value = sup.bankDetails || ''; document.getElementById('supplier-status').value = sup.status || 'active'; document.getElementById('supplier-modal').classList.remove('hidden'); };
+        
+        window.recordSupplierPayment = (id) => { currentSupplierId = id; document.getElementById('payment-amount').value = ''; document.getElementById('payment-date').value = new Date().toISOString().split('T')[0]; document.getElementById('payment-notes').value = ''; document.getElementById('payment-modal').classList.remove('hidden'); };
+        
+        window.deleteSupplier = async (id) => { if (!confirm('Delete this supplier? This will also remove them from products.')) return; await deleteDoc(doc(db, 'suppliers', id)); await loadSuppliers(); };
+        
+        document.getElementById('save-supplier').addEventListener('click', async () => { const data = { name: document.getElementById('supplier-name').value.trim(), contactPerson: document.getElementById('supplier-contact').value.trim(), phone: document.getElementById('supplier-phone').value.trim(), email: document.getElementById('supplier-email').value.trim(), address: document.getElementById('supplier-address').value.trim(), bankDetails: document.getElementById('supplier-bank').value.trim(), status: document.getElementById('supplier-status').value, updatedAt: new Date().toISOString() }; if (!data.name || !data.phone) { alert('Supplier name and phone are required'); return; } if (currentSupplierId) { await updateDoc(doc(db, 'suppliers', currentSupplierId), data); } else { data.createdAt = new Date().toISOString(); await addDoc(collection(db, 'suppliers'), data); } closeSupplierModal(); await loadSuppliers(); });
+        
+        document.getElementById('confirm-payment').addEventListener('click', async () => { const amount = document.getElementById('payment-amount').value; if (!amount) { alert('Please enter amount'); return; } const paymentData = { supplierId: currentSupplierId, amount: parseFloat(amount), date: document.getElementById('payment-date').value, notes: document.getElementById('payment-notes').value, recordedAt: new Date().toISOString() }; await addDoc(collection(db, 'supplierPayments'), paymentData); closePaymentModal(); alert('Payment recorded successfully'); });
+        
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+        document.getElementById('search-suppliers').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderSuppliers(); });
+        document.getElementById('status-filter').addEventListener('change', (e) => { currentStatusFilter = e.target.value; currentPage = 1; renderSuppliers(); });
+        document.getElementById('apply-filter').addEventListener('click', () => { currentPage = 1; renderSuppliers(); });
+    </script>
+</body>
+</html>

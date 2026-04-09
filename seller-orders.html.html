@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>My Orders - Marketplace Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .status-pending { background: #f59e0b20; color: #f59e0b; }
+        .status-confirmed { background: #10b98120; color: #10b981; }
+        .status-delivered { background: #3b82f620; color: #3b82f6; }
+        .status-completed { background: #8b5cf620; color: #8b5cf6; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
+        .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
+        .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
+        .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
+        @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
+    </style>
+</head>
+<body>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
+        <div class="p-4"><div class="text-xs opacity-60 mb-4">Seller Panel</div><nav id="mobile-nav"></nav></div>
+        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+    </aside>
+
+    <div class="app-wrapper">
+        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
+            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Seller Panel</p></div>
+            <nav id="desktop-nav"></nav>
+            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+                    <button id="sidebarToggleBtn" class="sidebar-toggle-btn hidden md:block"><i class="fas fa-chevron-left"></i></button>
+                    <a href="seller-dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span></a>
+                    <div><h1 class="text-xl md:text-2xl font-bold">My Orders</h1><p class="text-sm text-gray-500">View your order history and commissions</p></div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
+                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">Seller</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="stat-card p-4"><div class="text-2xl font-bold text-purple-500" id="stat-total-orders">0</div><div class="text-sm text-gray-500">Total Orders</div></div>
+                    <div class="stat-card p-4"><div class="text-2xl font-bold text-green-500" id="stat-total-earnings">AED 0</div><div class="text-sm text-gray-500">Total Earnings</div></div>
+                    <div class="stat-card p-4"><div class="text-2xl font-bold text-blue-500" id="stat-pending-commission">AED 0</div><div class="text-sm text-gray-500">Pending Commission</div></div>
+                    <div class="stat-card p-4"><div class="text-2xl font-bold text-orange-500" id="stat-completed-orders">0</div><div class="text-sm text-gray-500">Completed Orders</div></div>
+                </div>
+
+                <div class="mb-4 flex justify-between items-center flex-wrap gap-3"><div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="search-orders" placeholder="Search by Order ID or Customer..." class="pl-10 pr-4 py-2 rounded-full border dark:bg-gray-800 dark:border-gray-700 w-full md:w-80"></div><button onclick="exportMyOrders()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"><i class="fas fa-download mr-2"></i>Export</button></div>
+
+                <div class="flex flex-wrap gap-2 mb-4"><button class="filter-chip active" data-status="all">All</button><button class="filter-chip" data-status="pending">Pending</button><button class="filter-chip" data-status="confirmed">Confirmed</button><button class="filter-chip" data-status="delivered">Delivered</button><button class="filter-chip" data-status="completed">Completed</button></div>
+
+                <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow"><table class="w-full min-w-[800px]"><thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold">Order ID</th><th class="px-4 py-3 text-left text-sm font-semibold">Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Customer</th><th class="px-4 py-3 text-left text-sm font-semibold">Product</th><th class="px-4 py-3 text-left text-sm font-semibold">Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Commission</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Action</th></tr></thead><tbody id="orders-table-body"><tr><td colspan="8" class="text-center py-8">Loading orders...</td></tr></tbody></table></div>
+
+                <div class="flex justify-between items-center mt-4"><div class="text-sm text-gray-500" id="pagination-info">Showing 0 - 0 of 0 orders</div><div class="flex gap-2" id="pagination-container"></div></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="order-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"><div class="p-5 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800"><h2 class="text-xl font-bold" id="order-modal-title">Order Details</h2><button onclick="closeOrderModal()" class="text-2xl hover:text-gray-500">&times;</button></div><div class="p-5" id="order-modal-content">Loading...</div><div class="p-5 border-t"><button onclick="closeOrderModal()" class="w-full bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition">Close</button></div></div></div>
+
+    <script src="sidebar.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { ROLES } from './permissions.js';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let allOrders = [], currentStatus = 'all', currentSearch = '', currentPage = 1, currentUserId = null;
+        const itemsPerPage = 10;
+
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = '/'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.data()?.role !== ROLES.SELLER || userDoc.data()?.verificationStatus !== 'approved') { window.location.href = '/seller-dashboard.html'; return; }
+            currentUserId = user.uid;
+            document.getElementById('user-name').textContent = userDoc.data()?.name || 'Seller';
+            await loadOrders();
+        });
+
+        async function loadOrders() { const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentUserId), orderBy('createdAt', 'desc'))); allOrders = ordersSnap.docs.map(d => ({ id: d.id, ...d.data() })); updateStats(); renderOrders(); }
+        
+        function updateStats() { let totalOrders = allOrders.length, totalEarnings = 0, pendingCommission = 0, completedOrders = 0; allOrders.forEach(o => { totalEarnings += o.sellerCommission || 0; if (!o.sellerPaid) pendingCommission += o.sellerCommission || 0; if (o.orderStatus === 'completed') completedOrders++; }); document.getElementById('stat-total-orders').textContent = totalOrders; document.getElementById('stat-total-earnings').textContent = `AED ${totalEarnings.toLocaleString()}`; document.getElementById('stat-pending-commission').textContent = `AED ${pendingCommission.toLocaleString()}`; document.getElementById('stat-completed-orders').textContent = completedOrders; }
+        
+        function renderOrders() { let filtered = allOrders; if (currentStatus !== 'all') filtered = filtered.filter(o => o.orderStatus === currentStatus); if (currentSearch) { const search = currentSearch.toLowerCase(); filtered = filtered.filter(o => o.id.toLowerCase().includes(search) || o.customerName?.toLowerCase().includes(search)); } const total = filtered.length; const start = (currentPage - 1) * itemsPerPage; const end = Math.min(start + itemsPerPage, total); const paginated = filtered.slice(start, end); const tbody = document.getElementById('orders-table-body'); if (!paginated.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No orders found. <a href="create-order.html" class="text-purple-500 hover:underline">Create your first order →</a></td></tr>'; document.getElementById('pagination-container').innerHTML = ''; return; }
+        tbody.innerHTML = paginated.map(order => { const statusClass = `status-${order.orderStatus || 'pending'}`; return `<tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800"><td class="px-4 py-2 text-sm font-mono">#${order.id.slice(0, 8)}</td><td class="px-4 py-2 text-sm">${formatDate(order.createdAt)}</td><td class="px-4 py-2">${escapeHtml(order.customerName || 'N/A')}</td><td class="px-4 py-2">${escapeHtml(order.productName || (order.items?.[0]?.productName || 'Multiple'))}</td><td class="px-4 py-2">AED ${order.totalAmount || 0}</td><td class="px-4 py-2 font-semibold text-purple-600">AED ${order.sellerCommission || 0}</td><td class="px-4 py-2"><span class="status-badge ${statusClass}">${order.orderStatus || 'pending'}</span></td><td class="px-4 py-2"><button onclick="viewOrderDetails('${order.id}')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button></td></tr>`; }).join('');
+        document.getElementById('pagination-info').textContent = `Showing ${start + 1} - ${end} of ${total} orders`; renderPagination(total); }
+        
+        function renderPagination(total) { const totalPages = Math.ceil(total / itemsPerPage); const container = document.getElementById('pagination-container'); if (totalPages <= 1) { container.innerHTML = ''; return; } let html = ''; if (currentPage > 1) html += `<button onclick="goToPage(${currentPage - 1})" class="pagination-btn">Prev</button>`; for (let i = 1; i <= Math.min(totalPages, 5); i++) { html += `<button onclick="goToPage(${i})" class="pagination-btn ${currentPage === i ? 'active' : ''}">${i}</button>`; } if (currentPage < totalPages) html += `<button onclick="goToPage(${currentPage + 1})" class="pagination-btn">Next</button>`; container.innerHTML = html; }
+        window.goToPage = (page) => { currentPage = page; renderOrders(); };
+        
+        window.viewOrderDetails = async (id) => { const orderDoc = await getDoc(doc(db, 'orders', id)); const order = orderDoc.data(); const modal = document.getElementById('order-modal'); const content = document.getElementById('order-modal-content'); document.getElementById('order-modal-title').textContent = `Order #${id.slice(0, 8)}`; content.innerHTML = `<div class="space-y-4"><div class="grid grid-cols-2 gap-4"><div><strong>Order ID:</strong> ${id.slice(0, 8)}</div><div><strong>Status:</strong> <span class="status-badge status-${order.orderStatus}">${order.orderStatus}</span></div><div><strong>Customer:</strong> ${escapeHtml(order.customerName || 'N/A')}</div><div><strong>Phone:</strong> ${escapeHtml(order.customerPhone || 'N/A')}</div><div><strong>Address:</strong> ${escapeHtml(order.customerAddress || 'N/A')}</div><div><strong>Total Amount:</strong> AED ${order.totalAmount || 0}</div><div><strong>Your Commission:</strong> AED ${order.sellerCommission || 0}</div><div><strong>Commission Paid:</strong> ${order.sellerPaid ? '✅ Yes' : '❌ No'}</div><div><strong>Date:</strong> ${formatDateTime(order.createdAt)}</div></div><div><strong>Order Items:</strong></div><div class="border rounded-lg overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-3 py-2 text-left">Product</th><th class="px-3 py-2 text-center">Qty</th><th class="px-3 py-2 text-right">Price</th><th class="px-3 py-2 text-right">Total</th></tr></thead><tbody>${order.items?.map(item => `<tr class="border-t"><td class="px-3 py-2">${escapeHtml(item.productName)}</td><td class="px-3 py-2 text-center">${item.quantity}</td><td class="px-3 py-2 text-right">AED ${item.retailPrice}</td><td class="px-3 py-2 text-right">AED ${item.retailPrice * item.quantity}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center py-4">No items</td></tr>'}</tbody><tfoot class="bg-gray-50 dark:bg-gray-700"><tr><td colspan="3" class="px-3 py-2 text-right font-semibold">Total:</td><td class="px-3 py-2 text-right font-bold">AED ${order.totalAmount || 0}</td></tr></tfoot></table></div></div>`; modal.classList.remove('hidden'); };
+        
+        window.closeOrderModal = () => { document.getElementById('order-modal').classList.add('hidden'); };
+        window.exportMyOrders = () => { const headers = ['Order ID', 'Date', 'Customer', 'Product', 'Amount', 'Commission', 'Status']; const rows = allOrders.map(o => [o.id.slice(0, 8), formatDate(o.createdAt), o.customerName || 'N/A', o.productName || (o.items?.[0]?.productName || 'N/A'), o.totalAmount || 0, o.sellerCommission || 0, o.orderStatus || 'pending']); const csv = [headers, ...rows].map(row => row.join(',')).join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `my_orders_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url); };
+        
+        function formatDate(dateString) { if (!dateString) return 'N/A'; return new Date(dateString).toLocaleDateString(); }
+        function formatDateTime(dateString) { if (!dateString) return 'N/A'; return new Date(dateString).toLocaleString(); }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+        document.getElementById('search-orders').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderOrders(); });
+        document.querySelectorAll('.filter-chip').forEach(chip => { chip.addEventListener('click', () => { document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active')); chip.classList.add('active'); currentStatus = chip.dataset.status; currentPage = 1; renderOrders(); }); });
+    </script>
+</body>
+</html>
