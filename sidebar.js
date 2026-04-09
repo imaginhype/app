@@ -2,7 +2,16 @@
 // SIDEBAR CONTROLLER - Marketplace Pro
 // ============================================
 
-import { getNavigationMenu, ROLES, canAccessPage } from './permissions.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { firebaseConfig } from './firebase-config.js';
+import { getNavigationMenu, ROLES } from './permissions.js';
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Global variables
 let currentUserRole = null;
@@ -22,9 +31,7 @@ function initSidebar() {
     const toggleBtn = document.getElementById('sidebarToggleBtn');
     
     if (sidebar && toggleBtn) {
-        // Load saved state
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        
         if (isCollapsed) {
             sidebar.classList.add('collapsed');
             toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
@@ -41,11 +48,9 @@ function initSidebar() {
         });
     }
     
-    // Load role-based menu after user is loaded
     loadRoleBasedMenu();
 }
 
-// Load role-based navigation menu
 async function loadRoleBasedMenu() {
     const user = await getCurrentUser();
     if (!user) return;
@@ -56,12 +61,10 @@ async function loadRoleBasedMenu() {
     currentUserRole = userDoc.role;
     currentUserData = userDoc;
     
-    // Update navigation menus
     updateMobileMenu();
     updateDesktopMenu();
 }
 
-// Update mobile sidebar menu
 function updateMobileMenu() {
     const mobileNav = document.querySelector('#mobile-sidebar nav');
     if (!mobileNav) return;
@@ -78,7 +81,6 @@ function updateMobileMenu() {
     }).join('');
 }
 
-// Update desktop sidebar menu
 function updateDesktopMenu() {
     const desktopNav = document.querySelector('.desktop-sidebar nav');
     if (!desktopNav) return;
@@ -95,7 +97,6 @@ function updateDesktopMenu() {
     }).join('');
 }
 
-// Helper functions
 async function getCurrentUser() {
     return new Promise((resolve) => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -139,7 +140,6 @@ window.closeMobileMenu = function() {
     document.body.style.overflow = '';
 };
 
-// Close mobile menu when clicking overlay
 document.addEventListener('click', function(event) {
     const overlay = document.getElementById('sidebar-overlay');
     if (overlay && overlay.classList.contains('show') && event.target === overlay) {
@@ -196,6 +196,5 @@ window.toggleTheme = function() {
     }
 };
 
-// Initialize theme on page load
 const savedTheme = localStorage.getItem('theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
