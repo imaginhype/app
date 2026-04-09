@@ -18,26 +18,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .category-chip {
-            transition: all 0.2s ease;
-            cursor: pointer;
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 500;
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
+        .category-chip { transition: all 0.2s ease; cursor: pointer; padding: 6px 16px; border-radius: 30px; font-size: 13px; font-weight: 500; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-color); }
         .category-chip.active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
-        .product-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-        }
+        .product-card { background: var(--bg-card); border-radius: 16px; overflow: hidden; transition: all 0.3s ease; border: 1px solid var(--border-color); cursor: pointer; }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15); }
         .product-image-container { background: #ffffff; padding: 16px; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; width: 100%; }
         .dark .product-image-container { background: #1e293b; }
@@ -90,16 +73,7 @@
         .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
         .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
         
-        .desktop-sidebar {
-            width: 16rem;
-            transition: width 0.3s ease;
-            overflow-x: hidden;
-            position: relative;
-            height: 100vh;
-            flex-shrink: 0;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-        }
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
         .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
         .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
         .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
@@ -107,22 +81,11 @@
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4" id="panel-label">Admin Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2" id="desktop-panel-label">Admin Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
+            <!-- Top Bar -->
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
@@ -132,8 +95,15 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <button onclick="toggleTheme()" class="p-2 rounded-full transition"><i class="fas fa-moon dark:block hidden"></i><i class="fas fa-sun dark:hidden block"></i></button>
-                    <div class="relative"><button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">User</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
-                    <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border"><a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a><a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a><div class="border-t"></div><button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button></div></div>
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-2 focus:outline-none"><i class="fas fa-user-circle text-2xl"></i><span class="hidden md:inline" id="user-name">User</span><i class="fas fa-chevron-down text-xs transition-transform duration-200" id="user-chevron"></i></button>
+                        <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden z-20 border">
+                            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-user-circle w-5"></i> My Profile</a>
+                            <a href="account-settings.html" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-cog w-5"></i> Account Settings</a>
+                            <div class="border-t"></div>
+                            <button onclick="logout()" class="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition"><i class="fas fa-sign-out-alt w-5"></i> Logout</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -158,8 +128,8 @@
 
     <div id="edit-category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" onclick="closeEditCategoryModal(event)"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4" onclick="event.stopPropagation()"><div class="p-5 border-b flex justify-between items-center"><h2 class="text-xl font-bold dark:text-white text-gray-900">Edit Category</h2><button onclick="closeEditCategoryModal()" class="text-2xl hover:text-gray-500 dark:text-gray-400">&times;</button></div><div class="p-5"><div class="mb-4"><label class="block text-sm font-medium mb-2 dark:text-gray-300 text-gray-700">Category Name</label><input type="text" id="edit-category-name" class="w-full px-4 py-2 rounded-xl border dark:border-gray-600 dark:bg-gray-700 dark:text-white"><p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Category names must be between 2-50 characters</p></div><div class="flex gap-3 mt-6"><button onclick="updateCategory()" class="flex-1 bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition">Save Changes</button><button onclick="closeEditCategoryModal()" class="flex-1 border dark:border-gray-600 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</button></div></div></div></div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -181,25 +151,15 @@
             if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             currentUserRole = userDoc.data()?.role;
-            
             if (!canAccessPage(currentUserRole, 'products.html')) { window.location.href = '/unauthorized.html'; return; }
-            
             document.getElementById('user-name').textContent = userDoc.data()?.name || 'User';
-            
-            // Role-based UI adjustments
             if (currentUserRole === ROLES.SELLER) {
-                document.getElementById('panel-label').textContent = 'Seller Panel';
-                document.getElementById('desktop-panel-label').textContent = 'Seller Panel';
                 document.getElementById('back-link').href = 'seller-dashboard.html';
                 document.getElementById('back-link').innerHTML = '<i class="fas fa-arrow-left"></i> <span>Back to Dashboard</span>';
                 document.getElementById('action-buttons').innerHTML = '';
-                document.getElementById('add-product-btn')?.remove();
             } else if (currentUserRole === ROLES.MANAGER) {
-                document.getElementById('panel-label').textContent = 'Manager Panel';
-                document.getElementById('desktop-panel-label').textContent = 'Manager Panel';
                 document.getElementById('back-link').href = 'manager-dashboard.html';
             }
-            
             await loadCategories();
             await loadProducts();
         });
