@@ -13,13 +13,10 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>Manager Dashboard - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .stat-card { transition: all 0.2s ease; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; }
@@ -42,13 +39,15 @@
     </style>
 </head>
 <body>
-    <!-- Cleanup script to remove timestamp from URL -->
+    <!-- CLEANUP SCRIPT: Ensures no lingering login content -->
     <script>
         (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('t')) {
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, document.title, newUrl);
+            if (document.body && document.body.innerHTML) {
+                if (document.body.innerHTML.includes('login-form') || 
+                    document.body.innerHTML.includes('Welcome Back') ||
+                    document.body.innerHTML.includes('Sign Up')) {
+                    window.location.reload();
+                }
             }
         })();
     </script>
@@ -92,13 +91,13 @@
 
                 <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-chart-line text-purple-500"></i> Orders Trend</h3><div class="chart-container"><canvas id="ordersChart"></canvas></div></div>
 
-                <div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></tr></tbody>}</div></div>
+                <div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Action</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td>\u003c/tr> </tbody>}</div></div>
             </div>
         </main>
     </div>
 
-    <script type="module" src="load-sidebar.js?v=2"></script>
-    <script type="module" src="sidebar.js?v=2"></script>
+    <script type="module" src="load-sidebar.js"></script>
+    <script type="module" src="sidebar.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -112,14 +111,10 @@
 
         let ordersChartInstance = null;
 
-        // Updated logout function - redirects to login.html
-        window.logout = async () => { 
-            await signOut(auth); 
-            window.location.href = '/login.html';
-        };
+        window.logout = async () => { await signOut(auth); window.location.href = '/'; };
 
         onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = '/login.html'; return; }
+            if (!user) { window.location.href = '/'; return; }
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.data()?.role !== ROLES.MANAGER) { window.location.href = '/unauthorized.html'; return; }
             document.getElementById('manager-name').textContent = userDoc.data()?.name || 'Manager';
