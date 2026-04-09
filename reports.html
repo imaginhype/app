@@ -25,6 +25,8 @@
         .report-tab.active { background: var(--accent-color); color: white; }
         .report-tab:hover:not(.active) { background: var(--hover-bg); }
         .date-filter { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+        .date-preset { padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.2s; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-color); }
+        .date-preset.active { background: var(--accent-color); color: white; }
         .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
         .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
         .chart-container { height: 300px; position: relative; width: 100%; }
@@ -37,21 +39,9 @@
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4" id="panel-label">Admin Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2" id="desktop-panel-label">Admin Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
@@ -70,7 +60,7 @@
             <div class="p-4 md:p-6">
                 <!-- Date Range Filter -->
                 <div class="date-filter">
-                    <div class="flex gap-2"><button class="date-preset px-3 py-1 rounded-lg bg-gray-200 dark:bg-gray-700" data-days="7">Last 7 days</button><button class="date-preset px-3 py-1 rounded-lg bg-gray-200 dark:bg-gray-700" data-days="30">Last 30 days</button><button class="date-preset px-3 py-1 rounded-lg bg-purple-600 text-white" data-days="90">Last 90 days</button><button class="date-preset px-3 py-1 rounded-lg bg-gray-200 dark:bg-gray-700" data-days="365">Last year</button></div>
+                    <div class="flex gap-2"><button class="date-preset" data-days="7">Last 7 days</button><button class="date-preset" data-days="30">Last 30 days</button><button class="date-preset active" data-days="90">Last 90 days</button><button class="date-preset" data-days="365">Last year</button></div>
                     <div class="flex gap-2"><input type="date" id="start-date" class="px-3 py-1 rounded-lg border dark:bg-gray-800"><span>to</span><input type="date" id="end-date" class="px-3 py-1 rounded-lg border dark:bg-gray-800"><button id="apply-date" class="px-4 py-1 bg-blue-600 text-white rounded-lg">Apply</button></div>
                     <div><button id="export-report" class="px-4 py-2 bg-green-600 text-white rounded-lg"><i class="fas fa-download mr-2"></i>Export Report</button></div>
                 </div>
@@ -80,27 +70,29 @@
 
                 <!-- Revenue Report -->
                 <div id="revenue-report" class="report-panel">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="stat-card p-4"><div class="text-2xl font-bold text-purple-600" id="total-revenue">AED 0</div><div class="text-sm text-gray-500">Total Revenue</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-green-600" id="avg-order-value">AED 0</div><div class="text-sm text-gray-500">Average Order Value</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-blue-600" id="total-commission">AED 0</div><div class="text-sm text-gray-500">Total Commission Paid</div></div></div>
-                    <div class="card p-5 rounded-xl"><h3 class="text-lg font-semibold mb-4">Revenue Trend</h3><div class="chart-container"><canvas id="revenueTrendChart"></canvas></div></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="lg:col-span-2"><div class="card p-5 rounded-xl"><h3 class="text-lg font-semibold mb-4">Revenue Trend</h3><div class="chart-container"><canvas id="revenueTrendChart"></canvas></div></div></div>
+                        <div><div class="card p-5 rounded-xl"><h3 class="text-lg font-semibold mb-4">Quick Stats</h3><div class="space-y-4"><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Total Revenue</span><span class="text-xl font-bold text-purple-600" id="total-revenue">AED 0</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Average Order Value</span><span class="text-xl font-bold text-blue-600" id="avg-order-value">AED 0</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Total Commission Paid</span><span class="text-xl font-bold text-green-600" id="total-commission">AED 0</span></div></div></div></div>
+                    </div>
                 </div>
 
                 <!-- Orders Report -->
-                <div id="orders-report" class="report-panel hidden"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="stat-card p-4"><div class="text-2xl font-bold text-purple-600" id="total-orders">0</div><div class="text-sm text-gray-500">Total Orders</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-green-600" id="completed-orders">0</div><div class="text-sm text-gray-500">Completed Orders</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-orange-600" id="pending-orders">0</div><div class="text-sm text-gray-500">Pending Orders</div></div></div><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Month</th><th class="px-4 py-2 text-left">Orders</th><th class="px-4 py-2 text-left">Revenue</th><th class="px-4 py-2 text-left">Commission</th></tr></thead><tbody id="orders-table-body"></tbody></table></div></div>
+                <div id="orders-report" class="report-panel hidden"><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="stat-card p-4"><div class="text-2xl font-bold text-purple-600" id="total-orders">0</div><div class="text-sm text-gray-500">Total Orders</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-green-600" id="completed-orders">0</div><div class="text-sm text-gray-500">Completed Orders</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-orange-600" id="pending-orders">0</div><div class="text-sm text-gray-500">Pending Orders</div></div></div><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Month</th><th class="px-4 py-2 text-left">Orders</th><th class="px-4 py-2 text-left">Revenue</th><th class="px-4 py-2 text-left">Commission</th></tr></thead><tbody id="orders-table-body"></tbody>}</div></div>
 
                 <!-- Sellers Report -->
-                <div id="sellers-report" class="report-panel hidden"><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Seller Name</th><th class="px-4 py-2 text-left">Orders</th><th class="px-4 py-2 text-left">Total Commission</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th></tr></thead><tbody id="sellers-table-body"></tbody></table></div></div>
+                <div id="sellers-report" class="report-panel hidden"><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Seller Name</th><th class="px-4 py-2 text-left">Orders</th><th class="px-4 py-2 text-left">Total Commission</th><th class="px-4 py-2 text-left">Status</th><th class="px-4 py-2 text-left">Joined</th></tr></thead><tbody id="sellers-table-body"></tbody>}</div></div>
 
                 <!-- Products Report -->
-                <div id="products-report" class="report-panel hidden"><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Product Name</th><th class="px-4 py-2 text-left">Category</th><th class="px-4 py-2 text-left">Units Sold</th><th class="px-4 py-2 text-left">Revenue</th><th class="px-4 py-2 text-left">Profit</th></tr></thead><tbody id="products-table-body"></tbody></table></div></div>
+                <div id="products-report" class="report-panel hidden"><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Product Name</th><th class="px-4 py-2 text-left">Category</th><th class="px-4 py-2 text-left">Units Sold</th><th class="px-4 py-2 text-left">Revenue</th><th class="px-4 py-2 text-left">Profit</th></tr></thead><tbody id="products-table-body"></tbody>}</div></div>
 
                 <!-- Payouts Report -->
-                <div id="payouts-report" class="report-panel hidden"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div class="stat-card p-4"><div class="text-2xl font-bold text-purple-600" id="total-payouts">AED 0</div><div class="text-sm text-gray-500">Total Payouts Processed</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-orange-600" id="pending-payouts">AED 0</div><div class="text-sm text-gray-500">Pending Payouts</div></div></div><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th></tr></thead><tbody id="payouts-table-body"></tbody></table></div></div>
+                <div id="payouts-report" class="report-panel hidden"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><div class="stat-card p-4"><div class="text-2xl font-bold text-purple-600" id="total-payouts">AED 0</div><div class="text-sm text-gray-500">Total Payouts Processed</div></div><div class="stat-card p-4"><div class="text-2xl font-bold text-orange-600" id="pending-payouts">AED 0</div><div class="text-sm text-gray-500">Pending Payouts</div></div></div><div class="overflow-x-auto"><table class="w-full min-w-[600px]"><thead class="bg-gray-50 dark:bg-gray-700"><tr><th class="px-4 py-2 text-left">Date</th><th class="px-4 py-2 text-left">Seller</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Status</th></tr></thead><tbody id="payouts-table-body"></tbody>}</div></div>
             </div>
         </main>
     </div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -122,7 +114,7 @@
             currentUserRole = userDoc.data()?.role;
             if (!canAccessPage(currentUserRole, 'reports.html')) { window.location.href = '/unauthorized.html'; return; }
             document.getElementById('user-name').textContent = userDoc.data()?.name || 'Admin';
-            if (currentUserRole === ROLES.MANAGER) { document.getElementById('panel-label').textContent = 'Manager Panel'; document.getElementById('desktop-panel-label').textContent = 'Manager Panel'; document.getElementById('back-link').href = 'manager-dashboard.html'; }
+            if (currentUserRole === ROLES.MANAGER) { document.getElementById('back-link').href = 'manager-dashboard.html'; }
             await loadAllData();
         });
 
@@ -146,6 +138,8 @@
 
         document.querySelectorAll('.report-tab').forEach(tab => { tab.addEventListener('click', () => { document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); document.querySelectorAll('.report-panel').forEach(p => p.classList.add('hidden')); document.getElementById(`${tab.dataset.report}-report`).classList.remove('hidden'); renderCurrentReport(); }); });
         document.getElementById('export-report').addEventListener('click', () => { const activeTab = document.querySelector('.report-tab.active').dataset.report; exportToCSV(currentData[activeTab === 'revenue' ? 'orders' : activeTab], `${activeTab}_report.csv`); });
+        document.querySelectorAll('.date-preset').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.date-preset').forEach(b => b.classList.remove('active')); btn.classList.add('active'); loadAllData(); }); });
+        document.getElementById('apply-date').addEventListener('click', () => { loadAllData(); });
 
         function formatDate(dateString) { if (!dateString) return 'N/A'; return new Date(dateString).toLocaleDateString(); }
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
