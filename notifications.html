@@ -24,6 +24,8 @@
         .notification-icon { width: 40px; height: 40px; background: var(--bg-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
         .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        .pagination-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .pagination-btn:hover, .pagination-btn.active { background: var(--accent-color); color: white; }
         
         .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
         .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
@@ -33,21 +35,9 @@
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4" id="panel-label">Admin Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2" id="desktop-panel-label">Admin Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
@@ -71,8 +61,8 @@
         </main>
     </div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -95,8 +85,8 @@
             currentUserRole = userDoc.data()?.role;
             if (!canAccessPage(currentUserRole, 'notifications.html')) { window.location.href = '/unauthorized.html'; return; }
             document.getElementById('user-name').textContent = userDoc.data()?.name || 'User';
-            if (currentUserRole === ROLES.MANAGER) { document.getElementById('panel-label').textContent = 'Manager Panel'; document.getElementById('desktop-panel-label').textContent = 'Manager Panel'; document.getElementById('back-link').href = 'manager-dashboard.html'; }
-            if (currentUserRole === ROLES.SELLER) { document.getElementById('panel-label').textContent = 'Seller Panel'; document.getElementById('desktop-panel-label').textContent = 'Seller Panel'; document.getElementById('back-link').href = 'seller-dashboard.html'; }
+            if (currentUserRole === ROLES.MANAGER) { document.getElementById('back-link').href = 'manager-dashboard.html'; }
+            if (currentUserRole === ROLES.SELLER) { document.getElementById('back-link').href = 'seller-dashboard.html'; }
             await loadNotifications();
         });
 
