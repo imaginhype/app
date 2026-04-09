@@ -99,7 +99,7 @@
     <!-- Change Role Modal -->
     <div id="role-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"><div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-4"><div class="p-5 border-b"><h2 class="text-xl font-bold">Change User Role</h2></div><div class="p-5"><select id="new-role" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700"><option value="seller">Seller</option><option value="manager">Manager</option></select><div class="flex gap-3 mt-6"><button id="confirm-role-change" class="flex-1 bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition">Save Changes</button><button onclick="closeRoleModal()" class="flex-1 border py-2 rounded-lg">Cancel</button></div></div></div></div>
 
-    <script src="sidebar.js"></script>
+    <script type="module" src="sidebar.js"></script>
     <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
