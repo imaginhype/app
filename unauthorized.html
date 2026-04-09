@@ -26,14 +26,8 @@
             animation: fadeInUp 0.5s ease-out;
         }
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .icon-circle {
             width: 80px;
@@ -45,38 +39,71 @@
             justify-content: center;
             margin: 0 auto 1.5rem auto;
         }
+        /* Fixed button sizes - not oversized */
         .btn-primary {
             background: linear-gradient(135deg, #8b5cf6, #7c3aed);
             color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 2rem;
+            padding: 8px 20px;
+            border-radius: 8px;
             font-weight: 600;
+            font-size: 14px;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             text-decoration: none;
+            border: none;
+            cursor: pointer;
         }
         .btn-primary:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
         .btn-secondary {
             background: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
-            padding: 0.75rem 2rem;
-            border-radius: 2rem;
+            padding: 8px 20px;
+            border-radius: 8px;
             font-weight: 500;
+            font-size: 14px;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             text-decoration: none;
+            cursor: pointer;
         }
         .btn-secondary:hover {
             background: var(--hover-bg);
             color: var(--text-primary);
+        }
+        .btn-danger {
+            background: transparent;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-danger:hover {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 1.5rem;
         }
     </style>
 </head>
@@ -99,14 +126,14 @@
             </ul>
         </div>
         
-        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <div class="button-group">
             <button onclick="goBack()" class="btn-secondary">
-                <i class="fas fa-arrow-left"></i> Go Back
+                <i class="fas fa-arrow-left"></i> Back
             </button>
             <button onclick="goToDashboard()" class="btn-primary">
-                <i class="fas fa-home"></i> Go to Dashboard
+                <i class="fas fa-home"></i> Dashboard
             </button>
-            <button onclick="logout()" class="btn-secondary">
+            <button onclick="logout()" class="btn-danger">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </button>
         </div>
@@ -137,16 +164,20 @@
                 return;
             }
             
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            const role = userDoc.data()?.role;
-            
-            if (role === 'admin') {
-                window.location.href = '/admin-dashboard.html';
-            } else if (role === 'manager') {
-                window.location.href = '/manager-dashboard.html';
-            } else if (role === 'seller') {
-                window.location.href = '/seller-dashboard.html';
-            } else {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const role = userDoc.data()?.role;
+                
+                if (role === 'admin') {
+                    window.location.href = '/admin-dashboard.html';
+                } else if (role === 'manager') {
+                    window.location.href = '/manager-dashboard.html';
+                } else if (role === 'seller') {
+                    window.location.href = '/seller-dashboard.html';
+                } else {
+                    window.location.href = '/';
+                }
+            } catch (error) {
                 window.location.href = '/';
             }
         };
