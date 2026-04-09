@@ -98,21 +98,14 @@ export function getNavigationMenu(role) {
     const adminMenus = [
         { name: 'Products', icon: 'box', link: 'products.html', permission: null },
         { name: 'Add Product', icon: 'plus-circle', link: 'add-product.html', permission: null },
-        { name: 'Product View', icon: 'eye', link: 'product-view.html', permission: null },
         { name: 'Orders', icon: 'shopping-cart', link: 'orders.html', permission: null },
-        { name: 'Seller Orders', icon: 'list', link: 'seller-orders.html', permission: null },
-        { name: 'Create Order', icon: 'plus', link: 'create-order.html', permission: null },
         { name: 'Sellers', icon: 'users', link: 'sellers.html', permission: null },
         { name: 'Suppliers', icon: 'truck', link: 'suppliers.html', permission: null },
         { name: 'Payouts', icon: 'money-bill-wave', link: 'payouts.html', permission: null },
-        { name: 'Seller Payouts', icon: 'money-bill', link: 'seller-payouts.html', permission: null },
-        { name: 'Bank Details', icon: 'university', link: 'bank-details.html', permission: null },
         { name: 'Announcements', icon: 'bullhorn', link: 'announcements.html', permission: null },
         { name: 'Reports', icon: 'chart-line', link: 'reports.html', permission: null },
         { name: 'Activity Log', icon: 'history', link: 'activity-log.html', permission: null },
-        { name: 'Support Tickets', icon: 'ticket-alt', link: 'tickets.html', permission: null },
-        { name: 'Seller Tickets', icon: 'ticket', link: 'seller-tickets.html', permission: null },
-        { name: 'Chat', icon: 'comments', link: 'chat.html', permission: null },
+        { name: 'Support Tickets', icon: 'ticket-alt', link: 'support-tickets.html', permission: null },
         { name: 'Notifications', icon: 'bell', link: 'notifications.html', permission: null },
         { name: 'Profile', icon: 'user', link: 'profile.html', permission: null },
         { name: 'Account Settings', icon: 'cog', link: 'account-settings.html', permission: null }
@@ -126,7 +119,7 @@ export function getNavigationMenu(role) {
         { name: 'Sellers', icon: 'users', link: 'sellers.html', permission: null },
         { name: 'Announcements', icon: 'bullhorn', link: 'announcements.html', permission: null },
         { name: 'Reports', icon: 'chart-line', link: 'reports.html', permission: null },
-        { name: 'Support Tickets', icon: 'ticket-alt', link: 'tickets.html', permission: null },
+        { name: 'Support Tickets', icon: 'ticket-alt', link: 'support-tickets.html', permission: null },
         { name: 'Notifications', icon: 'bell', link: 'notifications.html', permission: null },
         { name: 'Profile', icon: 'user', link: 'profile.html', permission: null },
         { name: 'Account Settings', icon: 'cog', link: 'account-settings.html', permission: null }
@@ -135,11 +128,11 @@ export function getNavigationMenu(role) {
     // SELLER MENUS - Own data only
     const sellerMenus = [
         { name: 'Products', icon: 'box', link: 'products.html', permission: null },
-        { name: 'My Orders', icon: 'shopping-cart', link: 'seller-orders.html', permission: null },
+        { name: 'Orders', icon: 'shopping-cart', link: 'seller-orders.html', permission: null },
         { name: 'Create Order', icon: 'plus-circle', link: 'create-order.html', permission: null },
         { name: 'My Payouts', icon: 'money-bill-wave', link: 'seller-payouts.html', permission: null },
         { name: 'Bank Details', icon: 'university', link: 'bank-details.html', permission: null },
-        { name: 'Support', icon: 'headset', link: 'seller-tickets.html', permission: null },
+        { name: 'Support', icon: 'headset', link: 'support-tickets.html', permission: null },
         { name: 'Chat', icon: 'comments', link: 'chat.html', permission: null },
         { name: 'Announcements', icon: 'bullhorn', link: 'announcements.html', permission: null },
         { name: 'Notifications', icon: 'bell', link: 'notifications.html', permission: null },
@@ -183,7 +176,6 @@ export function canAccessPage(userRole, pageName) {
         'orders.html': [ROLES.ADMIN, ROLES.MANAGER],
         'sellers.html': [ROLES.ADMIN, ROLES.MANAGER],
         'reports.html': [ROLES.ADMIN, ROLES.MANAGER],
-        'tickets.html': [ROLES.ADMIN, ROLES.MANAGER],
         'announcements.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         
         // Seller pages (accessible by all)
@@ -192,7 +184,6 @@ export function canAccessPage(userRole, pageName) {
         'seller-payouts.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         'create-order.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         'bank-details.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
-        'seller-tickets.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         'chat.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         
         // Everyone pages
@@ -200,6 +191,7 @@ export function canAccessPage(userRole, pageName) {
         'profile.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         'account-settings.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         'notifications.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
+        'support-tickets.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER],
         'unauthorized.html': [ROLES.ADMIN, ROLES.MANAGER, ROLES.SELLER]
     };
     
