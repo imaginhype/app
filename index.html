@@ -1,32 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>
-        (function() {
-            try {
-                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                if (isCollapsed) {
-                    document.documentElement.classList.add('sidebar-collapsed');
-                }
-            } catch(e) {}
-        })();
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Marketplace Pro - Login & Signup</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
     <style>
-        .auth-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1.5rem; transition: all 0.3s ease; }
-        .auth-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15); }
-        .auth-input { width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-primary); transition: all 0.2s; }
-        .auth-input:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
-        .auth-btn { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; transition: all 0.2s; width: 100%; border: none; cursor: pointer; }
-        .auth-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
-        .auth-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-        .error-message { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; }
-        .nav-bar { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); backdrop-filter: blur(10px); }
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .auth-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
+        }
+        .auth-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        .auth-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        .auth-btn {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+        }
+        .auth-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        .auth-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+        }
+        .nav-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
         
         .loading-overlay {
             position: fixed !important;
@@ -49,6 +89,10 @@
         .loading-spinner-large { width: 50px; height: 50px; border: 4px solid rgba(139, 92, 246, 0.3); border-radius: 50%; border-top-color: #8b5cf6; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-text { color: white; font-size: 1rem; font-weight: 500; }
+        
+        /* Prevent any flash of unstyled content */
+        body { opacity: 1; transition: opacity 0.2s; }
+        body.loading { opacity: 0; }
     </style>
 </head>
 <body>
@@ -159,7 +203,6 @@
             return map[code] || 'Something went wrong. Please try again.';
         }
 
-        // FIXED LOGIN FUNCTION - Force complete page replacement
         window.handleLogin = async () => {
             const email = loginEmail.value.trim();
             const password = loginPassword.value;
@@ -209,10 +252,11 @@
                 if (role === 'admin') redirectUrl = '/admin-dashboard.html';
                 if (role === 'manager') redirectUrl = '/manager-dashboard.html';
                 
-                // FORCE COMPLETE PAGE REPLACEMENT - This removes the login page entirely
-                document.open();
-                document.write('<!DOCTYPE html><html><head><title>Redirecting...</title><meta http-equiv="refresh" content="0;url=' + redirectUrl + '"></head><body style="background:black;display:flex;align-items:center;justify-content:center;height:100vh;color:white;font-family:sans-serif;">Redirecting to dashboard...</body></html>');
-                document.close();
+                // Add cache-busting timestamp
+                redirectUrl += '?t=' + Date.now();
+                
+                // Force full page reload with cache-busting
+                window.location.href = redirectUrl;
                 
             } catch (error) {
                 loginError.textContent = friendlyAuthError(error.code);
@@ -259,9 +303,7 @@
                 showLoading(false);
                 
                 if (role === 'admin') {
-                    document.open();
-                    document.write('<!DOCTYPE html><html><head><title>Redirecting...</title><meta http-equiv="refresh" content="0;url=/admin-dashboard.html"></head><body>Redirecting...</body></html>');
-                    document.close();
+                    window.location.href = '/admin-dashboard.html?t=' + Date.now();
                 } else {
                     okDiv.textContent = 'Account created! A verification email has been sent. Please verify your email, then complete your seller verification form to start selling.';
                     okDiv.classList.remove('hidden');
