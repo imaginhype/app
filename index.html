@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <script>
-        // CRITICAL: This runs BEFORE page paints to prevent sidebar flicker
         (function() {
             try {
                 const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -28,11 +27,6 @@
         .auth-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
-        }
-        .auth-card.loading {
-            opacity: 0.5;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
         }
         .auth-input {
             width: 100%;
@@ -67,32 +61,10 @@
             opacity: 0.7;
             cursor: not-allowed;
         }
-        .auth-btn-secondary {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .auth-btn-secondary:hover {
-            background: var(--hover-bg);
-            color: var(--text-primary);
-        }
         .error-message {
             background: rgba(239, 68, 68, 0.1);
             color: #ef4444;
             border: 1px solid rgba(239, 68, 68, 0.2);
-            padding: 0.75rem;
-            border-radius: 0.75rem;
-            font-size: 0.875rem;
-        }
-        .success-message {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.2);
             padding: 0.75rem;
             border-radius: 0.75rem;
             font-size: 0.875rem;
@@ -103,14 +75,14 @@
             backdrop-filter: blur(10px);
         }
         
-        /* FIXED: Loading overlay covers EVERYTHING including header */
+        /* Loading overlay */
         .loading-overlay {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            background: rgba(0, 0, 0, 0.85) !important;
+            background: rgba(0, 0, 0, 0.9) !important;
             z-index: 999999 !important;
             display: flex;
             align-items: center;
@@ -119,7 +91,7 @@
             gap: 1rem;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s ease;
+            transition: opacity 0.2s ease;
         }
         .loading-overlay.active {
             opacity: 1 !important;
@@ -207,28 +179,13 @@
                 <div id="signup-error" class="error-message hidden mb-4"></div>
                 <div id="signup-success" class="success-message hidden mb-4"></div>
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Full Name</label>
-                        <input type="text" id="signup-name" class="auth-input" placeholder="John Doe" autocomplete="off">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Email Address</label>
-                        <input type="email" id="signup-email" class="auth-input" placeholder="seller@example.com" autocomplete="off">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Password</label>
-                        <input type="password" id="signup-password" class="auth-input" placeholder="•••••••• (min 6 characters)" autocomplete="off">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Confirm Password</label>
-                        <input type="password" id="signup-confirm" class="auth-input" placeholder="••••••••" autocomplete="off">
-                    </div>
+                    <div><label class="block text-sm font-medium mb-2">Full Name</label><input type="text" id="signup-name" class="auth-input" placeholder="John Doe" autocomplete="off"></div>
+                    <div><label class="block text-sm font-medium mb-2">Email Address</label><input type="email" id="signup-email" class="auth-input" placeholder="seller@example.com" autocomplete="off"></div>
+                    <div><label class="block text-sm font-medium mb-2">Password</label><input type="password" id="signup-password" class="auth-input" placeholder="•••••••• (min 6 characters)" autocomplete="off"></div>
+                    <div><label class="block text-sm font-medium mb-2">Confirm Password</label><input type="password" id="signup-confirm" class="auth-input" placeholder="••••••••" autocomplete="off"></div>
                     <button onclick="handleSignup()" id="signup-btn" class="auth-btn">Sign Up</button>
                 </div>
-                <p class="text-center mt-4 text-sm">
-                    Already have an account?
-                    <button onclick="showLogin()" class="text-purple-500 hover:underline">Login</button>
-                </p>
+                <p class="text-center mt-4 text-sm">Already have an account? <button onclick="showLogin()" class="text-purple-500 hover:underline">Login</button></p>
             </div>
 
             <!-- Forgot Password Form -->
@@ -237,20 +194,15 @@
                 <div id="forgot-error" class="error-message hidden mb-4"></div>
                 <div id="forgot-success" class="success-message hidden mb-4"></div>
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Email Address</label>
-                        <input type="email" id="forgot-email" class="auth-input" placeholder="your@email.com" autocomplete="off">
-                    </div>
+                    <div><label class="block text-sm font-medium mb-2">Email Address</label><input type="email" id="forgot-email" class="auth-input" placeholder="your@email.com" autocomplete="off"></div>
                     <button onclick="handleForgotPassword()" id="forgot-btn" class="auth-btn">Send Reset Link</button>
                 </div>
-                <p class="text-center mt-4 text-sm">
-                    <button onclick="showLogin()" class="text-purple-500 hover:underline">Back to Login</button>
-                </p>
+                <p class="text-center mt-4 text-sm"><button onclick="showLogin()" class="text-purple-500 hover:underline">Back to Login</button></p>
             </div>
         </div>
     </div>
 
-    <!-- FULL PAGE LOADING OVERLAY - Covers EVERYTHING including header -->
+    <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay">
         <div class="loading-spinner-large"></div>
         <div class="loading-text">Logging in...</div>
@@ -262,7 +214,6 @@
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { firebaseConfig } from './firebase-config.js';
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -270,7 +221,6 @@
         window.auth = auth;
         window.db = db;
 
-        // DOM Elements
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginForm = document.getElementById('login-form');
         const loginEmail = document.getElementById('login-email');
@@ -278,35 +228,28 @@
         const loginError = document.getElementById('login-error');
         const loginBtn = document.getElementById('login-btn');
 
-        // Clear login form fields on page load
         function clearLoginForm() {
             if (loginEmail) loginEmail.value = '';
             if (loginPassword) loginPassword.value = '';
         }
 
-        // Show/hide loading overlay - covers EVERYTHING
         function showLoading(show, message = 'Logging in...') {
             const loadingText = document.querySelector('#loading-overlay .loading-text');
             if (show) {
                 if (loadingText) loadingText.textContent = message;
                 loadingOverlay.classList.add('active');
-                if (loginForm) loginForm.classList.add('loading');
-                // Disable login button
                 if (loginBtn) loginBtn.disabled = true;
             } else {
                 loadingOverlay.classList.remove('active');
-                if (loginForm) loginForm.classList.remove('loading');
                 if (loginBtn) loginBtn.disabled = false;
             }
         }
 
-        // Theme functions
         window.toggleTheme = function() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', nextTheme);
             localStorage.setItem('theme', nextTheme);
-            
             const moonIcons = document.querySelectorAll('.fa-moon');
             const sunIcons = document.querySelectorAll('.fa-sun');
             if (nextTheme === 'dark') {
@@ -318,7 +261,6 @@
             }
         };
 
-        // Initialize theme
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
         if (savedTheme === 'dark') {
@@ -331,7 +273,6 @@
 
         clearLoginForm();
 
-        // Check if first user exists
         async function isFirstUser() {
             const snapshot = await getDocs(collection(db, 'users'));
             return snapshot.empty;
@@ -370,7 +311,7 @@
             return map[code] || 'Something went wrong. Please try again.';
         }
 
-        // OPTIMIZED LOGIN FUNCTION - NO FLASH, COVERS HEADER
+        // LOGIN FUNCTION WITH OPTION 2 - FULL PAGE RELOAD
         window.handleLogin = async () => {
             const email = loginEmail.value.trim();
             const password = loginPassword.value;
@@ -383,18 +324,13 @@
                 return;
             }
             
-            // Show loading overlay - covers EVERYTHING including header
             showLoading(true, 'Logging in...');
-            
-            // Record start time for minimum loading experience
-            const startTime = Date.now();
-            const minLoadTime = 800;
+            const originalBtnText = loginBtn.innerHTML;
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Logging in...';
 
             try {
-                // Sign in
                 const cred = await signInWithEmailAndPassword(auth, email, password);
-                
-                // Fetch user document
                 const userDoc = await getDoc(doc(db, 'users', cred.user.uid));
                 const userData = userDoc.data();
                 
@@ -402,51 +338,49 @@
                     throw new Error('User data not found');
                 }
                 
-                // Check account status
                 if (userData.status === 'suspended') {
                     loginError.textContent = 'Your account has been suspended. Please contact support.';
                     loginError.classList.remove('hidden');
                     await signOut(auth);
                     showLoading(false);
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalBtnText;
                     return;
                 }
                 
-                // Check email verification for non-admin users
                 if (!cred.user.emailVerified && userData.role !== 'admin') {
                     loginError.textContent = 'Please verify your email before logging in. Check your inbox.';
                     loginError.classList.remove('hidden');
                     await signOut(auth);
                     showLoading(false);
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalBtnText;
                     return;
                 }
                 
-                // Update last login (fire and forget)
                 updateDoc(doc(db, 'users', cred.user.uid), {
                     lastLoginAt: new Date().toISOString()
                 }).catch(console.error);
                 
-                // Ensure minimum loading time
-                const elapsed = Date.now() - startTime;
-                if (elapsed < minLoadTime) {
-                    await new Promise(resolve => setTimeout(resolve, minLoadTime - elapsed));
-                }
-                
-                // Get role and redirect
                 const role = userData.role;
+                const timestamp = Date.now();
+                let redirectUrl = '/seller-dashboard.html?t=' + timestamp;
                 
                 if (role === 'admin') {
-                    window.location.replace('/admin-dashboard.html');
+                    redirectUrl = '/admin-dashboard.html?t=' + timestamp;
                 } else if (role === 'manager') {
-                    window.location.replace('/manager-dashboard.html');
-                } else {
-                    window.location.replace('/seller-dashboard.html');
+                    redirectUrl = '/manager-dashboard.html?t=' + timestamp;
                 }
                 
+                // OPTION 2: Full page reload with timestamp to bust cache
+                window.location.href = redirectUrl;
+                
             } catch (error) {
-                console.error('Login error:', error);
                 loginError.textContent = friendlyAuthError(error.code);
                 loginError.classList.remove('hidden');
                 showLoading(false);
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalBtnText;
             }
         };
 
@@ -509,7 +443,7 @@
                 showLoading(false);
                 
                 if (role === 'admin') {
-                    window.location.replace('/admin-dashboard.html');
+                    window.location.href = '/admin-dashboard.html?t=' + Date.now();
                 } else {
                     okDiv.textContent = 'Account created! A verification email has been sent. Please verify your email, then complete your seller verification form to start selling.';
                     okDiv.classList.remove('hidden');
