@@ -139,7 +139,7 @@ body {
 }
 
 /* ============================================
-   SIDEBAR SYSTEM - NO FLICKER (HTML CLASS BASED)
+   SIDEBAR SYSTEM
    ============================================ */
 
 .app-wrapper {
@@ -234,7 +234,7 @@ html.sidebar-collapsed .sidebar-logo i {
 }
 
 /* ============================================
-   FIX #30: MODERN THIN PURPLE SCROLLBAR
+   MODERN THIN PURPLE SCROLLBAR
    ============================================ */
 
 .desktop-sidebar::-webkit-scrollbar {
@@ -270,7 +270,7 @@ html.sidebar-collapsed .sidebar-logo i {
 }
 
 /* ============================================
-   FIX #19,23,24: TABLE HEADER DARK MODE
+   TABLE HEADER DARK MODE FIX
    ============================================ */
 
 [data-theme="dark"] thead tr,
@@ -284,7 +284,7 @@ html.sidebar-collapsed .sidebar-logo i {
 }
 
 /* ============================================
-   FIX #25: DATE FILTER BUTTONS DARK MODE
+   DATE FILTER BUTTONS DARK MODE
    ============================================ */
 
 [data-theme="dark"] .date-preset {
@@ -299,7 +299,7 @@ html.sidebar-collapsed .sidebar-logo i {
 }
 
 /* ============================================
-   FIX #26: MODAL BACKGROUND DARK MODE
+   MODAL BACKGROUND DARK MODE
    ============================================ */
 
 [data-theme="dark"] .modal-content,
@@ -310,19 +310,71 @@ html.sidebar-collapsed .sidebar-logo i {
 }
 
 /* ============================================
-   FIX #21,22: PRIORITY AND STATUS BADGES
+   PRIORITY AND STATUS BADGES
    ============================================ */
 
-.priority-urgent { background: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
-.priority-high { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
-.priority-normal { background: #3b82f6; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
-.priority-low { background: #6b7280; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
+.priority-urgent {
+    background: #ef4444;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
 
-.status-active { background: #10b98120; color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
-.status-expired { background: #ef444420; color: #ef4444; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; }
+.priority-high {
+    background: #f59e0b;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.priority-normal {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.priority-low {
+    background: #6b7280;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-active {
+    background: #10b98120;
+    color: #10b981;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-expired {
+    background: #ef444420;
+    color: #ef4444;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
 
 /* ============================================
-   FIX #31: UNAUTHORIZED PAGE BUTTONS
+   UNAUTHORIZED PAGE BUTTONS
    ============================================ */
 
 .unauthorized-btn {
@@ -475,11 +527,6 @@ html.sidebar-collapsed .sidebar-logo i {
     color: var(--modal-text) !important;
 }
 
-.modal-content p, .modal-container p,
-#category-modal p, #edit-category-modal p {
-    color: var(--text-secondary) !important;
-}
-
 /* ============================================
    CATEGORY MODAL - THEME AWARE
    ============================================ */
@@ -551,14 +598,8 @@ tr:hover td {
     background-color: var(--bg-table-row-hover) !important;
 }
 
-.table-container .text-gray-500,
-.table-container .text-gray-600,
-.table-container .opacity-70 {
-    color: var(--text-secondary) !important;
-}
-
 /* ============================================
-   NOTIFICATIONS PAGE FIX
+   NOTIFICATIONS PAGE
    ============================================ */
 
 .notification-item {
@@ -572,39 +613,8 @@ tr:hover td {
     background: linear-gradient(90deg, rgba(139, 92, 246, 0.05) 0%, transparent 100%) !important;
 }
 
-.notification-item .icon-box,
-.notification-item .w-10,
-.notification-item .h-10 {
-    background-color: var(--notif-icon-bg) !important;
-    color: var(--notif-icon-color) !important;
-}
-
-.notification-item h4,
-.notification-item .font-semibold {
-    color: var(--text-primary) !important;
-}
-
-.notification-item p,
-.notification-item .text-sm {
-    color: var(--text-secondary) !important;
-}
-
-@media (max-width: 640px) {
-    .notification-item .action-icon i,
-    .notification-item .fa-lg,
-    .notification-item .text-lg {
-        font-size: 14px !important;
-    }
-    .notification-item .gap-2 {
-        gap: 6px !important;
-    }
-    .notification-item .p-4 {
-        padding: 12px !important;
-    }
-}
-
 /* ============================================
-   QUILL EDITOR FIX
+   QUILL EDITOR
    ============================================ */
 
 .ql-toolbar {
@@ -623,42 +633,6 @@ tr:hover td {
 .ql-editor {
     color: var(--ql-editor-text) !important;
     min-height: 160px;
-}
-
-.ql-toolbar button {
-    color: var(--ql-toolbar-icon) !important;
-}
-
-.ql-toolbar button:hover {
-    color: var(--accent-color) !important;
-}
-
-.ql-toolbar .ql-picker-label {
-    color: var(--ql-toolbar-icon) !important;
-}
-
-.ql-toolbar .ql-stroke {
-    stroke: var(--ql-toolbar-icon) !important;
-}
-
-.ql-toolbar .ql-fill {
-    fill: var(--ql-toolbar-icon) !important;
-}
-
-.ql-toolbar button:hover .ql-stroke {
-    stroke: var(--accent-color) !important;
-}
-
-.ql-toolbar button:hover .ql-fill {
-    fill: var(--accent-color) !important;
-}
-
-.ql-toolbar .ql-active .ql-stroke {
-    stroke: var(--accent-color) !important;
-}
-
-.ql-toolbar .ql-active .ql-fill {
-    fill: var(--accent-color) !important;
 }
 
 /* ============================================
@@ -723,19 +697,65 @@ input:focus, select:focus, textarea:focus,
     font-weight: 500;
 }
 
-.status-pending { background: #f59e0b20; color: #f59e0b; }
-.status-approved { background: #10b98120; color: #10b981; }
-.status-completed { background: #3b82f620; color: #3b82f6; }
-.status-paid { background: #8b5cf620; color: #8b5cf6; }
-.status-active { background: #10b98120; color: #10b981; }
-.status-suspended { background: #ef444420; color: #ef4444; }
+.status-pending {
+    background: #f59e0b20;
+    color: #f59e0b;
+}
 
-[data-theme="dark"] .status-pending { background: #f59e0b30; color: #fbbf24; }
-[data-theme="dark"] .status-approved { background: #10b98130; color: #34d399; }
-[data-theme="dark"] .status-completed { background: #3b82f630; color: #60a5fa; }
-[data-theme="dark"] .status-paid { background: #8b5cf630; color: #a78bfa; }
-[data-theme="dark"] .status-active { background: #10b98130; color: #34d399; }
-[data-theme="dark"] .status-suspended { background: #ef444430; color: #f87171; }
+.status-approved {
+    background: #10b98120;
+    color: #10b981;
+}
+
+.status-completed {
+    background: #3b82f620;
+    color: #3b82f6;
+}
+
+.status-paid {
+    background: #8b5cf620;
+    color: #8b5cf6;
+}
+
+.status-active {
+    background: #10b98120;
+    color: #10b981;
+}
+
+.status-suspended {
+    background: #ef444420;
+    color: #ef4444;
+}
+
+[data-theme="dark"] .status-pending {
+    background: #f59e0b30;
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .status-approved {
+    background: #10b98130;
+    color: #34d399;
+}
+
+[data-theme="dark"] .status-completed {
+    background: #3b82f630;
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .status-paid {
+    background: #8b5cf630;
+    color: #a78bfa;
+}
+
+[data-theme="dark"] .status-active {
+    background: #10b98130;
+    color: #34d399;
+}
+
+[data-theme="dark"] .status-suspended {
+    background: #ef444430;
+    color: #f87171;
+}
 
 /* ============================================
    PAGINATION BUTTONS
@@ -782,8 +802,14 @@ input:focus, select:focus, textarea:focus,
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 /* ============================================
@@ -791,8 +817,14 @@ input:focus, select:focus, textarea:focus,
    ============================================ */
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .fade-in {
