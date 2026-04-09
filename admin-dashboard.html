@@ -41,18 +41,6 @@
     </style>
 </head>
 <body>
-    <!-- CLEANUP SCRIPT: Ensures no lingering login content -->
-    <script>
-        (function() {
-            if (document.body && document.body.innerHTML) {
-                if (document.body.innerHTML.includes('login-form') || 
-                    document.body.innerHTML.includes('Welcome Back') ||
-                    document.body.innerHTML.includes('Sign Up')) {
-                    window.location.reload();
-                }
-            }
-        })();
-    </script>
 
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
 
@@ -190,7 +178,7 @@
         async function loadRecentOrders() {
             const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(10)));
             const tbody = document.getElementById('recent-orders-table');
-            if (ordersSnap.empty) { tbody.innerHTML = '</table><td colspan="6" class="text-center py-4">No orders yet</td>\u003c/tr>'; return; }
+            if (ordersSnap.empty) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No orders yet</tr>'; return; }
             tbody.innerHTML = ordersSnap.docs.map(d => { const o = d.data(); return `<tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td><td class="px-4 py-2">${escapeHtml(o.sellerName || 'N/A')}</td><td class="px-4 py-2">AED ${o.totalAmount || 0}</td><td class="px-4 py-2"><span class="status-badge status-${o.orderStatus || 'pending'}">${o.orderStatus || 'pending'}</span></td><td class="px-4 py-2"><a href="orders.html" class="text-purple-500 hover:underline">View</a></td></tr>`; }).join('');
         }
 
