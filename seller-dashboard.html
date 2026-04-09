@@ -19,78 +19,32 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            transition: transform 0.2s;
-        }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; transition: transform 0.2s; }
         .stat-card:hover { transform: translateY(-2px); }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
+        .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
         .status-pending { background: #f59e0b20; color: #f59e0b; }
         .status-approved { background: #10b98120; color: #10b981; }
         .status-completed { background: #3b82f620; color: #3b82f6; }
         .status-paid { background: #8b5cf620; color: #8b5cf6; }
-        .section-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; }
         .chart-container { height: 250px; position: relative; width: 100%; }
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 12px; border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .back-btn:hover { background: var(--hover-bg); transform: translateX(-2px); }
+        .pending-verification-card { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 1rem; padding: 1.5rem; text-align: center; margin-bottom: 2rem; }
         
-        .desktop-sidebar {
-            width: 16rem;
-            transition: width 0.3s ease;
-            overflow-x: hidden;
-            position: relative;
-            height: 100vh;
-            flex-shrink: 0;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-        }
+        .desktop-sidebar { width: 16rem; transition: width 0.3s ease; overflow-x: hidden; position: relative; height: 100vh; flex-shrink: 0; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); }
         .sidebar-logo { display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; transition: none; transform: none; }
         .main-content { flex: 1; min-width: 0; transition: none; width: auto; }
         .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
         @media (max-width: 767px) { .desktop-sidebar { display: none; } .app-wrapper { display: block; } .main-content { margin-left: 0 !important; width: 100% !important; } }
-        
-        .pending-verification-card {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
     </style>
 </head>
 <body>
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
-
-    <aside id="mobile-sidebar" class="sidebar fixed top-0 left-0 h-full w-64 z-50 overflow-y-auto">
-        <div class="p-4 border-b flex justify-between items-center"><div class="flex items-center space-x-2"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><button onclick="closeMobileMenu()" class="text-2xl">&times;</button></div>
-        <div class="p-4"><div class="text-xs opacity-60 mb-4">Seller Panel</div><nav id="mobile-nav"></nav></div>
-        <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-    </aside>
-
+    <!-- Sidebar loads automatically via load-sidebar.js -->
+    
     <div class="app-wrapper">
-        <aside class="desktop-sidebar sidebar w-64 overflow-y-auto hidden md:block">
-            <div class="p-4 border-b"><div class="flex items-center space-x-2 sidebar-logo"><i class="fas fa-store text-2xl text-purple-500"></i><span class="text-xl font-bold">Marketplace Pro</span></div><p class="text-xs opacity-60 mt-2">Seller Panel</p></div>
-            <nav id="desktop-nav"></nav>
-            <div class="absolute bottom-0 w-full p-4 border-t"><button onclick="logout()" class="w-full text-left nav-item"><i class="fas fa-sign-out-alt w-5"></i><span>Logout</span></button></div>
-        </aside>
-
         <main class="main-content">
+            <!-- Top Bar -->
             <div class="top-bar sticky top-0 z-10 p-4 flex justify-between items-center" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleMobileMenu()" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
@@ -142,7 +96,7 @@
                         <div class="card p-5 rounded-xl"><h3 class="section-title"><i class="fas fa-clock text-blue-500"></i> Payout Status</h3><div id="payout-status-card"><p class="text-gray-500">Loading...</p></div></div>
                     </div>
 
-                    <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Product</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Commission</th><th class="px-4 py-2 text-left">Status</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></tr></tbody>}</div></div>
+                    <div class="card p-5 rounded-xl mb-8"><h3 class="section-title"><i class="fas fa-shopping-cart text-blue-500"></i> Recent Orders</h3><div class="overflow-x-auto"><table class="w-full"><thead class="border-b"><tr><th class="px-4 py-2 text-left">Order ID</th><th class="px-4 py-2 text-left">Customer</th><th class="px-4 py-2 text-left">Product</th><th class="px-4 py-2 text-left">Amount</th><th class="px-4 py-2 text-left">Commission</th><th class="px-4 py-2 text-left">Status</th></tr></thead><tbody id="recent-orders-table"><tr><td colspan="6" class="text-center py-4">Loading orders...</td></table></tbody>}</div></div>
 
                     <div class="flex flex-wrap gap-4 justify-center"><a href="create-order.html" class="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"><i class="fas fa-plus mr-2"></i>Create New Order</a><a href="seller-orders.html" class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"><i class="fas fa-list mr-2"></i>View All Orders</a><a href="seller-payouts.html" class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"><i class="fas fa-money-bill-wave mr-2"></i>Request Payout</a></div>
                 </div>
@@ -150,8 +104,8 @@
         </main>
     </div>
 
+    <script type="module" src="load-sidebar.js"></script>
     <script type="module" src="sidebar.js"></script>
-    <script src="app.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -163,8 +117,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUserId = null;
-        let currentUserData = null;
+        let currentUserId = null, currentUserData = null;
         let earningsChartInstance = null;
 
         window.logout = async () => { await signOut(auth); window.location.href = '/'; };
@@ -174,29 +127,20 @@
             currentUserId = user.uid;
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             currentUserData = userDoc.data();
-            
-            if (currentUserData?.role !== ROLES.SELLER) {
-                window.location.href = '/unauthorized.html';
-                return;
-            }
-            
+            if (currentUserData?.role !== ROLES.SELLER) { window.location.href = '/unauthorized.html'; return; }
             document.getElementById('seller-name').textContent = currentUserData.name || 'Seller';
             document.getElementById('user-name').textContent = currentUserData.name || 'Seller';
-            
             await checkVerificationStatus();
         });
 
         async function checkVerificationStatus() {
             const status = currentUserData.verificationStatus;
-            
             if (status === 'pending') {
                 document.getElementById('pending-verification-warning').classList.remove('hidden');
                 document.getElementById('active-dashboard').classList.add('hidden');
             } else if (status === 'rejected') {
                 document.getElementById('rejected-verification-warning').classList.remove('hidden');
-                if (currentUserData.rejectionReason) {
-                    document.getElementById('rejection-reason').textContent = currentUserData.rejectionReason;
-                }
+                if (currentUserData.rejectionReason) { document.getElementById('rejection-reason').textContent = currentUserData.rejectionReason; }
                 document.getElementById('active-dashboard').classList.add('hidden');
             } else if (status === 'approved') {
                 document.getElementById('pending-verification-warning').classList.add('hidden');
@@ -206,24 +150,12 @@
             }
         }
 
-        async function loadDashboardData() {
-            await loadStats();
-            await loadRecentOrders();
-            await loadCharts();
-            await loadPayoutStatus();
-        }
+        async function loadDashboardData() { await loadStats(); await loadRecentOrders(); await loadCharts(); await loadPayoutStatus(); }
 
         async function loadStats() {
             const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentUserId)));
-            let totalEarnings = 0;
-            let pendingPayout = 0;
-            
-            ordersSnap.docs.forEach(d => {
-                const o = d.data();
-                totalEarnings += o.sellerCommission || 0;
-                if (o.sellerPaid !== true) pendingPayout += o.sellerCommission || 0;
-            });
-            
+            let totalEarnings = 0, pendingPayout = 0;
+            ordersSnap.docs.forEach(d => { const o = d.data(); totalEarnings += o.sellerCommission || 0; if (o.sellerPaid !== true) pendingPayout += o.sellerCommission || 0; });
             document.getElementById('stat-total-orders').textContent = ordersSnap.size;
             document.getElementById('stat-total-earnings').textContent = `AED ${totalEarnings.toLocaleString()}`;
             document.getElementById('stat-pending-payout').textContent = `AED ${pendingPayout.toLocaleString()}`;
@@ -233,49 +165,28 @@
         async function loadCharts() {
             const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentUserId)));
             const monthly = { Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0, Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0 };
-            
-            ordersSnap.docs.forEach(d => {
-                const o = d.data();
-                if (o.createdAt) {
-                    const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' });
-                    monthly[m] = (monthly[m] || 0) + (o.sellerCommission || 0);
-                }
-            });
-            
+            ordersSnap.docs.forEach(d => { const o = d.data(); if (o.createdAt) { const m = new Date(o.createdAt).toLocaleString('default', { month: 'short' }); monthly[m] = (monthly[m] || 0) + (o.sellerCommission || 0); } });
             const ctx = document.getElementById('earningsChart');
             if (earningsChartInstance) earningsChartInstance.destroy();
-            earningsChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: Object.keys(monthly), datasets: [{ label: 'Earnings (AED)', data: Object.values(monthly), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.05)', borderWidth: 2, pointBackgroundColor: '#8b5cf6', pointBorderColor: '#ffffff', pointRadius: 4, tension: 0.3, fill: true }] },
-                options: { responsive: true, maintainAspectRatio: true }
-            });
+            earningsChartInstance = new Chart(ctx, { type: 'line', data: { labels: Object.keys(monthly), datasets: [{ label: 'Earnings (AED)', data: Object.values(monthly), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.05)', borderWidth: 2, pointBackgroundColor: '#8b5cf6', pointBorderColor: '#ffffff', pointRadius: 4, tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: true } });
         }
 
         async function loadRecentOrders() {
             const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentUserId), orderBy('createdAt', 'desc'), limit(10)));
             const tbody = document.getElementById('recent-orders-table');
             if (ordersSnap.empty) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No orders yet. Create your first order!<br><a href="create-order.html" class="text-purple-500 hover:underline mt-2 inline-block">Create Order →</a></td></tr>'; return; }
-            tbody.innerHTML = ordersSnap.docs.map(d => {
-                const o = d.data();
-                const statusClass = o.orderStatus === 'pending' ? 'status-pending' : (o.orderStatus === 'approved' ? 'status-approved' : (o.orderStatus === 'completed' ? 'status-completed' : 'status-paid'));
-                return `<tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td><td class="px-4 py-2">${escapeHtml(o.productName || 'N/A')}</td><td class="px-4 py-2">AED ${o.totalAmount || 0}</td><td class="px-4 py-2">AED ${o.sellerCommission || 0}</td><td class="px-4 py-2"><span class="status-badge ${statusClass}">${o.orderStatus || 'pending'}</span></td></tr>`;
-            }).join('');
+            tbody.innerHTML = ordersSnap.docs.map(d => { const o = d.data(); const statusClass = o.orderStatus === 'pending' ? 'status-pending' : (o.orderStatus === 'approved' ? 'status-approved' : (o.orderStatus === 'completed' ? 'status-completed' : 'status-paid')); return `<tr class="border-b hover:bg-gray-50 dark:hover:bg-gray-800"><td class="px-4 py-2 text-sm">#${d.id.slice(0,8)}</td><td class="px-4 py-2">${escapeHtml(o.customerName || 'N/A')}</td><td class="px-4 py-2">${escapeHtml(o.productName || (o.items?.[0]?.productName || 'N/A'))}</td><td class="px-4 py-2">AED ${o.totalAmount || 0}</td><td class="px-4 py-2">AED ${o.sellerCommission || 0}</td><td class="px-4 py-2"><span class="status-badge ${statusClass}">${o.orderStatus || 'pending'}</span></td></tr>`; }).join('');
         }
 
         async function loadPayoutStatus() {
             const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentUserId)));
-            const now = new Date();
-            const day = now.getDate();
-            let cycleStatus = '';
-            let cycleDates = '';
-            
+            const now = new Date(); const day = now.getDate();
+            let cycleStatus = '', cycleDates = '';
             if (day <= 7) { cycleStatus = 'Open'; cycleDates = `Current cycle: ${now.getFullYear()}-${now.getMonth()+1}-1 to ${now.getFullYear()}-${now.getMonth()+1}-7`; }
             else if (day <= 21) { cycleStatus = 'Closed'; cycleDates = `Next cycle opens on 15th`; }
             else { cycleStatus = 'Open'; cycleDates = `Current cycle: ${now.getFullYear()}-${now.getMonth()+1}-15 to ${now.getFullYear()}-${now.getMonth()+1}-21`; }
-            
             let pendingBalance = 0;
             ordersSnap.docs.forEach(d => { if (d.data().sellerPaid !== true) pendingBalance += d.data().sellerCommission || 0; });
-            
             document.getElementById('payout-status-card').innerHTML = `<div class="space-y-3"><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Payout Cycle:</span><span class="font-semibold ${cycleStatus === 'Open' ? 'text-green-500' : 'text-red-500'}">${cycleStatus}</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Cycle Dates:</span><span class="text-sm">${cycleDates}</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Pending Balance:</span><span class="font-bold text-purple-600">AED ${pendingBalance.toLocaleString()}</span></div><div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"><span class="text-sm">Your Threshold:</span><span class="font-semibold">AED ${currentUserData.payoutThreshold || 100}</span></div>`;
         }
 
