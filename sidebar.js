@@ -8,16 +8,13 @@ import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10
 import { firebaseConfig } from './firebase-config.js';
 import { getNavigationMenu, ROLES } from './permissions.js';
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Global variables
 let currentUserRole = null;
 let currentUserData = null;
 
-// Initialize sidebar toggle after sidebar is loaded
 export function initSidebar() {
     const sidebar = document.querySelector('.desktop-sidebar');
     const toggleBtn = document.getElementById('sidebarToggleBtn');
@@ -31,54 +28,92 @@ export function initSidebar() {
             toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
         }
         
-        toggleBtn.addEventListener('click', function(e) {
+        // Remove existing listener to avoid duplicates
+        const newToggleBtn = toggleBtn.cloneNode(true);
+        toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+        
+        newToggleBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            sidebar.classList.toggle('collapsed');
-            const collapsed = sidebar.classList.contains('collapsed');
-            localStorage.setItem('sidebarCollapsed', collapsed);
-            toggleBtn.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+            e.stopPropagation();
+            const sidebarEl = document.querySelector('.desktop-sidebar');
+            if (sidebarEl) {
+                sidebarEl.classList.toggle('collapsed');
+                const collapsed = sidebarEl.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', collapsed);
+                this.innerHTML = collapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+            }
         });
     }
     
-    // Load role-based menu after user is authenticated
+    // Load role-based menu
     loadRoleBasedMenu();
 }
 
 async function loadRoleBasedMenu() {
+    // Wait for auth to be ready
     const user = await getCurrentUser();
-    if (!user) return;
-    
-    const userDoc = await getUserDoc(user.uid);
-    if (!userDoc) return;
-    
-    currentUserRole = userDoc.role;
-    currentUserData = userDoc;
-    
-    // Update panel labels based on role
-    const panelLabel = document.getElementById('mobile-panel-label');
-    const desktopLabel = document.getElementById('desktop-panel-label');
-    
-    if (currentUserRole === ROLES.ADMIN) {
-        if (panelLabel) panelLabel.textContent = 'Admin Panel';
-        if (desktopLabel) desktopLabel.textContent = 'Admin Panel';
-    } else if (currentUserRole === ROLES.MANAGER) {
-        if (panelLabel) panelLabel.textContent = 'Manager Panel';
-        if (desktopLabel) desktopLabel.textContent = 'Manager Panel';
-    } else {
-        if (panelLabel) panelLabel.textContent = 'Seller Panel';
-        if (desktopLabel) desktopLabel.textContent = 'Seller Panel';
+    if (!user) {
+        console.log('No user logged in, waiting for auth');
+        setTimeout(() => loadRoleBasedMenu(), 500);
+        return;
     }
     
-    updateMobileMenu();
-    updateDesktopMenu();
+    try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+            console.log('User document not found');
+            return;
+        }
+        
+        currentUserData = userDoc.data();
+        currentUserRole = currentUserData.role;
+        
+        console.log('User role detected:', currentUserRole);
+        
+        // Update panel labels
+        const mobileLabel = document.getElementById('mobile-panel-label');
+        const desktopLabel = document.getElementById('desktop-panel-label');
+        
+        let panelText = 'Panel';
+        if (currentUserRole === ROLES.ADMIN) panelText = 'Admin Panel';
+        else if (currentUserRole === ROLES.MANAGER) panelText = 'Manager Panel';
+        else if (currentUserRole === ROLES.SELLER) panelText = 'Seller Panel';
+        
+        if (mobileLabel) mobileLabel.textContent = panelText;
+        if (desktopLabel) desktopLabel.textContent = panelText;
+        
+        updateMobileMenu();
+        updateDesktopMenu();
+        
+    } catch (error) {
+        console.error('Error loading user role:', error);
+    }
+}
+
+function getCurrentUser() {
+    return new Promise((resolve) => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            unsubscribe();
+            resolve(user);
+        });
+    });
 }
 
 function updateMobileMenu() {
-    const mobileNav = document.querySelector('#mobile-nav');
-    if (!mobileNav) return;
+    const mobileNav = document.getElementById('mobile-nav');
+    if (!mobileNav) {
+        console.log('mobile-nav element not found, will retry');
+        setTimeout(() => updateMobileMenu(), 200);
+        return;
+    }
     
     const menus = getNavigationMenu(currentUserRole);
     const currentPage = window.location.pathname.split('/').pop();
+    
+    if (menus.length === 0) {
+        console.log('No menus found for role:', currentUserRole);
+        return;
+    }
     
     mobileNav.innerHTML = menus.map(menu => {
         const isActive = menu.link === currentPage;
@@ -90,11 +125,20 @@ function updateMobileMenu() {
 }
 
 function updateDesktopMenu() {
-    const desktopNav = document.querySelector('#desktop-nav');
-    if (!desktopNav) return;
+    const desktopNav = document.getElementById('desktop-nav');
+    if (!desktopNav) {
+        console.log('desktop-nav element not found, will retry');
+        setTimeout(() => updateDesktopMenu(), 200);
+        return;
+    }
     
     const menus = getNavigationMenu(currentUserRole);
     const currentPage = window.location.pathname.split('/').pop();
+    
+    if (menus.length === 0) {
+        console.log('No menus found for role:', currentUserRole);
+        return;
+    }
     
     desktopNav.innerHTML = menus.map(menu => {
         const isActive = menu.link === currentPage;
@@ -105,29 +149,6 @@ function updateDesktopMenu() {
     }).join('');
 }
 
-async function getCurrentUser() {
-    return new Promise((resolve) => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            unsubscribe();
-            resolve(user);
-        });
-    });
-}
-
-async function getUserDoc(uid) {
-    try {
-        const docRef = doc(db, 'users', uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return docSnap.data();
-        }
-        return null;
-    } catch (error) {
-        console.error('Error getting user doc:', error);
-        return null;
-    }
-}
-
 // ============================================
 // MOBILE MENU FUNCTIONS
 // ============================================
@@ -135,8 +156,12 @@ async function getUserDoc(uid) {
 window.toggleMobileMenu = function() {
     const sidebar = document.getElementById('mobile-sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.toggle('show');
-    if (overlay) overlay.classList.toggle('show');
+    if (sidebar) {
+        sidebar.classList.toggle('show');
+    }
+    if (overlay) {
+        overlay.classList.toggle('show');
+    }
     document.body.style.overflow = sidebar?.classList.contains('show') ? 'hidden' : '';
 };
 
@@ -148,10 +173,11 @@ window.closeMobileMenu = function() {
     document.body.style.overflow = '';
 };
 
+// Close mobile menu when clicking overlay
 document.addEventListener('click', function(event) {
     const overlay = document.getElementById('sidebar-overlay');
     if (overlay && overlay.classList.contains('show') && event.target === overlay) {
-        closeMobileMenu();
+        window.closeMobileMenu();
     }
 });
 
@@ -171,14 +197,17 @@ window.toggleUserMenu = function() {
     }
 };
 
+// Close user menu when clicking outside
 document.addEventListener('click', function(event) {
     const dropdown = document.getElementById('user-dropdown');
     const userButton = document.querySelector('[onclick="toggleUserMenu()"]');
-    if (dropdown && userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
-        dropdown.classList.add('hidden');
-        const chevron = document.getElementById('user-chevron');
-        if (chevron) {
-            chevron.style.transform = 'rotate(0deg)';
+    if (dropdown && !dropdown.classList.contains('hidden')) {
+        if (userButton && !userButton.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.classList.add('hidden');
+            const chevron = document.getElementById('user-chevron');
+            if (chevron) {
+                chevron.style.transform = 'rotate(0deg)';
+            }
         }
     }
 });
@@ -204,8 +233,18 @@ window.toggleTheme = function() {
     }
 };
 
+// Apply saved theme
 const savedTheme = localStorage.getItem('theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
+
+// ============================================
+// SIDEBAR COLLAPSED STATE
+// ============================================
+
+const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+if (isCollapsed) {
+    document.documentElement.classList.add('sidebar-collapsed');
+}
 
 // ============================================
 // LOGOUT FUNCTION
@@ -215,3 +254,20 @@ window.logout = async () => {
     await signOut(auth);
     window.location.href = '/';
 };
+
+// ============================================
+// AUTO INITIALIZE
+// ============================================
+
+// Initialize sidebar when DOM is ready and sidebar exists
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.querySelector('.desktop-sidebar')) {
+            initSidebar();
+        }
+    });
+} else {
+    if (document.querySelector('.desktop-sidebar')) {
+        initSidebar();
+    }
+}
