@@ -74,13 +74,13 @@
                 <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow">
                     <table class="w-full min-w-[800px]">
                         <thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold w-10"><input type="checkbox" id="select-all-requests" class="rounded"></th><th class="px-4 py-3 text-left text-sm font-semibold">Seller</th><th class="px-4 py-3 text-left text-sm font-semibold">Requested Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Available Balance</th><th class="px-4 py-3 text-left text-sm font-semibold">Request Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Bank Details</th><th class="px-4 py-3 text-left text-sm font-semibold">Action</th></tr></thead>
-                        <tbody id="payout-requests-table"><tr><td colspan="8" class="text-center py-8">Loading payout requests...</td</tr></tbody>
+                        <tbody id="payout-requests-table"><tr><td colspan="8" class="text-center py-8">Loading payout requests...</td></tbody>
                     </table>
                 </div>
                 <div class="flex justify-between items-center mt-4"><div class="text-sm text-gray-500" id="pagination-info">Showing 0 - 0 of 0 requests</div><div class="flex gap-2" id="pagination-container"></div></div>
 
                 <!-- Payout History -->
-                <div class="mt-8"><h3 class="text-lg font-semibold mb-4">Payout History</h3><div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow"><table class="w-full min-w-[800px]"><thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold">Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Seller</th><th class="px-4 py-3 text-left text-sm font-semibold">Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Processed By</th></tr></thead><tbody id="payout-history-table"><tr><td colspan="5" class="text-center py-8">Loading history...</td</tr></tbody>}</div></div>
+                <div class="mt-8"><h3 class="text-lg font-semibold mb-4">Payout History</h3><div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow"><table class="w-full min-w-[800px]"><thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold">Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Seller</th><th class="px-4 py-3 text-left text-sm font-semibold">Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Processed By</th></tr></thead><tbody id="payout-history-table"><td><td colspan="5" class="text-center py-8">Loading history...</td></tbody></table></div></div>
             </div>
         </main>
     </div>
@@ -93,7 +93,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // FIXED: Added orderBy to imports
+        import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { firebaseConfig } from './firebase-config.js';
         import { ROLES, canAccessPage } from './permissions.js';
 
@@ -137,7 +138,7 @@
         
         document.getElementById('confirm-payout-btn').addEventListener('click', async () => { if (!currentPayoutSellerId) return; const notes = document.getElementById('payout-notes').value; await updateDoc(doc(db, 'users', currentPayoutSellerId), { totalPaid: (allSellers.find(s => s.id === currentPayoutSellerId)?.totalPaid || 0) + currentPayoutAmount, updatedAt: new Date().toISOString() }); const ordersSnap = await getDocs(query(collection(db, 'orders'), where('sellerId', '==', currentPayoutSellerId), where('sellerPaid', '==', false))); for (const orderDoc of ordersSnap.docs) { await updateDoc(doc(db, 'orders', orderDoc.id), { sellerPaid: true, sellerPaidDate: new Date().toISOString(), payoutNotes: notes, updatedAt: new Date().toISOString() }); } await addDoc(collection(db, 'payouts'), { sellerId: currentPayoutSellerId, sellerName: allSellers.find(s => s.id === currentPayoutSellerId)?.name, amount: currentPayoutAmount, status: 'paid', processedDate: new Date().toISOString(), processedBy: auth.currentUser.uid, notes: notes }); closePayoutModal(); await loadPayoutData(); alert(`Payout of AED ${currentPayoutAmount} processed successfully!`); });
         
-        async function loadPayoutHistory() { const payoutsSnap = await getDocs(query(collection(db, 'payouts'), orderBy('processedDate', 'desc'), limit(50))); const tbody = document.getElementById('payout-history-table'); if (payoutsSnap.empty) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No payout history yet.</td></tr>'; return; } tbody.innerHTML = payoutsSnap.docs.map(d => { const p = d.data(); return `<tr class="border-b"><td class="px-4 py-3 text-sm">${formatDate(p.processedDate)}</td><td class="px-4 py-3">${escapeHtml(p.sellerName)}</td><td class="px-4 py-3 font-semibold text-green-600">AED ${p.amount}</td><td class="px-4 py-3"><span class="status-badge status-paid">Paid</span></td><td class="px-4 py-3 text-sm">Admin</td></tr>`; }).join(''); }
+        async function loadPayoutHistory() { const payoutsSnap = await getDocs(query(collection(db, 'payouts'), orderBy('processedDate', 'desc'), limit(50))); const tbody = document.getElementById('payout-history-table'); if (payoutsSnap.empty) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No payout history yet.您</td>'; return; } tbody.innerHTML = payoutsSnap.docs.map(d => { const p = d.data(); return `<tr class="border-b"><td class="px-4 py-3 text-sm">${formatDate(p.processedDate)}</td><td class="px-4 py-3">${escapeHtml(p.sellerName)}</td><td class="px-4 py-3 font-semibold text-green-600">AED ${p.amount}</td><td class="px-4 py-3"><span class="status-badge status-paid">Paid</span></td><td class="px-4 py-3 text-sm">Admin</td></tr>`; }).join(''); }
         
         function updateStats() { const totalDue = allSellers.reduce((sum, s) => sum + (s.pendingEarnings || 0), 0); const totalRequested = payoutRequests.reduce((sum, r) => sum + (r.pendingEarnings || 0), 0); document.getElementById('total-due').textContent = `AED ${totalDue.toLocaleString()}`; document.getElementById('total-requested').textContent = `AED ${totalRequested.toLocaleString()}`; }
         
