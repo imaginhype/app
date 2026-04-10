@@ -16,7 +16,7 @@
     <title>My Orders - Marketplace Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css");
+    <link rel="stylesheet" href="style.css">
     <style>
         .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
         .status-pending { background: #f59e0b20; color: #f59e0b; }
@@ -68,7 +68,7 @@
 
                 <div class="flex flex-wrap gap-2 mb-4"><button class="filter-chip active" data-status="all">All</button><button class="filter-chip" data-status="pending">Pending</button><button class="filter-chip" data-status="confirmed">Confirmed</button><button class="filter-chip" data-status="delivered">Delivered</button><button class="filter-chip" data-status="completed">Completed</button></div>
 
-                <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow"><table class="w-full min-w-[800px]"><thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold">Order ID</th><th class="px-4 py-3 text-left text-sm font-semibold">Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Customer</th><th class="px-4 py-3 text-left text-sm font-semibold">Product</th><th class="px-4 py-3 text-left text-sm font-semibold">Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Commission</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Action</th></tr></thead><tbody id="orders-table-body"><tr><td colspan="8" class="text-center py-8">Loading orders...</td></tr></tbody></table></div>
+                <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow"><table class="w-full min-w-[800px]"><thead class="bg-gray-50 dark:bg-gray-700 border-b"><tr><th class="px-4 py-3 text-left text-sm font-semibold">Order ID</th><th class="px-4 py-3 text-left text-sm font-semibold">Date</th><th class="px-4 py-3 text-left text-sm font-semibold">Customer</th><th class="px-4 py-3 text-left text-sm font-semibold">Product</th><th class="px-4 py-3 text-left text-sm font-semibold">Amount</th><th class="px-4 py-3 text-left text-sm font-semibold">Commission</th><th class="px-4 py-3 text-left text-sm font-semibold">Status</th><th class="px-4 py-3 text-left text-sm font-semibold">Action</th></tr></thead><tbody id="orders-table-body"><tr><td colspan="8" class="text-center py-8">Loading orders...</td></tr></tbody>}</div>
 
                 <div class="flex justify-between items-center mt-4"><div class="text-sm text-gray-500" id="pagination-info">Showing 0 - 0 of 0 orders</div><div class="flex gap-2" id="pagination-container"></div></div>
             </div>
